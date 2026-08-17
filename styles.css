@@ -1,0 +1,70 @@
+.context-tree-view {
+	--ct-accent: var(--interactive-accent);
+	--ct-card: var(--background-secondary);
+	--ct-border: var(--background-modifier-border);
+	--ct-muted: var(--text-muted);
+	overflow: auto;
+	padding: 0 0 32px;
+}
+
+.context-tree-toolbar {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 16px 20px;
+	background: color-mix(in srgb, var(--background-primary) 92%, transparent);
+	backdrop-filter: blur(10px);
+	border-bottom: 1px solid var(--ct-border);
+}
+
+.context-tree-toolbar h2 { margin: 0; font-size: 1rem; }
+.context-tree-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.context-tree-action, .context-tree-source, .context-tree-branch-toggle {
+	border: 1px solid var(--ct-border);
+	background: var(--background-primary);
+	border-radius: 6px;
+	padding: 4px 8px;
+	font-size: 0.8rem;
+	cursor: pointer;
+}
+
+.context-tree-graph { padding: 32px; min-width: max-content; }
+.context-tree-row { display: flex; align-items: center; gap: 52px; position: relative; }
+.context-tree-row + .context-tree-row { margin-top: 20px; }
+.context-tree-card {
+	width: 280px;
+	padding: 12px;
+	border: 1px solid var(--ct-border);
+	border-left: 3px solid var(--ct-accent);
+	border-radius: 10px;
+	background: var(--ct-card);
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+.context-tree-card.is-detail-open { width: min(620px, 62vw); background: var(--background-primary); }
+.context-tree-title {
+	width: 100%; padding: 0; border: 0; background: none; color: var(--text-normal);
+	font-weight: 650; text-align: left; cursor: pointer; font-size: 0.95rem;
+}
+.context-tree-summary { margin-top: 8px; color: var(--ct-muted); font-size: 0.82rem; line-height: 1.45; }
+.context-tree-detail { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--ct-border); max-width: 100%; }
+.context-tree-detail > :first-child { margin-top: 0; }
+.context-tree-detail h1 { font-size: 1.1rem; }
+.context-tree-detail h2 { font-size: 1rem; }
+.context-tree-detail h3 { font-size: 0.95rem; }
+.context-tree-source { margin-top: 12px; color: var(--text-accent); }
+.context-tree-branch-toggle { margin-top: 10px; color: var(--text-muted); }
+.context-tree-children { display: flex; flex-direction: column; gap: 20px; position: relative; padding: 16px 0; }
+.context-tree-children::before { content: ""; position: absolute; left: -28px; top: 0; bottom: 0; border-left: 1px solid var(--ct-border); }
+.context-tree-children > .context-tree-row::before { content: ""; position: absolute; left: -28px; width: 28px; border-top: 1px solid var(--ct-border); }
+.context-tree-empty { padding: 48px; color: var(--text-muted); }
+
+@media (max-width: 700px) {
+	.context-tree-toolbar { align-items: flex-start; flex-direction: column; }
+	.context-tree-graph { padding: 20px; }
+	.context-tree-row { gap: 28px; }
+	.context-tree-card, .context-tree-card.is-detail-open { width: min(78vw, 480px); }
+}
