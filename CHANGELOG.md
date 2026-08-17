@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- Make the test command portable across GitHub Actions shells.
+
 ## 0.1.0
 
 - Initial local-first keyword tree view.
