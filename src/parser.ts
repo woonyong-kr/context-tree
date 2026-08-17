@@ -50,7 +50,9 @@ export async function loadContextTree(
 			: undefined;
 
 		topics.push({
-			id: text(frontmatter.context_tree_id) || file.path,
+			// A frontmatter id is useful to people, but the view state must stay
+			// unambiguous even when two notes accidentally reuse one.
+			id: `${file.path}::${text(frontmatter.context_tree_id) || file.path}`,
 			path: file.path,
 			parentPath: resolvedParent,
 			title: text(frontmatter.title) || file.basename,

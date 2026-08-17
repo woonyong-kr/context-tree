@@ -28,3 +28,20 @@ test("keeps an unresolved parent as an independent root", () => {
 
 	assert.deepEqual(roots.map((node) => node.title), ["Orphan", "Root"]);
 });
+
+test("keeps a self-referencing topic visible as a root", () => {
+	const roots = buildContextTree([topic("threads", "Threads", "threads")]);
+
+	assert.deepEqual(roots.map((node) => node.title), ["Threads"]);
+	assert.deepEqual(roots[0]?.children, []);
+});
+
+test("breaks a parent cycle without dropping either topic", () => {
+	const roots = buildContextTree([
+		topic("b", "B", "a"),
+		topic("a", "A", "b"),
+	]);
+
+	assert.deepEqual(roots.map((node) => node.title), ["B"]);
+	assert.deepEqual(roots[0]?.children.map((node) => node.title), ["A"]);
+});

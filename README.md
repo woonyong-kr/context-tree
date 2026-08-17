@@ -44,7 +44,7 @@ The interrupt handler requests a yield; the scheduler switches after interrupt r
 - [[PintOS implementation notes]]
 ```
 
-Only opted-in notes are rendered. If **Source folder** is configured, the note must also live under that folder. A note whose parent is not another opted-in note becomes a root card.
+Only opted-in notes are rendered. If **Source folder** is configured, the note must also live under that folder. A note whose parent is not another opted-in note becomes a root card. Invalid self-links and parent cycles are also kept visible as root cards rather than making the view fail.
 
 ## Commands
 
@@ -63,7 +63,7 @@ For local development, copy `main.js`, `manifest.json`, and `styles.css` into `<
 
 ## Release and directory submission
 
-Every release tag must exactly match `manifest.json`'s version. Attach `main.js`, `manifest.json`, and `styles.css` as release assets. Community Plugin directory submission requires a pull request to [`obsidianmd/obsidian-releases`](https://github.com/obsidianmd/obsidian-releases) after the first public release.
+Every release tag must exactly match `manifest.json`'s version. Attach `main.js`, `manifest.json`, and `styles.css` as release assets. After the first public release, submit the listing through the official [Obsidian Community directory](https://community.obsidian.md/) with an Obsidian account linked to GitHub. The current directory submission flow is not a pull request to `obsidianmd/obsidian-releases`.
 
 ## License
 
