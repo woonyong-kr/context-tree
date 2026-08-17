@@ -1,6 +1,6 @@
 # Context Tree
 
-Context Tree is an Obsidian plugin for exploring Markdown knowledge without losing the path that led to it. It renders topic notes as a connected tree of keyword cards. Select a card to expand its Markdown inside the map; use the small branch control to reveal or hide child keywords. Links inside expanded content keep Obsidian's normal navigation behavior.
+Context Tree is an Obsidian plugin for exploring Markdown knowledge without losing the path that led to it. It renders topic notes as connected keyword cards in a pannable, zoomable radial canvas. Select a keyword to make it the centre; its connected concepts spread around it in 360 degrees. Open details inside the centred card when you need the question-and-answer content. Links inside expanded content keep Obsidian's normal navigation behavior.
 
 The plugin is local-first: it reads Markdown already in the vault, makes no network request, sends no telemetry, and stores only its settings through Obsidian's plugin data API.
 
@@ -8,11 +8,19 @@ The plugin is local-first: it reads Markdown already in the vault, makes no netw
 
 Long notes and unstructured graph views make it easy to lose both the overall concept map and the detail needed to study one branch. Context Tree keeps both visible:
 
-- **Collapsed card:** a keyword and short summary for the overall structure.
-- **Expanded card:** the existing Markdown content, including questions, answers, evidence, and links.
+- **Keyword card:** a keyword and short summary for the overall structure.
+- **Centred card:** selecting a keyword moves it to the centre and redraws its connected concepts around it.
+- **Details:** the existing Markdown content, including questions, answers, evidence, and links, expands inside the centred card.
 - **Branch control:** progressive disclosure for child concepts.
 
 The graph has keyword cards, not duplicate question and answer cards. Questions and answers live in the expanded keyword card, where they retain their context.
+
+## Canvas controls
+
+- Drag empty canvas space to pan.
+- Hold `Ctrl` (or `Command` on macOS) and use the mouse wheel to zoom.
+- With the canvas focused, `Ctrl`/`Command` + `+` or `-` also zooms.
+- **Reset view** restores the default centre and zoom.
 
 ## Markdown contract
 
