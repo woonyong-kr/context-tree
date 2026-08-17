@@ -1,9 +1,9 @@
 {
 	"id": "context-tree",
 	"name": "Context Tree",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"minAppVersion": "1.8.0",
-	"description": "Explore Markdown knowledge as expandable context-preserving trees.",
+	"description": "Explore Markdown knowledge as an expandable context-preserving graph.",
 	"author": "woonyong-kr",
 	"authorUrl": "https://github.com/woonyong-kr",
 	"isDesktopOnly": false

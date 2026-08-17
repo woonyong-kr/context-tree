@@ -1,7 +1,7 @@
 {
 	"name": "context-tree",
-	"version": "0.2.0",
-	"description": "An expandable, Markdown-native knowledge tree for Obsidian.",
+	"version": "0.3.0",
+	"description": "An expandable, Markdown-native context graph for Obsidian.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {
@@ -11,10 +11,16 @@
 		"lint": "eslint .",
 		"test": "tsx --test tests/*.test.ts"
 	},
-	"keywords": ["obsidian", "knowledge-management", "mindmap", "learning"],
+	"keywords": [
+		"obsidian",
+		"knowledge-management",
+		"mindmap",
+		"learning"
+	],
 	"license": "MIT",
 	"devDependencies": {
 		"@eslint/js": "^9.39.4",
+		"@types/d3-force": "^3.0.6",
 		"@types/node": "^22.15.17",
 		"esbuild": "0.25.5",
 		"eslint": "^9.39.4",
@@ -22,8 +28,11 @@
 		"globals": "^17.6.0",
 		"jiti": "^2.6.1",
 		"obsidian": "latest",
+		"tsx": "^4.20.6",
 		"typescript": "^5.8.3",
-		"typescript-eslint": "^8.59.1",
-		"tsx": "^4.20.6"
+		"typescript-eslint": "^8.59.1"
+	},
+	"dependencies": {
+		"d3-force": "^3.0.0"
 	}
 }

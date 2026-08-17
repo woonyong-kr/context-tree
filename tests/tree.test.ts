@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildRadialLayout } from "../src/radial-layout";
+import { buildContextGraph } from "../src/radial-layout";
 import { buildContextTree } from "../src/tree";
 import { ParsedTopic } from "../src/types";
 
@@ -47,33 +47,29 @@ test("breaks a parent cycle without dropping either topic", () => {
 	assert.deepEqual(roots[0]?.children.map((node) => node.title), ["A"]);
 });
 
-test("puts the selected keyword at the centre of a radial graph", () => {
+test("keeps every keyword and relation when building the graph", () => {
 	const roots = buildContextTree([
 		topic("threads", "Threads", "pintos"),
 		topic("pintos", "PintOS"),
 		topic("sleep", "Sleep list", "threads"),
 	]);
-	const layout = buildRadialLayout(roots, "threads");
+	const graph = buildContextGraph(roots);
 
-	assert.equal(layout?.focus.title, "Threads");
-	assert.deepEqual(layout?.nodes.find((item) => item.node.title === "Threads"), {
-		node: layout?.focus,
-		x: 0,
-		y: 0,
-		distance: 0,
-	});
-	assert.equal(layout?.edges.length, 2);
-	assert.deepEqual(layout?.nodes.map((item) => item.node.title).sort(), ["PintOS", "Sleep list", "Threads"]);
+	assert.deepEqual(graph.nodes.map((item) => item.title).sort(), ["PintOS", "Sleep list", "Threads"]);
+	assert.deepEqual(graph.edges, [
+		{ from: "pintos", to: "threads" },
+		{ from: "threads", to: "sleep" },
+	]);
 });
 
-test("widens the first ring while the focused card shows details", () => {
+test("keeps disconnected roots visible as graph vertices", () => {
 	const roots = buildContextTree([
 		topic("child", "Child", "root"),
 		topic("root", "Root"),
+		topic("orphan", "Orphan"),
 	]);
-	const layout = buildRadialLayout(roots, "root", true);
-	const child = layout?.nodes.find((item) => item.node.id === "child");
+	const graph = buildContextGraph(roots);
 
-	assert.ok(child);
-	assert.equal(Math.abs(child?.y ?? 0), 520);
+	assert.deepEqual(graph.nodes.map((node) => node.id).sort(), ["child", "orphan", "root"]);
+	assert.deepEqual(graph.edges, [{ from: "root", to: "child" }]);
 });

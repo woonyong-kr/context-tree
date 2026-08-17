@@ -1,6 +1,6 @@
 # Context Tree
 
-Context Tree is an Obsidian plugin for exploring Markdown knowledge without losing the path that led to it. It renders topic notes as connected keyword cards in a pannable, zoomable radial canvas. Select a keyword to make it the centre; its connected concepts spread around it in 360 degrees. Open details inside the centred card when you need the question-and-answer content. Links inside expanded content keep Obsidian's normal navigation behavior.
+Context Tree is an Obsidian plugin for exploring Markdown knowledge without losing the path that led to it. It renders topic notes as connected keyword cards in a pannable, zoomable **force-directed graph**. Select a keyword to make it the centre; its connected concepts settle around it in 360 degrees. Click the card itself to open or close its Markdown details in place. Links inside expanded content keep Obsidian's normal navigation behavior.
 
 The plugin is local-first: it reads Markdown already in the vault, makes no network request, sends no telemetry, and stores only its settings through Obsidian's plugin data API.
 
@@ -9,9 +9,10 @@ The plugin is local-first: it reads Markdown already in the vault, makes no netw
 Long notes and unstructured graph views make it easy to lose both the overall concept map and the detail needed to study one branch. Context Tree keeps both visible:
 
 - **Keyword card:** a keyword and short summary for the overall structure.
-- **Centred card:** selecting a keyword moves it to the centre and redraws its connected concepts around it.
-- **Details:** the existing Markdown content, including questions, answers, evidence, and links, expands inside the centred card.
-- **Branch control:** progressive disclosure for child concepts.
+- **Centred card:** selecting a keyword moves it to the centre. Its neighbours are arranged by a physical graph simulation, not a left-to-right outline.
+- **Details:** clicking the card expands the existing Markdown content, including questions, answers, evidence, and links, inside that same card.
+- **Collision-aware movement:** the card's measured size is fed back to the simulation. When details open, surrounding cards move aside instead of sitting underneath it.
+- **Two reading scales:** a compact overview automatically fits the full graph; opening a card restores a comfortable reading zoom.
 
 The graph has keyword cards, not duplicate question and answer cards. Questions and answers live in the expanded keyword card, where they retain their context.
 
@@ -20,7 +21,8 @@ The graph has keyword cards, not duplicate question and answer cards. Questions 
 - Drag empty canvas space to pan.
 - Hold `Ctrl` (or `Command` on macOS) and use the mouse wheel to zoom.
 - With the canvas focused, `Ctrl`/`Command` + `+` or `-` also zooms.
-- **Reset view** restores the default centre and zoom.
+- Use the compact `−` / `+` controls when a modifier key is inconvenient.
+- **Re-center** returns the selected keyword to the centre. The circular control restores the overview zoom.
 
 ## Markdown contract
 
@@ -68,6 +70,16 @@ npm run lint
 ```
 
 For local development, copy `main.js`, `manifest.json`, and `styles.css` into `<vault>/.obsidian/plugins/context-tree/`, reload Obsidian, and enable **Context Tree**.
+
+## Design and dependency notes
+
+The interaction model follows the public Graph view documentation for panning, zooming, centring, repulsion, and link distance. The implementation uses the local [`d3-force`](https://github.com/d3/d3-force) dependency (ISC) for its simulation; card rendering and Markdown integration are native to this plugin.
+
+- [Obsidian Graph view documentation](https://help.obsidian.md/plugins/graph)
+- [TheBrain tutorials](https://www.thebrain.com/support/tutorials) — selected concept as the navigation centre
+- [Graph Explorer](https://github.com/dsebastien/obsidian-graph-explorer-base-view) (MIT) — public Obsidian graph integration reference
+
+No source code from GPL-licensed graph plugins is included. They were considered only as independent behavioural references during design.
 
 ## Release and directory submission
 
