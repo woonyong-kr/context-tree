@@ -1,6 +1,6 @@
 {
 	"name": "context-tree",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"description": "An expandable, Markdown-native context graph for Obsidian.",
 	"main": "main.js",
 	"type": "module",

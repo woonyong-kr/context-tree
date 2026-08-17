@@ -1,4 +1,4 @@
-import { ItemView, MarkdownRenderer, WorkspaceLeaf } from "obsidian";
+import { ItemView, MarkdownRenderer, Notice, setIcon, TFile, WorkspaceLeaf } from "obsidian";
 import {
 	forceCollide as d3ForceCollide,
 	forceLink as d3ForceLink,
@@ -13,6 +13,7 @@ import {
 	SimulationNodeDatum,
 } from "d3-force";
 import ContextTreePlugin from "./main";
+import { replaceDocumentBody } from "./document-body";
 import { loadContextTree } from "./parser";
 import { buildContextGraph, GraphEdge } from "./radial-layout";
 import { ContextTreeNode } from "./types";
@@ -51,6 +52,7 @@ export class ContextTreeView extends ItemView {
 	private readonly renderedDetails = new Set<string>();
 	private readonly nodeElements = new Map<string, HTMLElement>();
 	private readonly edgeElements = new Map<string, SVGPathElement>();
+	private editingNodeId?: string;
 	private rootNodes: ContextTreeNode[] = [];
 	private simNodes: SimNode[] = [];
 	private simLinks: SimLink[] = [];
@@ -152,11 +154,7 @@ export class ContextTreeView extends ItemView {
 		const reset = controls.createEl("button", { cls: "context-tree-zoom-button", text: "⌾", attr: { "aria-label": "Reset graph view", title: "Reset graph view" } });
 		reset.addEventListener("click", (event) => {
 			event.stopPropagation();
-			this.pan = { x: 0, y: 0 };
-			this.zoom = 1;
-			this.updateZoomLabel();
-			this.applyTransform();
-			this.focusNode(this.focusedNodeId);
+			this.fitOverview();
 		});
 	}
 
@@ -218,7 +216,8 @@ export class ContextTreeView extends ItemView {
 			.force("y", d3ForceY<SimNode>(0).strength(0.018))
 			.alphaDecay(0.038)
 			.velocityDecay(0.46)
-			.on("tick", () => this.paintGraph());
+			.on("tick", () => this.paintGraph())
+			.on("end", () => this.finishOverviewFit());
 	}
 
 	private syncCards(): void {
@@ -248,7 +247,7 @@ export class ContextTreeView extends ItemView {
 		card.createDiv({ cls: "context-tree-title", text: node.title });
 		if (node.summary) card.createDiv({ cls: "context-tree-summary", text: node.summary });
 		card.addEventListener("click", (event) => {
-			if ((event.target as Element).closest("a, button")) return;
+			if ((event.target as Element).closest("a, button, textarea, input, select")) return;
 			this.toggleNode(node.id);
 		});
 		card.addEventListener("keydown", (event) => {
@@ -273,6 +272,16 @@ export class ContextTreeView extends ItemView {
 		if (this.renderedDetails.has(node.id)) return;
 		this.renderedDetails.add(node.id);
 		const wrapper = card.createDiv({ cls: "context-tree-detail-wrap" });
+		const actions = wrapper.createDiv({ cls: "context-tree-detail-actions" });
+		const edit = actions.createEl("button", {
+			cls: "context-tree-edit",
+			attr: { "aria-label": "Edit this card", title: "Edit this card" },
+		});
+		setIcon(edit, "pencil");
+		edit.addEventListener("click", (event) => {
+			event.stopPropagation();
+			this.openEditor(card, wrapper, node);
+		});
 		const detail = wrapper.createDiv({ cls: "context-tree-detail markdown-rendered" });
 		void MarkdownRenderer.render(this.app, node.body, detail, node.path, this).then(() => {
 			detail.addEventListener("click", (event) => this.openInternalLink(event, node.path));
@@ -285,16 +294,76 @@ export class ContextTreeView extends ItemView {
 		});
 	}
 
+	private openEditor(card: HTMLElement, wrapper: HTMLElement, node: ContextTreeNode): void {
+		if (this.editingNodeId && this.editingNodeId !== node.id) {
+			new Notice("Finish or cancel the open card editor first.");
+			return;
+		}
+		this.editingNodeId = node.id;
+		wrapper.empty();
+		wrapper.addClass("is-editing");
+		const editor = wrapper.createDiv({ cls: "context-tree-editor" });
+		editor.createDiv({ cls: "context-tree-editor-label", text: "Markdown body" });
+		const textarea = editor.createEl("textarea", { cls: "context-tree-editor-input" });
+		textarea.value = node.body;
+		textarea.setAttribute("aria-label", `${node.title} Markdown body`);
+		const actions = editor.createDiv({ cls: "context-tree-editor-actions" });
+		const save = actions.createEl("button", { cls: "context-tree-editor-save", text: "Save" });
+		const cancel = actions.createEl("button", { cls: "context-tree-editor-cancel", text: "Cancel" });
+		cancel.addEventListener("click", (event) => {
+			event.stopPropagation();
+			this.restoreRenderedDetails(card, wrapper, node);
+		});
+		save.addEventListener("click", (event) => {
+			event.stopPropagation();
+			void this.saveEditor(card, wrapper, node, textarea, save, cancel);
+		});
+		textarea.focus();
+		this.scheduleMeasure();
+	}
+
+	private async saveEditor(
+		card: HTMLElement,
+		wrapper: HTMLElement,
+		node: ContextTreeNode,
+		textarea: HTMLTextAreaElement,
+		save: HTMLButtonElement,
+		cancel: HTMLButtonElement,
+	): Promise<void> {
+		const file = this.app.vault.getAbstractFileByPath(node.path);
+		if (!(file instanceof TFile)) {
+			new Notice("The source note no longer exists.");
+			return;
+		}
+		const nextBody = textarea.value.trim();
+		save.disabled = true;
+		cancel.disabled = true;
+		try {
+			const source = await this.app.vault.read(file);
+			await this.app.vault.modify(file, replaceDocumentBody(source, nextBody));
+			node.body = nextBody;
+			this.restoreRenderedDetails(card, wrapper, node);
+			new Notice("Card content saved.");
+		} catch (error) {
+			console.error("Context Tree: failed to save card content", error);
+			new Notice("Could not save this card. The note was left unchanged.");
+			save.disabled = false;
+			cancel.disabled = false;
+		}
+	}
+
+	private restoreRenderedDetails(card: HTMLElement, wrapper: HTMLElement, node: ContextTreeNode): void {
+		this.editingNodeId = undefined;
+		wrapper.remove();
+		this.renderedDetails.delete(node.id);
+		this.ensureDetails(card, node);
+		this.scheduleMeasure();
+	}
+
 	private toggleNode(nodeId: string): void {
 		const isOpen = this.openDetails.has(nodeId);
 		this.openDetails.clear();
-		if (!isOpen) {
-			this.openDetails.add(nodeId);
-			// A fitted overview can be deliberately compact. Opening a topic is a
-			// reading action, so restore a comfortable minimum scale automatically.
-			this.zoom = Math.max(this.zoom, 0.95);
-			this.updateZoomLabel();
-		}
+		if (!isOpen) this.openDetails.add(nodeId);
 		this.syncCards();
 		this.focusNode(nodeId);
 		window.setTimeout(() => this.scheduleMeasure(), 220);
@@ -403,11 +472,20 @@ export class ContextTreeView extends ItemView {
 			this.collideForce?.radius((node) => this.cardRadius(node) + 30);
 			this.linkForce?.distance((edge) => this.linkDistance(edge));
 			this.simulation.alpha(0.86).restart();
-			if (this.fitWhenMeasured) {
-				this.fitGraph();
-				this.fitWhenMeasured = false;
-			}
 		}, 90);
+	}
+
+	private finishOverviewFit(): void {
+		if (!this.fitWhenMeasured) return;
+		this.fitGraph();
+		this.fitWhenMeasured = false;
+	}
+
+	private fitOverview(): void {
+		if (!this.focusedNodeId || !this.simulation) return;
+		this.focusNode(this.focusedNodeId, false);
+		this.fitWhenMeasured = true;
+		this.simulation.alpha(0.92).restart();
 	}
 
 	private fitGraph(): void {

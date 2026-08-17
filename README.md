@@ -11,6 +11,7 @@ Long notes and unstructured graph views make it easy to lose both the overall co
 - **Keyword card:** a keyword and short summary for the overall structure.
 - **Centred card:** selecting a keyword moves it to the centre. Its neighbours are arranged by a physical graph simulation, not a left-to-right outline.
 - **Details:** clicking the card expands the existing Markdown content, including questions, answers, evidence, and links, inside that same card.
+- **Inline editing:** hover an expanded card and select the pencil icon to edit its Markdown body in place. Saving preserves the note's frontmatter and H1, including graph metadata.
 - **Collision-aware movement:** the card's measured size is fed back to the simulation. When details open, surrounding cards move aside instead of sitting underneath it.
 - **Two reading scales:** a compact overview automatically fits the full graph; opening a card restores a comfortable reading zoom.
 
@@ -23,6 +24,7 @@ The graph has keyword cards, not duplicate question and answer cards. Questions 
 - With the canvas focused, `Ctrl`/`Command` + `+` or `-` also zooms.
 - Use the compact `−` / `+` controls when a modifier key is inconvenient.
 - **Re-center** returns the selected keyword to the centre. The circular control restores the overview zoom.
+- Switching cards preserves the zoom you selected; only the circular overview control changes it automatically.
 
 ## Markdown contract
 
