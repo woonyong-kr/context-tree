@@ -1,9 +1,18 @@
+export type ContextRelationType = "related" | "prerequisite" | "supports" | "contrasts" | "follow-up";
+
+export interface ContextTreeLink {
+	targetPath: string;
+	type: ContextRelationType;
+}
+
 export interface ContextTreeNode {
 	id: string;
 	path: string;
 	title: string;
 	summary: string;
 	body: string;
+	parentPath?: string;
+	links: ContextTreeLink[];
 	children: ContextTreeNode[];
 }
 
@@ -14,4 +23,5 @@ export interface ParsedTopic {
 	title: string;
 	summary: string;
 	body: string;
+	links: ContextTreeLink[];
 }

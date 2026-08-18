@@ -21,6 +21,11 @@ jobs:
                   node-version: 24
                   cache: 'npm'
 
+            - name: Verify release version
+              run: |
+                  manifest_version="$(node -p \"require('./manifest.json').version\")"
+                  test "$manifest_version" = "$GITHUB_REF_NAME"
+
             - name: Build plugin
               run: |
                   npm ci

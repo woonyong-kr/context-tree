@@ -1,79 +1,93 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
+import { GraphPhysics } from "./graph/simulation";
+import { GraphViewState, GraphWorkspace } from "./domain/graph-workspace";
 import ContextTreePlugin from "./main";
+import { COPY } from "./ui/copy";
 
 export interface ContextTreeSettings {
-	sourceFolder: string;
-	initialExpandedDepth: number;
+	graphs: GraphWorkspace[];
+	defaultGraphId: string;
+	viewStates: Record<string, GraphViewState>;
 }
 
-export const DEFAULT_SETTINGS: ContextTreeSettings = {
-	sourceFolder: "",
-	initialExpandedDepth: 2,
-};
+export const DEFAULT_SETTINGS: ContextTreeSettings = { graphs: [], defaultGraphId: "", viewStates: {} };
 
 export class ContextTreeSettingTab extends PluginSettingTab {
 	constructor(app: App, private readonly plugin: ContextTreePlugin) {
 		super(app, plugin);
 	}
 
-	/**
-	 * Obsidian 1.13+ uses this declarative form for settings search and rendering.
-	 * Older supported versions continue through display() below.
-	 */
-	getSettingDefinitions() {
-		return [
-			{
-				name: "Source folder",
-				desc: "Only scan this folder. Leave empty to scan the whole vault for context_tree: true notes.",
-				control: {
-					type: "text",
-					key: "sourceFolder",
-					placeholder: "Maps/learning",
-				},
-			},
-			{
-				name: "Initially visible depth",
-				desc: "How many keyword levels to show before branches start collapsed.",
-				control: {
-					type: "slider",
-					key: "initialExpandedDepth",
-					min: 1,
-					max: 6,
-					step: 1,
-				},
-			},
-		];
-	}
-
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		new Setting(containerEl)
-			.setName("Source folder")
-			.setDesc("Only scan this folder. Leave empty to scan the whole vault for context_tree: true notes.")
-			.addText((text) =>
-				text
-				.setPlaceholder("Maps/learning")
-					.setValue(this.plugin.settings.sourceFolder)
-					.onChange(async (value) => {
-						this.plugin.settings.sourceFolder = value.trim().replace(/^\/+|\/+$/g, "");
-						await this.plugin.saveSettings();
-					}),
-			);
+		if (!this.plugin.settings.graphs.length) return;
+		containerEl.createEl("p", {
+			cls: "setting-item-description",
+			text: COPY.settings.graphSettingsDescription,
+		});
+		for (const graph of this.plugin.settings.graphs) this.renderGraphPhysics(containerEl, graph);
+	}
 
-		new Setting(containerEl)
-			.setName("Initially visible depth")
-			.setDesc("How many keyword levels to show before branches start collapsed.")
-			.addSlider((slider) =>
-				slider
-					.setLimits(1, 6, 1)
-					.setValue(this.plugin.settings.initialExpandedDepth)
-					.setDynamicTooltip()
-					.onChange(async (value) => {
-						this.plugin.settings.initialExpandedDepth = value;
-						await this.plugin.saveSettings();
-					}),
+	/**
+	 * Obsidian 1.13+ calls this instead of display(), which makes all controls
+	 * searchable. The repository still compiles against the public 1.8 SDK, so
+	 * the framework-only definition shape stays intentionally structural here.
+	 * Each render callback reuses the exact same controls as the legacy path.
+	 */
+	getSettingDefinitions(): unknown[] {
+		return this.plugin.settings.graphs.flatMap((graph) => [
+			this.physicsDefinition(graph, COPY.settings.linkStrengthName, COPY.settings.linkStrengthDescription, "linkStrength", 0.1, 1, 0.02),
+			this.physicsDefinition(graph, COPY.settings.repulsionName, COPY.settings.repulsionDescription, "repulsion", 200, 1800, 20),
+			this.physicsDefinition(graph, COPY.settings.linkGapName, COPY.settings.linkGapDescription, "linkGap", 20, 260, 10),
+		]);
+	}
+
+	private renderGraphPhysics(container: HTMLElement, graph: GraphWorkspace): void {
+		new Setting(container).setName(graph.name).setHeading();
+		container.createEl("p", { cls: "setting-item-description", text: COPY.settings.physicsDescription });
+		this.addPhysicsSlider(new Setting(container), graph, COPY.settings.linkStrengthName, COPY.settings.linkStrengthDescription, "linkStrength", 0.1, 1, 0.02);
+		this.addPhysicsSlider(new Setting(container), graph, COPY.settings.repulsionName, COPY.settings.repulsionDescription, "repulsion", 200, 1800, 20);
+		this.addPhysicsSlider(new Setting(container), graph, COPY.settings.linkGapName, COPY.settings.linkGapDescription, "linkGap", 20, 260, 10);
+	}
+
+	private physicsDefinition(
+		graph: GraphWorkspace,
+		name: string,
+		desc: string,
+		key: keyof GraphPhysics,
+		min: number,
+		max: number,
+		step: number,
+	): unknown {
+		return {
+			name,
+			desc,
+			render: (setting: Setting) => this.addPhysicsSlider(setting, graph, name, desc, key, min, max, step),
+		};
+	}
+
+	private addPhysicsSlider(
+		setting: Setting,
+		graph: GraphWorkspace,
+		name: string,
+		description: string,
+		key: keyof GraphPhysics,
+		min: number,
+		max: number,
+		step: number,
+	): void {
+		setting
+			.setName(name)
+			.setDesc(description)
+			.addSlider((slider) => slider
+				.setLimits(min, max, step)
+				.setValue(graph.physics[key])
+				.setDynamicTooltip()
+				.onChange(async (value) => {
+					graph.physics[key] = value;
+					await this.plugin.saveSettings();
+				}),
 			);
 	}
 }

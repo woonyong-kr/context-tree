@@ -1,0 +1,31 @@
+# Contributing to Context Graph
+
+Context Graph is a local-first Obsidian plugin. Every product change must keep
+Markdown in the vault as the only durable source of truth.
+
+## Before opening a pull request
+
+1. Start from an issue or describe the problem, the affected Markdown contract,
+   and the expected user-visible behaviour.
+2. Keep parsing, graph geometry, Vault writes, and UI effects in their existing
+   module boundaries. Do not add a second card database or a network service.
+3. Add a focused regression test for parsing, graph construction, relation
+   storage, or geometry when the behaviour can be tested without Obsidian.
+4. Run `npm run check`.
+5. For an interaction change, manually verify desktop Obsidian: opening and
+   closing a card, editing Markdown, pan/zoom, and the affected graph gesture.
+
+## Pull request expectations
+
+- Explain the user problem and the trade-off, not only the implementation.
+- State whether the change reads or writes vault files.
+- Keep generated `main.js` out of commits; GitHub releases attach the built
+  `main.js`, `manifest.json`, and `styles.css` artifacts.
+- Do not introduce telemetry, network access, remote code, or Electron-only
+  behaviour without an explicit proposal and updated privacy documentation.
+
+## Release changes
+
+Use semantic versions in `package.json` and `manifest.json`. The GitHub tag
+must exactly equal `manifest.json.version` (without a leading `v`), and
+`versions.json` must contain the matching minimum Obsidian version.

@@ -1,75 +1,124 @@
-import { ItemView, MarkdownRenderer, Notice, setIcon, TFile, WorkspaceLeaf } from "obsidian";
-import {
-	forceCollide as d3ForceCollide,
-	forceLink as d3ForceLink,
-	forceManyBody as d3ForceManyBody,
-	forceSimulation as d3ForceSimulation,
-	forceX as d3ForceX,
-	forceY as d3ForceY,
-	ForceCollide,
-	ForceLink,
-	Simulation,
-	SimulationLinkDatum,
-	SimulationNodeDatum,
-} from "d3-force";
+import { FileView, Notice, setIcon, TFile, ViewStateResult, WorkspaceLeaf } from "obsidian";
+import { GRAPH_DEFINITION_EXTENSION } from "./domain/graph-definition";
+import { canvasWheelAction } from "./domain/canvas-wheel-action";
+import { normalizePinnedCardIds, openCardAlongsidePins, retainPinnedCards } from "./domain/card-pin-state";
 import ContextTreePlugin from "./main";
-import { replaceDocumentBody } from "./document-body";
+import { graphHoverNodeIds, graphSearchVisibility, isGraphEdgeVisible } from "./domain/graph-filter";
+import type { GraphSearchVisibility } from "./domain/graph-filter";
+import { graphNoteFolder, GraphWorkspace } from "./domain/graph-workspace";
+import { decideInlineEditorSave } from "./domain/inline-editor-save";
+import { DIRECT_RELATION, contextRelationLabel, isSymmetricRelation, RELATION_TYPES } from "./domain/relations";
+import {
+	cardRadius,
+	CardAnchor,
+	cardAnchorAtPoint,
+	cardAnchorPoint,
+	cardEdgeEndpoints,
+	createGraphSimulation,
+	curvedEdgePath,
+	DEFAULT_CARD_SIZE,
+	graphZoomBounds,
+	graphPointerDelta,
+	GRAPH_ZOOM,
+	initialGraphPosition,
+	linkDistance,
+	SimLink,
+	SimNode,
+	simulationLinkFor,
+} from "./graph/simulation";
 import { loadContextTree } from "./parser";
-import { buildContextGraph, GraphEdge } from "./radial-layout";
-import { ContextTreeNode } from "./types";
+import { buildContextGraph, GraphRelationType, isDetachableGraphEdge } from "./graph/model";
+import { ContextTreeLink, ContextTreeNode } from "./types";
+import { addRelation, createTopic, moveTopicToTrash, removeRelation } from "./topic-store";
+import { AddGraphNoteModal, DeleteTopicModal, GraphWorkspaceModal, ReloadInlineSourceModal } from "./topic-modals";
+import { CardConnection, TopicCardRenderer } from "./ui/topic-card-renderer";
+import type { TopicCardState } from "./ui/topic-card-renderer";
+import { COPY, movedToTrashNotice } from "./ui/copy";
 
 export const VIEW_TYPE_CONTEXT_TREE = "context-tree-view";
 
-const MIN_ZOOM = 0.35;
-const MAX_ZOOM = 2.5;
-const FALLBACK_CARD = { width: 276, height: 146 };
+type EdgeVisual = {
+	path: SVGPathElement;
+	firstEndpoint: HTMLElement;
+	secondEndpoint: HTMLElement;
+};
 
-interface NodeSize {
-	width: number;
-	height: number;
-}
-
-interface SimNode extends SimulationNodeDatum {
-	id: string;
-	node: ContextTreeNode;
-	size: NodeSize;
-}
-
-interface SimLink extends SimulationLinkDatum<SimNode> {
-	from: string;
-	to: string;
-	source: string | SimNode;
-	target: string | SimNode;
-}
+type PointerCaptureTarget = HTMLElement | SVGPathElement;
 
 /**
  * An interactive ego graph. Topic cards contain Markdown directly; the graph
  * is physical rather than a tree layout so cards push one another apart when
  * their details open.
  */
-export class ContextTreeView extends ItemView {
+export class ContextTreeView extends FileView {
 	private readonly openDetails = new Set<string>();
-	private readonly renderedDetails = new Set<string>();
+	/** Open-card pins are per graph view and intentionally never enter Markdown. */
+	private readonly pinnedOpenNodeIds = new Set<string>();
 	private readonly nodeElements = new Map<string, HTMLElement>();
-	private readonly edgeElements = new Map<string, SVGPathElement>();
-	private editingNodeId?: string;
+	private readonly edgeElements = new Map<string, EdgeVisual>();
+	private readonly cards: TopicCardRenderer;
 	private rootNodes: ContextTreeNode[] = [];
 	private simNodes: SimNode[] = [];
 	private simLinks: SimLink[] = [];
 	private focusedNodeId?: string;
+	private hoveredNodeId?: string;
+	private hoverNodeIds = new Set<string>();
+	private selectedEdgeId?: string;
+	private hoveredAnchor?: { nodeId: string; anchor: CardAnchor };
+	private dragNode?: { nodeId: string; pointerId: number; originPointer: { x: number; y: number }; originGraph: { x: number; y: number }; captureTarget?: HTMLElement; moved: boolean };
+	private canvasPan?: { pointerId: number; originPointer: { x: number; y: number }; originPan: { x: number; y: number }; captureTarget: HTMLElement; sourceNodeId?: string; moved: boolean };
+	private suppressNextToggleFor?: string;
+	private dragConnection?: { sourceId: string; sourceAnchor: CardAnchor; targetId?: string; targetAnchor?: CardAnchor; pointerId: number; x: number; y: number };
+	private disconnectDrag?: { edgeId: string; pointerId: number; captureTarget: PointerCaptureTarget; start: { x: number; y: number } };
+	private draftEdges?: SVGSVGElement;
+	private draftEdge?: SVGPathElement;
+	private inlineEdit?: { nodeId: string; file: TFile; content: string; lastPersisted: string; timer?: number; saving?: Promise<void>; saveFailed?: boolean; hasConflict?: boolean };
+	private pendingEditorPath?: string;
 	private pan = { x: 0, y: 0 };
 	private zoom = 1;
+	private viewportBeforeDetails?: { pan: { x: number; y: number }; zoom: number };
 	private viewport?: HTMLElement;
 	private scene?: HTMLElement;
 	private edges?: SVGSVGElement;
-	private simulation?: Simulation<SimNode, undefined>;
-	private linkForce?: ForceLink<SimNode, SimLink>;
-	private collideForce?: ForceCollide<SimNode>;
+	private simulation?: ReturnType<typeof createGraphSimulation>["simulation"];
+	private linkForce?: ReturnType<typeof createGraphSimulation>["linkForce"];
+	private collideForce?: ReturnType<typeof createGraphSimulation>["collideForce"];
 	private resizeTimer?: number;
+	private viewportObserver?: ResizeObserver;
+	private viewportSize?: { width: number; height: number };
 	private fitWhenMeasured = false;
+	private hasRenderedGraph = false;
+	private refreshGeneration = 0;
+	private graphId?: string;
+	private searchQuery = "";
+	private searchVisibilityCache?: {
+		nodes: readonly SimNode[];
+		links: readonly SimLink[];
+		query: string;
+		visibility: GraphSearchVisibility;
+	};
+	private paintFrame?: number;
+	private readonly relationFilter = new Set<GraphRelationType>(["derived", ...RELATION_TYPES]);
+	private searchPanel?: HTMLElement;
 
 	constructor(leaf: WorkspaceLeaf, private readonly plugin: ContextTreePlugin) {
-		super(leaf);
+		 super(leaf);
+		 this.cards = new TopicCardRenderer(this.app, this, {
+			onToggle: (nodeId) => void this.toggleNodeFromCard(nodeId),
+			onOpen: (nodeId) => void this.openNodeFromCard(nodeId),
+			onCardDragStart: (event, node) => this.startNodeDrag(event, node),
+			onOpenCardPanStart: (event, node) => this.startCanvasPan(event, node.id),
+			onConnectionStart: (event, node, anchor) => this.startDragConnection(event, node, anchor),
+			onConnectionCandidate: (nodeId, anchor) => this.setConnectionCandidate(nodeId, anchor),
+			onPin: (node) => void this.toggleCardPin(node),
+			onEdit: (node) => void this.toggleInlineMarkdownEditor(node),
+			onMoveToTrash: (node) => void this.deleteFromCard(node),
+			onOpenInternalLink: (event, sourcePath) => this.openInternalLink(event, sourcePath),
+			onNavigateConnection: (nodeId) => void this.navigateToNode(nodeId),
+			onHover: (nodeId) => this.setHoveredNode(nodeId),
+			connectionsFor: (node) => this.connectionsFor(node),
+			onMeasure: () => this.scheduleMeasure(),
+		});
 	}
 
 	getViewType(): string {
@@ -77,34 +126,100 @@ export class ContextTreeView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return "Context graph";
+		return this.plugin.getGraph(this.graphId)?.name ?? this.file?.basename ?? COPY.view.title;
 	}
 
 	getIcon(): string {
-		return "git-fork";
+		return "share-2";
+	}
+
+	getGraphId(): string {
+		return this.graphId ?? this.plugin.defaultGraph()?.id ?? "";
+	}
+
+	getState(): Record<string, unknown> {
+		return { ...super.getState(), graphId: this.getGraphId() };
+	}
+
+	async setState(state: unknown, result: ViewStateResult): Promise<void> {
+		const candidate = state && typeof state === "object" ? (state as Record<string, unknown>).graphId : undefined;
+		this.graphId = typeof candidate === "string" && this.plugin.getGraph(candidate) ? candidate : undefined;
+		await super.setState(state, result);
+	}
+
+	canAcceptExtension(extension: string): boolean {
+		return extension === GRAPH_DEFINITION_EXTENSION;
+	}
+
+	async onLoadFile(file: TFile): Promise<void> {
+		await super.onLoadFile(file);
+		const graph = await this.plugin.graphForDefinitionFile(file);
+		if (!graph) {
+			new Notice(COPY.notice.graphDefinitionInvalid);
+			return;
+		}
+		this.graphId = graph.id;
+		await this.refresh();
+	}
+
+	private get graph(): GraphWorkspace {
+		const graph = this.plugin.getGraph(this.graphId);
+		if (!graph) throw new Error("Context Graph requires at least one graph workspace.");
+		return graph;
 	}
 
 	async onOpen(): Promise<void> {
 		this.registerDomEvent(window, "resize", () => this.scheduleMeasure());
-		await this.refresh();
+		this.registerDomEvent(window, "pointermove", (event) => {
+			this.updateCanvasPan(event);
+			this.updateNodeDrag(event);
+			this.updateDragConnection(event);
+		});
+		this.registerDomEvent(window, "pointerup", (event) => {
+			this.finishCanvasPan(event);
+			this.finishNodeDrag(event);
+			this.finishDragConnection(event);
+		});
+		this.registerDomEvent(window, "pointercancel", (event) => {
+			this.finishCanvasPan(event);
+			this.finishNodeDrag(event);
+			this.finishDragConnection(event);
+		});
+		// A FileView receives onOpen() before onLoadFile(). Its graph id does not
+		// exist yet in that path, so rendering here would either throw or briefly
+		// render the default graph. onLoadFile() performs the first render for a
+		// `.context-graph` file; legacy command-created leaves already have an id.
+		if (this.graphId !== undefined) await this.refresh();
 	}
 
-	onClose(): Promise<void> {
+	async onClose(): Promise<void> {
+		await this.persistGraphViewState();
+		this.refreshGeneration += 1;
 		this.simulation?.stop();
+		if (this.paintFrame !== undefined) window.cancelAnimationFrame(this.paintFrame);
+		this.viewportObserver?.disconnect();
 		if (this.resizeTimer !== undefined) window.clearTimeout(this.resizeTimer);
-		return Promise.resolve();
 	}
 
 	async refresh(): Promise<void> {
-		const roots = await loadContextTree(this.app, this.plugin.settings);
+		const generation = ++this.refreshGeneration;
+		// Autosaving a raw Markdown edit triggers Vault modify events. Preserve
+		// the focused textarea until the reader explicitly leaves edit mode.
+		if (this.inlineEdit) return;
+		const roots = await loadContextTree(this.app, this.graph);
+		// Vault events can arrive faster than cachedRead() completes. Only the
+		// newest snapshot may update the view; otherwise a stale read can repaint
+		// a card after its source note was already changed or removed.
+		if (generation !== this.refreshGeneration) return;
 		this.rootNodes = roots;
 		this.focusedNodeId ??= roots[0]?.id;
 		if (!roots.length) {
 			this.renderEmpty();
 			return;
 		}
+		const preserveViewport = this.hasRenderedGraph;
 		this.renderShell();
-		this.createGraph();
+		this.createGraph(preserveViewport);
 	}
 
 	private renderShell(): void {
@@ -113,53 +228,211 @@ export class ContextTreeView extends ItemView {
 		contentEl.addClass("context-tree-view");
 		this.nodeElements.clear();
 		this.edgeElements.clear();
-		this.renderedDetails.clear();
-
-		const header = contentEl.createDiv({ cls: "context-tree-toolbar" });
-		header.createEl("h2", { text: "Context graph" });
-		const actions = header.createDiv({ cls: "context-tree-actions" });
-		this.createAction(actions, "Re-center", () => this.focusNode(this.focusedNodeId));
-		this.createAction(actions, "Refresh", () => void this.refresh());
+		this.cards.reset();
 
 		this.viewport = contentEl.createDiv({ cls: "context-tree-viewport" });
 		this.viewport.tabIndex = 0;
-		this.viewport.setAttribute("aria-label", "Context graph. Drag to pan; use control or command plus the mouse wheel to zoom.");
+		this.viewport.setAttribute("aria-label", COPY.view.aria);
 		this.scene = this.viewport.createDiv({ cls: "context-tree-scene" });
 		this.edges = this.scene.createSvg("svg", { cls: "context-tree-edges" });
-		this.createZoomControls(this.viewport);
+		this.draftEdges = this.viewport.createSvg("svg", { cls: "context-tree-draft-edges" });
+		this.createGraphControls(this.viewport);
 		this.applyTransform();
 		this.bindCanvasControls(this.viewport);
+		this.viewportObserver?.disconnect();
+		this.viewportObserver = new ResizeObserver(() => {
+			const previous = this.viewportSize;
+			const width = this.viewport?.clientWidth ?? 0;
+			const height = this.viewport?.clientHeight ?? 0;
+			this.viewportSize = { width, height };
+			this.updateViewportCardWidth(width);
+			this.scheduleMeasure();
+			// Preserve intentional pan/zoom during normal resizing, but prevent a
+			// substantial split-pane contraction from stranding most cards offscreen.
+			if (previous && (width < previous.width * 0.72 || height < previous.height * 0.72)) {
+				this.fitWhenMeasured = true;
+			}
+			this.finishOverviewFit();
+		});
+		this.viewportObserver.observe(this.viewport);
+		this.updateViewportCardWidth(this.viewport.clientWidth);
 	}
 
 	private renderEmpty(): void {
+		this.simulation?.stop();
+		this.simulation = undefined;
+		this.linkForce = undefined;
+		this.collideForce = undefined;
+		this.simNodes = [];
+		this.simLinks = [];
+		this.openDetails.clear();
+		this.pinnedOpenNodeIds.clear();
+		this.nodeElements.clear();
+		this.edgeElements.clear();
+		this.cards.reset();
+		this.viewportObserver?.disconnect();
+		this.viewportObserver = undefined;
+		this.viewport = undefined;
+		this.scene = undefined;
+		this.edges = undefined;
+		this.draftEdges = undefined;
+		this.draftEdge = undefined;
+		this.dragConnection = undefined;
+		this.viewportBeforeDetails = undefined;
+		this.hasRenderedGraph = false;
 		const { contentEl } = this;
 		contentEl.empty();
 		contentEl.addClass("context-tree-view");
 		const empty = contentEl.createDiv({ cls: "context-tree-empty" });
-		empty.createEl("h3", { text: "No graph topics found" });
-		empty.createEl("p", { text: "Add context_tree: true to a Markdown note, then connect related notes with context_tree_parent." });
+		empty.createEl("p", { cls: "context-tree-empty-eyebrow", text: this.graph.name });
+		empty.createEl("h2", { text: COPY.labels.emptyTitle });
+		empty.createEl("p", { cls: "context-tree-empty-status", text: this.emptyScopeStatus() });
+		empty.createEl("p", { cls: "context-tree-empty-next", text: COPY.labels.emptyNextStep });
+		const actions = empty.createDiv({ cls: "context-tree-empty-actions" });
+		this.createAction(actions, COPY.actions.manageGraphs, () => this.openGraphWorkspaceModal());
+		this.createAction(actions, COPY.actions.createCard, () => this.createInlineTopic());
 	}
 
-	private createAction(parent: HTMLElement, label: string, callback: () => void): void {
+	private emptyScopeStatus(): string {
+		const { scope } = this.graph;
+		if ((scope.kind === "folders" || scope.kind === "hybrid") && scope.folders[0]) {
+			return COPY.labels.emptyFolderScope(scope.folders[0]);
+		}
+		return scope.kind === "curated" ? COPY.labels.emptyCuratedScope : COPY.labels.emptyAllScope;
+	}
+
+	private createAction(parent: HTMLElement, label: string, callback: () => void): HTMLButtonElement {
 		const button = parent.createEl("button", { text: label, cls: "context-tree-action" });
 		button.addEventListener("click", callback);
+		return button;
 	}
 
-	private createZoomControls(parent: HTMLElement): void {
-		const controls = parent.createDiv({ cls: "context-tree-zoom-controls" });
-		this.createZoomButton(controls, "−", "Zoom out", 0.86);
+	private createGraphControls(parent: HTMLElement): void {
+		const controls = parent.createDiv({ cls: "context-tree-graph-controls" });
+		this.createIconControl(controls, "layers-3", COPY.actions.manageGraphs, () => this.openGraphWorkspaceModal());
+		this.createIconControl(controls, "search", COPY.actions.searchGraph, () => this.toggleSearchPanel("search"));
+		this.createIconControl(controls, "sliders-horizontal", COPY.actions.filterRelations, () => this.toggleSearchPanel("filter"));
+		this.createIconControl(controls, "file-plus-2", COPY.actions.newCard, () => this.createInlineTopic());
+		this.createIconControl(controls, "refresh-cw", COPY.actions.refresh, () => void this.refresh());
+		controls.createDiv({ cls: "context-tree-control-divider" });
+		this.createZoomButton(controls, "minus", COPY.actions.zoomOut, 0.86);
 		const label = controls.createDiv({ cls: "context-tree-zoom-label", text: "100%" });
 		label.setAttribute("aria-live", "polite");
-		this.createZoomButton(controls, "+", "Zoom in", 1.16);
-		const reset = controls.createEl("button", { cls: "context-tree-zoom-button", text: "⌾", attr: { "aria-label": "Reset graph view", title: "Reset graph view" } });
+		this.createZoomButton(controls, "plus", COPY.actions.zoomIn, 1.16);
+		const reset = controls.createEl("button", { cls: "context-tree-zoom-button", attr: { "aria-label": COPY.actions.resetView, title: COPY.actions.resetView } });
+		setIcon(reset, "maximize-2");
 		reset.addEventListener("click", (event) => {
 			event.stopPropagation();
-			this.fitOverview();
+			void this.showOverview();
 		});
+		this.createSearchPanel(parent);
 	}
 
-	private createZoomButton(parent: HTMLElement, text: string, label: string, multiplier: number): void {
-		const button = parent.createEl("button", { cls: "context-tree-zoom-button", text, attr: { "aria-label": label, title: label } });
+	private toggleSearchPanel(mode: "search" | "filter"): void {
+		const panel = this.searchPanel;
+		if (!panel) return;
+		const wasOpen = panel.hasClass("is-open");
+		panel.toggleClass("is-open", !wasOpen);
+		if (mode === "search") panel.querySelector<HTMLInputElement>("input")?.focus();
+	}
+
+	private createSearchPanel(parent: HTMLElement): void {
+		const panel = parent.createDiv({ cls: "context-tree-search-panel" });
+		this.searchPanel = panel;
+		const input = panel.createEl("input", {
+			type: "search",
+			attr: { placeholder: COPY.labels.searchPlaceholder, "aria-label": COPY.actions.searchGraph },
+		});
+		input.value = this.searchQuery;
+		input.addEventListener("input", () => {
+			this.searchQuery = input.value;
+			this.applySearchAndFilter();
+		});
+		input.addEventListener("keydown", (event) => {
+			if (event.key === "Escape") {
+				input.value = "";
+				this.searchQuery = "";
+				this.applySearchAndFilter();
+				panel.removeClass("is-open");
+				return;
+			}
+			if (event.key !== "Enter") return;
+			const firstMatch = this.searchVisibility().matches.values().next().value;
+			if (firstMatch) this.focusNode(firstMatch);
+		});
+		const filters = panel.createDiv({ cls: "context-tree-relation-filters" });
+		filters.createDiv({ cls: "context-tree-filter-label", text: COPY.labels.relationFilters });
+		for (const type of ["derived", ...RELATION_TYPES] as readonly GraphRelationType[]) {
+			const label = filters.createEl("label", { cls: "context-tree-relation-filter" });
+			const checkbox = label.createEl("input", { type: "checkbox" });
+			checkbox.checked = this.relationFilter.has(type);
+			checkbox.addEventListener("change", () => {
+				if (checkbox.checked) this.relationFilter.add(type);
+				else this.relationFilter.delete(type);
+				this.applySearchAndFilter();
+			});
+			label.createSpan({ text: type === "derived" ? "맥락" : contextRelationLabel(type) });
+		}
+		const empty = panel.createDiv({ cls: "context-tree-search-empty", text: COPY.labels.searchNoResults });
+		empty.toggleClass("is-visible", false);
+	}
+
+	private searchVisibility(): GraphSearchVisibility {
+		const cached = this.searchVisibilityCache;
+		if (cached && cached.nodes === this.simNodes && cached.links === this.simLinks && cached.query === this.searchQuery) {
+			return cached.visibility;
+		}
+		const visibility = graphSearchVisibility(this.searchQuery, this.simNodes.map((node) => node.node), this.simLinks);
+		this.searchVisibilityCache = {
+			nodes: this.simNodes,
+			links: this.simLinks,
+			query: this.searchQuery,
+			visibility,
+		};
+		return visibility;
+	}
+
+	private applySearchAndFilter(): void {
+		const visibility = this.searchVisibility();
+		this.refreshHoverNodeIds();
+		this.searchPanel?.querySelector(".context-tree-search-empty")?.toggleClass("is-visible", !!this.searchQuery.trim() && visibility.matches.size === 0);
+		this.clearSelectedEdge();
+		if (this.openDetails.size && ![...this.openDetails].some((id) => visibility.visible.has(id))) this.closeDetailsForCanvas();
+		this.syncCards();
+		this.paintGraph();
+	}
+
+	private openGraphWorkspaceModal(): void {
+		new GraphWorkspaceModal(this.app, this.plugin.settings.graphs, this.getGraphId(), {
+			onOpenGraph: (graphId) => void this.plugin.activateView(graphId),
+			onCreateGraph: (name, scope) => {
+				void this.plugin.createGraph(name, scope)
+					.then((graph) => this.plugin.activateView(graph.id))
+					.catch((error: unknown) => console.error("Context Graph: failed to create graph workspace", error));
+			},
+			onAddExistingNote: () => new AddGraphNoteModal(this.app, (file) => {
+				void this.plugin.includePathInGraph(this.getGraphId(), file.path)
+					.catch((error: unknown) => console.error("Context Graph: failed to add an existing note", error));
+			}).open(),
+		}).open();
+	}
+
+	private createIconControl(parent: HTMLElement, icon: string, label: string, callback: () => void): HTMLButtonElement {
+		const button = parent.createEl("button", {
+			cls: "context-tree-zoom-button context-tree-control-button",
+			attr: { "aria-label": label, title: label },
+		});
+		setIcon(button, icon);
+		button.addEventListener("click", (event) => {
+			event.stopPropagation();
+			callback();
+		});
+		return button;
+	}
+
+	private createZoomButton(parent: HTMLElement, icon: string, label: string, multiplier: number): void {
+		const button = parent.createEl("button", { cls: "context-tree-zoom-button", attr: { "aria-label": label, title: label } });
+		setIcon(button, icon);
 		button.addEventListener("click", (event) => {
 			event.stopPropagation();
 			if (!this.viewport) return;
@@ -168,61 +441,85 @@ export class ContextTreeView extends ItemView {
 		});
 	}
 
-	private createGraph(): void {
+	private createGraph(preserveViewport: boolean): void {
 		this.simulation?.stop();
 		const graph = buildContextGraph(this.rootNodes);
+		if (!graph.edges.some((edge) => edge.id === this.selectedEdgeId)) this.selectedEdgeId = undefined;
 		const previous = new Map(this.simNodes.map((node) => [node.id, node]));
-		const focusId = graph.nodes.some((node) => node.id === this.focusedNodeId) ? this.focusedNodeId : graph.nodes[0]?.id;
+		const savedView = preserveViewport ? undefined : this.plugin.graphViewState(this.getGraphId());
+		const availableIds = graph.nodes.map((node) => node.id);
+		if (savedView) {
+			this.pinnedOpenNodeIds.clear();
+			for (const id of normalizePinnedCardIds(savedView.pinnedOpenNodeIds, availableIds)) this.pinnedOpenNodeIds.add(id);
+			this.openDetails.clear();
+			for (const id of this.pinnedOpenNodeIds) this.openDetails.add(id);
+		} else {
+			const validPins = normalizePinnedCardIds([...this.pinnedOpenNodeIds], availableIds);
+			this.pinnedOpenNodeIds.clear();
+			for (const id of validPins) this.pinnedOpenNodeIds.add(id);
+			this.replaceOpenDetails(new Set([...this.openDetails].filter((id) => availableIds.includes(id))));
+		}
+		const focusId = graph.nodes.some((node) => node.id === this.focusedNodeId)
+			? this.focusedNodeId
+			: graph.nodes.some((node) => node.id === savedView?.focusedNodeId)
+				? savedView?.focusedNodeId
+				: graph.nodes[0]?.id;
 		this.focusedNodeId = focusId;
 		this.simNodes = graph.nodes.map((node, index) => {
 			const saved = previous.get(node.id);
-			const initial = saved ?? this.initialPosition(index, graph.nodes.length, node.id === focusId);
-			return { id: node.id, node, size: saved?.size ?? FALLBACK_CARD, x: initial.x, y: initial.y, vx: saved?.vx, vy: saved?.vy };
+			const persisted = savedView?.positions[node.id];
+			const initial = saved ?? persisted ?? initialGraphPosition(index, graph.nodes.length, node.id === focusId);
+			return {
+				id: node.id,
+				node,
+				size: saved?.size ?? DEFAULT_CARD_SIZE,
+				x: initial.x,
+				y: initial.y,
+				vx: saved?.vx,
+				vy: saved?.vy,
+				fx: saved?.fx ?? (persisted?.pinned ? persisted.x : undefined),
+				fy: saved?.fy ?? (persisted?.pinned ? persisted.y : undefined),
+			};
 		});
-		this.simLinks = graph.edges.map((edge) => this.toSimulationLink(edge));
+		this.simLinks = graph.edges.map(simulationLinkFor);
+		if (!this.simNodes.some((node) => node.id === this.hoveredNodeId)) this.hoveredNodeId = undefined;
+		this.refreshHoverNodeIds();
+		if (savedView) {
+			this.pan = { ...savedView.pan };
+			this.zoom = this.clampZoom(savedView.zoom);
+		}
 		this.syncCards();
 		this.createSimulation();
-		this.focusNode(focusId, false);
+		if (!preserveViewport && !savedView) this.focusNode(focusId, false);
+		this.openPendingEditor();
 		this.paintGraph();
-		this.fitWhenMeasured = true;
+		this.fitWhenMeasured = !preserveViewport;
+		this.hasRenderedGraph = true;
 		this.scheduleMeasure();
 	}
 
-	private initialPosition(index: number, total: number, isFocus: boolean): { x: number; y: number } {
-		if (isFocus) return { x: 0, y: 0 };
-		const angle = (index / Math.max(total, 1)) * Math.PI * 2 - Math.PI / 2;
-		const radius = 360 + (index % 3) * 78;
-		return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
-	}
-
-	private toSimulationLink(edge: GraphEdge): SimLink {
-		return { from: edge.from, to: edge.to, source: edge.from, target: edge.to };
-	}
-
 	private createSimulation(): void {
-		this.linkForce = d3ForceLink<SimNode, SimLink>(this.simLinks)
-			.id((node) => node.id)
-			.distance((edge) => this.linkDistance(edge))
-			.strength(0.42);
-		this.collideForce = d3ForceCollide<SimNode>()
-			.radius((node) => this.cardRadius(node) + 30)
-			.strength(1)
-			.iterations(3);
-		this.simulation = d3ForceSimulation(this.simNodes)
-			.force("link", this.linkForce)
-			.force("charge", d3ForceManyBody<SimNode>().strength(-980).distanceMax(1900))
-			.force("collide", this.collideForce)
-			.force("x", d3ForceX<SimNode>(0).strength(0.018))
-			.force("y", d3ForceY<SimNode>(0).strength(0.018))
-			.alphaDecay(0.038)
-			.velocityDecay(0.46)
-			.on("tick", () => this.paintGraph())
-			.on("end", () => this.finishOverviewFit());
+		const graphSimulation = createGraphSimulation(this.simNodes, this.simLinks, {
+			onTick: () => {
+				this.paintGraph();
+				// Some Obsidian webviews keep the simulation warm after a card
+				// measurement restart. Fit once it is visually stable instead of
+				// waiting indefinitely for D3's end event.
+				if (this.fitWhenMeasured && this.simulation?.alpha() !== undefined && this.simulation.alpha() < 0.08) {
+					this.finishOverviewFit();
+				}
+			},
+			onEnd: () => this.finishOverviewFit(),
+		}, this.graph.physics);
+		this.simulation = graphSimulation.simulation;
+		this.linkForce = graphSimulation.linkForce;
+		this.collideForce = graphSimulation.collideForce;
 	}
 
 	private syncCards(): void {
 		if (!this.scene) return;
 		const wanted = new Set(this.simNodes.map((node) => node.id));
+		const visibility = this.searchVisibility();
 		for (const [id, element] of this.nodeElements) {
 			if (wanted.has(id)) continue;
 			element.remove();
@@ -231,182 +528,689 @@ export class ContextTreeView extends ItemView {
 		for (const node of this.simNodes) {
 			let element = this.nodeElements.get(node.id);
 			if (!element) {
-				element = this.createNode(node.node);
+				element = this.cards.create(this.scene, node.node);
 				this.nodeElements.set(node.id, element);
 			}
-			this.syncNode(element, node.node);
+			this.cards.sync(element, node.node, this.cardState(node, visibility));
 		}
 	}
 
-	private createNode(node: ContextTreeNode): HTMLElement {
-		const element = this.scene!.createDiv({ cls: "context-tree-node" });
-		const card = element.createDiv({ cls: "context-tree-card" });
-		card.tabIndex = 0;
-		card.setAttribute("role", "button");
-		card.setAttribute("aria-label", `${node.title} 카드 열기 또는 닫기`);
-		card.createDiv({ cls: "context-tree-title", text: node.title });
-		if (node.summary) card.createDiv({ cls: "context-tree-summary", text: node.summary });
-		card.addEventListener("click", (event) => {
-			if ((event.target as Element).closest("a, button, textarea, input, select")) return;
-			this.toggleNode(node.id);
-		});
-		card.addEventListener("keydown", (event) => {
-			if (event.key !== "Enter" && event.key !== " ") return;
-			event.preventDefault();
-			this.toggleNode(node.id);
-		});
-		return element;
+	private cardState(node: SimNode, visibility: GraphSearchVisibility): TopicCardState {
+		const isHoverActive = this.hoverNodeIds.has(node.id);
+		return {
+			isOpen: this.openDetails.has(node.id),
+			isFocused: node.id === this.focusedNodeId,
+			isEditing: this.inlineEdit?.nodeId === node.id,
+			isPinned: this.pinnedOpenNodeIds.has(node.id),
+			isNodeDrag: this.dragNode?.nodeId === node.id && this.dragNode.moved,
+			isDragSource: this.dragConnection?.sourceId === node.id,
+			hoverAnchor: this.hoveredAnchor?.nodeId === node.id ? this.hoveredAnchor.anchor : undefined,
+			dragSourceAnchor: this.dragConnection?.sourceId === node.id ? this.dragConnection.sourceAnchor : undefined,
+			isDragTarget: this.dragConnection?.targetId === node.id,
+			dragTargetAnchor: this.dragConnection?.targetId === node.id ? this.dragConnection.targetAnchor : undefined,
+			isSearchMatch: visibility.matches.has(node.id),
+			isSearchContext: visibility.context.has(node.id),
+			isSearchHidden: !visibility.visible.has(node.id),
+			isHoverOrigin: node.id === this.hoveredNodeId,
+			isHoverNeighbour: !!this.hoveredNodeId && node.id !== this.hoveredNodeId && isHoverActive,
+			isHoverMuted: !!this.hoveredNodeId && !isHoverActive,
+		};
 	}
 
-	private syncNode(element: HTMLElement, node: ContextTreeNode): void {
-		const card = element.querySelector<HTMLElement>(".context-tree-card");
-		if (!card) return;
-		const isOpen = this.openDetails.has(node.id);
-		element.toggleClass("is-focused", node.id === this.focusedNodeId);
-		card.toggleClass("is-detail-open", isOpen);
-		card.setAttribute("aria-expanded", String(isOpen));
-		if (isOpen) this.ensureDetails(card, node);
+	private refreshHoverNodeIds(): void {
+		this.hoverNodeIds = graphHoverNodeIds(this.hoveredNodeId, this.simLinks, this.relationFilter);
 	}
 
-	private ensureDetails(card: HTMLElement, node: ContextTreeNode): void {
-		if (this.renderedDetails.has(node.id)) return;
-		this.renderedDetails.add(node.id);
-		const wrapper = card.createDiv({ cls: "context-tree-detail-wrap" });
-		const actions = wrapper.createDiv({ cls: "context-tree-detail-actions" });
-		const edit = actions.createEl("button", {
-			cls: "context-tree-edit",
-			attr: { "aria-label": "Edit this card", title: "Edit this card" },
-		});
-		setIcon(edit, "pencil");
-		edit.addEventListener("click", (event) => {
-			event.stopPropagation();
-			this.openEditor(card, wrapper, node);
-		});
-		const detail = wrapper.createDiv({ cls: "context-tree-detail markdown-rendered" });
-		void MarkdownRenderer.render(this.app, node.body, detail, node.path, this).then(() => {
-			detail.addEventListener("click", (event) => this.openInternalLink(event, node.path));
-			const source = wrapper.createEl("button", { cls: "context-tree-source", text: "Open source note" });
-			source.addEventListener("click", (event) => {
-				event.stopPropagation();
-				void this.app.workspace.openLinkText(node.path, "", true);
-			});
-			this.scheduleMeasure();
+	private syncInteractionStates(): void {
+		const visibility = this.searchVisibility();
+		for (const node of this.simNodes) {
+			const element = this.nodeElements.get(node.id);
+			if (element) this.cards.syncInteraction(element, this.cardState(node, visibility));
+		}
+	}
+
+	private setHoveredNode(nodeId?: string): void {
+		if (this.hoveredNodeId === nodeId) return;
+		this.hoveredNodeId = nodeId;
+		this.refreshHoverNodeIds();
+		this.syncInteractionStates();
+		this.paintGraph();
+	}
+
+	private setConnectionCandidate(nodeId?: string, anchor?: CardAnchor): void {
+		if (this.dragConnection) return;
+		const next = nodeId && anchor ? { nodeId, anchor } : undefined;
+		if (this.sameAnchor(this.hoveredAnchor, next)) return;
+		const previous = this.hoveredAnchor;
+		this.hoveredAnchor = next;
+		const visibility = this.searchVisibility();
+		for (const id of new Set([previous?.nodeId, next?.nodeId])) {
+			if (!id) continue;
+			const node = this.simNodes.find((candidate) => candidate.id === id);
+			const element = this.nodeElements.get(id);
+			if (node && element) this.cards.syncConnectionPort(element, this.cardState(node, visibility));
+		}
+	}
+
+	private connectionsFor(node: ContextTreeNode): CardConnection[] {
+		return this.simLinks.flatMap((edge) => {
+			if (edge.nodeA !== node.id && edge.nodeB !== node.id) return [];
+			const targetId = edge.nodeA === node.id ? edge.nodeB : edge.nodeA;
+			const target = this.simNodes.find((candidate) => candidate.id === targetId)?.node;
+			if (!target) return [];
+			const derived = edge.types.includes("derived")
+				? [{ label: "맥락", target }]
+				: [];
+			const stored = edge.storedLinks
+				.filter((link) => link.sourcePath === node.path)
+				.map((link) => this.storedConnection(link, target));
+			const storedTypes = new Set(edge.storedLinks
+				.filter((link) => link.sourcePath === node.path)
+				.map((link) => link.type));
+			const incoming = edge.storedLinks
+				.filter((link) => link.targetPath === node.path && !(isSymmetricRelation(link.type) && storedTypes.has(link.type)))
+				.map((link) => ({
+					// A card chip is a navigation affordance, not a provenance viewer.
+					// The relation type already explains the semantic role; arrows made
+					// ordinary reading look like a data-flow diagram.
+					label: contextRelationLabel(link.type),
+					target,
+				}));
+			return [...derived, ...stored, ...incoming];
 		});
 	}
 
-	private openEditor(card: HTMLElement, wrapper: HTMLElement, node: ContextTreeNode): void {
-		if (this.editingNodeId && this.editingNodeId !== node.id) {
-			new Notice("Finish or cancel the open card editor first.");
+	private storedConnection(link: ContextTreeLink & { sourcePath?: string }, target: ContextTreeNode): CardConnection {
+		return {
+			label: contextRelationLabel(link.type),
+			target,
+		};
+	}
+
+	private async toggleInlineMarkdownEditor(node: ContextTreeNode): Promise<void> {
+		if (this.inlineEdit?.nodeId === node.id) {
+			await this.finishInlineMarkdownEditor();
 			return;
 		}
-		this.editingNodeId = node.id;
-		wrapper.empty();
-		wrapper.addClass("is-editing");
-		const editor = wrapper.createDiv({ cls: "context-tree-editor" });
-		editor.createDiv({ cls: "context-tree-editor-label", text: "Markdown body" });
-		const textarea = editor.createEl("textarea", { cls: "context-tree-editor-input" });
-		textarea.value = node.body;
-		textarea.setAttribute("aria-label", `${node.title} Markdown body`);
-		const actions = editor.createDiv({ cls: "context-tree-editor-actions" });
-		const save = actions.createEl("button", { cls: "context-tree-editor-save", text: "Save" });
-		const cancel = actions.createEl("button", { cls: "context-tree-editor-cancel", text: "Cancel" });
-		cancel.addEventListener("click", (event) => {
-			event.stopPropagation();
-			this.restoreRenderedDetails(card, wrapper, node);
-		});
-		save.addEventListener("click", (event) => {
-			event.stopPropagation();
-			void this.saveEditor(card, wrapper, node, textarea, save, cancel);
-		});
-		textarea.focus();
-		this.scheduleMeasure();
-	}
-
-	private async saveEditor(
-		card: HTMLElement,
-		wrapper: HTMLElement,
-		node: ContextTreeNode,
-		textarea: HTMLTextAreaElement,
-		save: HTMLButtonElement,
-		cancel: HTMLButtonElement,
-	): Promise<void> {
+		if (this.inlineEdit) await this.finishInlineMarkdownEditor();
 		const file = this.app.vault.getAbstractFileByPath(node.path);
 		if (!(file instanceof TFile)) {
-			new Notice("The source note no longer exists.");
+			new Notice(COPY.notice.sourceMissing);
 			return;
 		}
-		const nextBody = textarea.value.trim();
-		save.disabled = true;
-		cancel.disabled = true;
 		try {
 			const source = await this.app.vault.read(file);
-			await this.app.vault.modify(file, replaceDocumentBody(source, nextBody));
-			node.body = nextBody;
-			this.restoreRenderedDetails(card, wrapper, node);
-			new Notice("Card content saved.");
+			this.clearSelectedEdge();
+			this.replaceOpenDetails(openCardAlongsidePins(this.pinnedOpenNodeIds, node.id));
+			this.inlineEdit = { nodeId: node.id, file, content: source, lastPersisted: source };
+			this.syncCards();
+			const element = this.nodeElements.get(node.id);
+			if (!element) return;
+			this.cards.startInlineMarkdownEditing(element, source, {
+				onInput: (content) => this.queueInlineMarkdownSave(content),
+				onCopyDraft: () => void this.copyInlineMarkdownDraft(),
+				onReloadSource: () => void this.reloadInlineMarkdownSource(),
+				onOpenSource: () => void this.openInlineMarkdownSource(),
+			});
+			this.scheduleMeasure();
 		} catch (error) {
-			console.error("Context Tree: failed to save card content", error);
-			new Notice("Could not save this card. The note was left unchanged.");
-			save.disabled = false;
-			cancel.disabled = false;
+			console.error("Context Graph: failed to open inline Markdown editor", error);
+			this.inlineEdit = undefined;
+			new Notice(COPY.notice.openMarkdownFailed);
 		}
 	}
 
-	private restoreRenderedDetails(card: HTMLElement, wrapper: HTMLElement, node: ContextTreeNode): void {
-		this.editingNodeId = undefined;
-		wrapper.remove();
-		this.renderedDetails.delete(node.id);
-		this.ensureDetails(card, node);
-		this.scheduleMeasure();
+	private queueInlineMarkdownSave(content: string): void {
+		const edit = this.inlineEdit;
+		if (!edit) return;
+		edit.content = content;
+		edit.saveFailed = false;
+		if (edit.hasConflict) return;
+		if (edit.timer !== undefined) window.clearTimeout(edit.timer);
+		edit.timer = window.setTimeout(() => {
+			edit.timer = undefined;
+			void this.flushInlineMarkdownSave();
+		}, 220);
+	}
+
+	private async flushInlineMarkdownSave(): Promise<void> {
+		const edit = this.inlineEdit;
+		if (!edit || edit.hasConflict || edit.saveFailed || edit.saving || edit.content === edit.lastPersisted) return edit?.saving;
+		const content = edit.content;
+		let hasConflict = false;
+		edit.saving = this.app.vault.process(edit.file, (current) => {
+			const decision = decideInlineEditorSave(current, edit.lastPersisted, content);
+			if (decision.kind === "conflict") {
+				hasConflict = true;
+				return current;
+			}
+			return decision.kind === "write" ? content : current;
+		})
+			.then(() => {
+				if (hasConflict) {
+					edit.hasConflict = true;
+					this.showInlineMarkdownConflict(edit);
+					return;
+				}
+				edit.lastPersisted = content;
+			})
+			.catch((error: unknown) => {
+				edit.saveFailed = true;
+				console.error("Context Graph: failed to save inline Markdown", error);
+				new Notice(COPY.notice.inlineSaveFailed);
+			})
+			.finally(() => {
+				if (this.inlineEdit !== edit) return;
+				edit.saving = undefined;
+				if (!edit.hasConflict && edit.content !== edit.lastPersisted) void this.flushInlineMarkdownSave();
+			});
+		return edit.saving;
+	}
+
+	private async finishInlineMarkdownEditor(): Promise<void> {
+		const edit = this.inlineEdit;
+		if (!edit) return;
+		if (edit.timer !== undefined) {
+			window.clearTimeout(edit.timer);
+			edit.timer = undefined;
+		}
+		while (this.inlineEdit === edit && !edit.hasConflict && !edit.saveFailed && (edit.saving || edit.content !== edit.lastPersisted)) {
+			await this.flushInlineMarkdownSave();
+		}
+		if (edit.hasConflict || edit.saveFailed) return;
+		this.inlineEdit = undefined;
+		await this.refresh();
+	}
+
+	private showInlineMarkdownConflict(edit: NonNullable<ContextTreeView["inlineEdit"]>): void {
+		if (this.inlineEdit !== edit) return;
+		const element = this.nodeElements.get(edit.nodeId);
+		if (!element) return;
+		this.cards.showInlineMarkdownConflict(element, {
+			onCopyDraft: () => void this.copyInlineMarkdownDraft(),
+			onReloadSource: () => void this.reloadInlineMarkdownSource(),
+			onOpenSource: () => void this.openInlineMarkdownSource(),
+		});
+		new Notice(COPY.notice.inlineSaveConflict);
+	}
+
+	private async copyInlineMarkdownDraft(): Promise<void> {
+		const edit = this.inlineEdit;
+		if (!edit) return;
+		try {
+			await navigator.clipboard.writeText(edit.content);
+			new Notice(COPY.notice.inlineDraftCopied);
+		} catch (error) {
+			console.error("Context Graph: failed to copy inline Markdown draft", error);
+		}
+	}
+
+	private reloadInlineMarkdownSource(): void {
+		const edit = this.inlineEdit;
+		if (!edit) return;
+		new ReloadInlineSourceModal(this.app, () => void this.replaceInlineMarkdownSource(edit)).open();
+	}
+
+	private async replaceInlineMarkdownSource(edit: NonNullable<ContextTreeView["inlineEdit"]>): Promise<void> {
+		try {
+			const source = await this.app.vault.read(edit.file);
+			if (this.inlineEdit !== edit) return;
+			edit.content = source;
+			edit.lastPersisted = source;
+			edit.hasConflict = false;
+			const element = this.nodeElements.get(edit.nodeId);
+			if (element) this.cards.replaceInlineMarkdownSource(element, source);
+		} catch (error) {
+			console.error("Context Graph: failed to reload inline Markdown source", error);
+			new Notice(COPY.notice.sourceMissing);
+		}
+	}
+
+	private async openInlineMarkdownSource(): Promise<void> {
+		const edit = this.inlineEdit;
+		if (!edit) return;
+		await this.app.workspace.getLeaf("tab").openFile(edit.file);
+	}
+
+	private openPendingEditor(): void {
+		const path = this.pendingEditorPath;
+		if (!path) return;
+		const pending = this.simNodes.find((candidate) => candidate.node.path === path);
+		if (!pending) return;
+		this.pendingEditorPath = undefined;
+		this.replaceOpenDetails(openCardAlongsidePins(this.pinnedOpenNodeIds, pending.id));
+		this.syncCards();
+		window.setTimeout(() => void this.toggleInlineMarkdownEditor(pending.node), 0);
+	}
+
+	private async toggleNodeFromCard(nodeId: string): Promise<void> {
+		this.cards.closeMenus();
+		if (this.suppressNextToggleFor === nodeId) {
+			this.suppressNextToggleFor = undefined;
+			return;
+		}
+		this.clearSelectedEdge();
+		if (!(await this.settleUnpinnedInlineEditor())) return;
+		this.toggleNode(nodeId);
+	}
+
+	/** A double click is an idempotent open, never a second toggle that closes it. */
+	private async openNodeFromCard(nodeId: string): Promise<void> {
+		this.cards.closeMenus();
+		this.clearSelectedEdge();
+		if (!(await this.settleUnpinnedInlineEditor())) return;
+		if (this.openDetails.has(nodeId)) return;
+		this.openNode(nodeId);
 	}
 
 	private toggleNode(nodeId: string): void {
 		const isOpen = this.openDetails.has(nodeId);
-		this.openDetails.clear();
-		if (!isOpen) this.openDetails.add(nodeId);
+		if (isOpen) {
+			if (this.isPinnedCard(nodeId)) return;
+			this.closeDetailsForCanvas();
+			return;
+		}
+		this.openNode(nodeId);
+	}
+
+	/** Relation chips are navigation, never a second toggle or removal control. */
+	private async navigateToNode(nodeId: string): Promise<void> {
+		if (!(await this.settleUnpinnedInlineEditor())) return;
+		if (this.openDetails.has(nodeId)) {
+			this.focusNode(nodeId);
+			return;
+		}
+		this.openNode(nodeId);
+	}
+
+	/** Card expansion deliberately recentres the graph; secondary card actions do not. */
+	private openNode(nodeId: string, shouldFocus = true): void {
+		const hadOpenCard = this.openDetails.size > 0;
+		this.replaceOpenDetails(openCardAlongsidePins(this.pinnedOpenNodeIds, nodeId));
+		if (!hadOpenCard) {
+			this.viewportBeforeDetails = { pan: { ...this.pan }, zoom: this.zoom };
+		}
 		this.syncCards();
-		this.focusNode(nodeId);
+		if (shouldFocus) this.focusNode(nodeId);
 		window.setTimeout(() => this.scheduleMeasure(), 220);
 		window.setTimeout(() => this.scheduleMeasure(), 520);
+	}
+
+	private async deleteFromCard(node: ContextTreeNode): Promise<void> {
+		if (this.inlineEdit) await this.finishInlineMarkdownEditor();
+		if (this.inlineEdit) return;
+		this.showDeleteTopic(node);
+	}
+
+	private async toggleCardPin(node: ContextTreeNode): Promise<void> {
+		// Pinning a different card is a structural action. Finish a regular
+		// Source edit first, but keep a pinned editor available as reference
+		// material while the reader opens or pins another card.
+		if (this.inlineEdit?.nodeId !== node.id && !(await this.settleUnpinnedInlineEditor())) return;
+		if (!this.openDetails.has(node.id)) this.openNode(node.id, false);
+		if (this.pinnedOpenNodeIds.has(node.id)) this.pinnedOpenNodeIds.delete(node.id);
+		else this.pinnedOpenNodeIds.add(node.id);
+		this.replaceOpenDetails(openCardAlongsidePins(this.pinnedOpenNodeIds, node.id));
+		this.syncCards();
+		this.scheduleMeasure();
+		this.scheduleGraphViewStateSave();
+	}
+
+	private isPinnedCard(nodeId: string): boolean {
+		return this.pinnedOpenNodeIds.has(nodeId) && this.openDetails.has(nodeId);
+	}
+
+	/** A pinned Source card remains available as a reference while another card opens. */
+	private async settleUnpinnedInlineEditor(): Promise<boolean> {
+		if (!this.inlineEdit || this.isPinnedCard(this.inlineEdit.nodeId)) return true;
+		await this.finishInlineMarkdownEditor();
+		return !this.inlineEdit;
+	}
+
+	private replaceOpenDetails(next: ReadonlySet<string>): void {
+		this.openDetails.clear();
+		for (const id of next) this.openDetails.add(id);
+	}
+
+	private createInlineTopic(): void {
+		void createTopic(this.app, { title: COPY.labels.newTopicTitle, body: "", fallbackFolder: graphNoteFolder(this.graph) })
+			.then(async (file) => {
+				await this.plugin.includePathInGraph(this.getGraphId(), file.path);
+				this.pendingEditorPath = file.path;
+				window.setTimeout(() => this.plugin.refreshOpenViews(), 180);
+			})
+			.catch((error: unknown) => {
+			console.error("Context Graph: failed to create inline topic", error);
+				new Notice(COPY.notice.createFailed);
+		});
+	}
+
+	private startNodeDrag(event: PointerEvent, node: ContextTreeNode): void {
+		if (event.button !== 0 || this.dragConnection) return;
+		this.clearSelectedEdge();
+		const simNode = this.simNodes.find((candidate) => candidate.id === node.id);
+		if (!simNode) return;
+		const captureTarget = event.currentTarget instanceof HTMLElement ? event.currentTarget : undefined;
+		captureTarget?.setPointerCapture(event.pointerId);
+		this.dragNode = {
+			nodeId: node.id,
+			pointerId: event.pointerId,
+			originPointer: { x: event.clientX, y: event.clientY },
+			originGraph: { x: simNode.x ?? 0, y: simNode.y ?? 0 },
+			captureTarget,
+			moved: false,
+		};
+	}
+
+	/**
+	 * An expanded card is a reading surface. Its non-interactive area pans the
+	 * graph so the reader can inspect surrounding context without background-
+	 * clicking and closing the card. Compact cards still move their own node.
+	 */
+	private startCanvasPan(event: PointerEvent, sourceNodeId?: string): void {
+		if (event.button !== 0 || this.dragConnection || this.disconnectDrag || this.canvasPan) return;
+		const captureTarget = event.currentTarget;
+		if (!(captureTarget instanceof HTMLElement)) return;
+		this.clearSelectedEdge();
+		captureTarget.setPointerCapture(event.pointerId);
+		this.canvasPan = {
+			pointerId: event.pointerId,
+			originPointer: { x: event.clientX, y: event.clientY },
+			originPan: { ...this.pan },
+			captureTarget,
+			sourceNodeId,
+			moved: false,
+		};
+	}
+
+	private updateCanvasPan(event: PointerEvent): void {
+		const pan = this.canvasPan;
+		if (!pan || event.pointerId !== pan.pointerId) return;
+		const distance = Math.hypot(event.clientX - pan.originPointer.x, event.clientY - pan.originPointer.y);
+		if (!pan.moved && distance < 5) return;
+		pan.moved = true;
+		event.preventDefault();
+		this.pan = {
+			x: pan.originPan.x + event.clientX - pan.originPointer.x,
+			y: pan.originPan.y + event.clientY - pan.originPointer.y,
+		};
+		pan.captureTarget.addClass("is-panning");
+		this.applyTransform();
+	}
+
+	private finishCanvasPan(event: PointerEvent): void {
+		const pan = this.canvasPan;
+		if (!pan || event.pointerId !== pan.pointerId) return;
+		this.canvasPan = undefined;
+		if (pan.captureTarget.hasPointerCapture(event.pointerId)) pan.captureTarget.releasePointerCapture(event.pointerId);
+		pan.captureTarget.removeClass("is-panning");
+		if (!pan.moved) return;
+		if (pan.sourceNodeId) {
+			this.suppressNextToggleFor = pan.sourceNodeId;
+			window.setTimeout(() => {
+				if (this.suppressNextToggleFor === pan.sourceNodeId) this.suppressNextToggleFor = undefined;
+			}, 0);
+		}
+		this.scheduleGraphViewStateSave();
+	}
+
+	private updateNodeDrag(event: PointerEvent): void {
+		const drag = this.dragNode;
+		if (!drag || event.pointerId !== drag.pointerId) return;
+		const deltaScreen = {
+			x: event.clientX - drag.originPointer.x,
+			y: event.clientY - drag.originPointer.y,
+		};
+		if (!drag.moved && Math.hypot(deltaScreen.x, deltaScreen.y) < 5) return;
+		const simNode = this.simNodes.find((candidate) => candidate.id === drag.nodeId);
+		if (!simNode) return;
+		drag.moved = true;
+		event.preventDefault();
+		const delta = graphPointerDelta(drag.originPointer, { x: event.clientX, y: event.clientY }, this.zoom);
+		simNode.fx = drag.originGraph.x + delta.x;
+		simNode.fy = drag.originGraph.y + delta.y;
+		simNode.x = simNode.fx;
+		simNode.y = simNode.fy;
+		this.hoveredAnchor = undefined;
+		this.syncCards();
+		this.paintGraph();
+		this.simulation?.alpha(Math.max(this.simulation.alpha(), 0.28)).restart();
+	}
+
+	private finishNodeDrag(event: PointerEvent): void {
+		const drag = this.dragNode;
+		if (!drag || event.pointerId !== drag.pointerId) return;
+		this.dragNode = undefined;
+		if (drag.captureTarget?.hasPointerCapture(event.pointerId)) drag.captureTarget.releasePointerCapture(event.pointerId);
+		if (!drag.moved) return;
+		// The browser still emits click after a pointer drag. Suppress only that
+		// trailing click, then let the next intentional card click work normally.
+		this.suppressNextToggleFor = drag.nodeId;
+		window.setTimeout(() => {
+			if (this.suppressNextToggleFor === drag.nodeId) this.suppressNextToggleFor = undefined;
+		}, 0);
+		this.syncCards();
+		this.scheduleGraphViewStateSave();
+	}
+
+	private async createDirectRelation(first: ContextTreeNode, second: ContextTreeNode): Promise<void> {
+		try {
+			// A drag is directional authoring: the card whose handle the user
+			// grabbed owns the frontmatter record. Visual graph edges remain peer
+			// relationships, but this preserves a predictable Markdown source.
+			if (await addRelation(this.app, first, second, DIRECT_RELATION)) this.plugin.refreshOpenViews();
+		} catch (error) {
+			console.error("Context Graph: failed to connect cards", error);
+			new Notice(COPY.notice.connectFailed);
+		}
+	}
+
+	private startDragConnection(event: PointerEvent, node: ContextTreeNode, sourceAnchor: CardAnchor): void {
+		if (event.button !== 0) return;
+		event.preventDefault();
+		event.stopPropagation();
+		this.clearSelectedEdge();
+		this.hoveredAnchor = undefined;
+		this.dragConnection = { sourceId: node.id, sourceAnchor, pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+		this.syncCards();
+		this.paintDraftConnection();
+	}
+
+	/** A direct edge owns relationship removal; cards and relation chips only navigate. */
+	private startDisconnectDrag(event: PointerEvent, edgeId: string): void {
+		if (event.button !== 0 || this.dragConnection) return;
+		const edge = this.simLinks.find((candidate) => candidate.id === edgeId);
+		if (!edge || !isDetachableGraphEdge(edge)) return;
+		const captureTarget = event.currentTarget;
+		if (!(captureTarget instanceof SVGPathElement || captureTarget instanceof HTMLElement)) return;
+		event.preventDefault();
+		event.stopPropagation();
+		captureTarget.setPointerCapture(event.pointerId);
+		this.disconnectDrag = {
+			edgeId,
+			pointerId: event.pointerId,
+			captureTarget,
+			start: { x: event.clientX, y: event.clientY },
+		};
+		this.selectEdge(edgeId);
+		captureTarget.addClass("is-disconnecting");
+	}
+
+	private finishDisconnectDrag(event: PointerEvent, cancelled = false): void {
+		const drag = this.disconnectDrag;
+		if (!drag || event.pointerId !== drag.pointerId) return;
+		this.disconnectDrag = undefined;
+		if (drag.captureTarget.hasPointerCapture(event.pointerId)) drag.captureTarget.releasePointerCapture(event.pointerId);
+		drag.captureTarget.removeClass("is-disconnecting");
+		if (cancelled) return;
+		if (Math.hypot(event.clientX - drag.start.x, event.clientY - drag.start.y) < 6) return;
+		const releasedOver = document.elementFromPoint(event.clientX, event.clientY);
+		// Dropping on a card is an aborted gesture; graph controls are also not
+		// part of the canvas. Only an actual empty-canvas drop disconnects.
+		if (releasedOver?.closest(".context-tree-node, .context-tree-graph-controls, .context-tree-edge-endpoint")) return;
+		const edge = this.simLinks.find((candidate) => candidate.id === drag.edgeId);
+		if (edge) void this.disconnectEdge(edge);
+	}
+
+	private updateDragConnection(event: PointerEvent): void {
+		if (!this.dragConnection || event.pointerId !== this.dragConnection.pointerId) return;
+		this.dragConnection.x = event.clientX;
+		this.dragConnection.y = event.clientY;
+		const targetId = this.nodeIdAt(event.clientX, event.clientY);
+		const nextTarget = targetId === this.dragConnection.sourceId ? undefined : targetId;
+		const nextTargetAnchor = nextTarget ? this.anchorForPointer(nextTarget, event.clientX, event.clientY) : undefined;
+		if (nextTarget !== this.dragConnection.targetId || !this.sameAnchor(this.dragConnection.targetAnchor, nextTargetAnchor)) {
+			this.dragConnection.targetId = nextTarget;
+			this.dragConnection.targetAnchor = nextTargetAnchor;
+			this.syncCards();
+		}
+		this.paintDraftConnection();
+	}
+
+	private finishDragConnection(event: PointerEvent): void {
+		const drag = this.dragConnection;
+		if (!drag || event.pointerId !== drag.pointerId) return;
+		const source = this.simNodes.find((candidate) => candidate.id === drag.sourceId)?.node;
+		const target = drag.targetId ? this.simNodes.find((candidate) => candidate.id === drag.targetId)?.node : undefined;
+		this.clearDragConnection();
+		if (source && target) void this.createDirectRelation(source, target);
+	}
+
+	private clearDragConnection(): void {
+		this.dragConnection = undefined;
+		this.draftEdge?.remove();
+		this.draftEdge = undefined;
+		this.syncCards();
+	}
+
+	private sameAnchor(
+		first?: { nodeId: string; anchor: CardAnchor } | CardAnchor,
+		second?: { nodeId: string; anchor: CardAnchor } | CardAnchor,
+	): boolean {
+		if (!first || !second) return first === second;
+		const firstNodeId = "nodeId" in first ? first.nodeId : undefined;
+		const secondNodeId = "nodeId" in second ? second.nodeId : undefined;
+		if (firstNodeId !== secondNodeId) return false;
+		const firstAnchor = "anchor" in first ? first.anchor : first;
+		const secondAnchor = "anchor" in second ? second.anchor : second;
+		return Math.abs(firstAnchor.x - secondAnchor.x) < 0.005 && Math.abs(firstAnchor.y - secondAnchor.y) < 0.005;
+	}
+
+	private nodeIdAt(clientX: number, clientY: number): string | undefined {
+		const target = document.elementFromPoint(clientX, clientY);
+		const node = target?.closest<HTMLElement>(".context-tree-node");
+		return node?.dataset.nodeId;
+	}
+
+
+	private anchorForPointer(targetId: string, clientX: number, clientY: number): CardAnchor | undefined {
+		const card = this.nodeElements.get(targetId)?.querySelector<HTMLElement>(".context-tree-card");
+		if (!card) return undefined;
+		const bounds = card.getBoundingClientRect();
+		return cardAnchorAtPoint(
+			{ width: bounds.width, height: bounds.height },
+			{ x: clientX - bounds.left, y: clientY - bounds.top },
+		);
+	}
+
+	private paintDraftConnection(): void {
+		const drag = this.dragConnection;
+		if (!drag || !this.viewport || !this.draftEdges) return;
+		const viewport = this.viewport.getBoundingClientRect();
+		const source = this.nodeElements.get(drag.sourceId)?.querySelector<HTMLElement>(".context-tree-card")?.getBoundingClientRect();
+		if (!source) return;
+		this.draftEdges.setAttribute("viewBox", `0 0 ${viewport.width} ${viewport.height}`);
+		const target = drag.targetId
+			? this.nodeElements.get(drag.targetId)?.querySelector<HTMLElement>(".context-tree-card")?.getBoundingClientRect()
+			: undefined;
+		const pointer = { x: drag.x - viewport.left, y: drag.y - viewport.top };
+		const sourceCenter = { x: source.left + source.width / 2 - viewport.left, y: source.top + source.height / 2 - viewport.top };
+		const targetCenter = target
+			? { x: target.left + target.width / 2 - viewport.left, y: target.top + target.height / 2 - viewport.top }
+			: pointer;
+		const first = cardAnchorPoint(sourceCenter, { width: source.width, height: source.height }, drag.sourceAnchor);
+		const second = target
+			? cardAnchorPoint(targetCenter, { width: target.width, height: target.height }, drag.targetAnchor ?? { x: 0.5, y: 0 })
+			: pointer;
+		this.draftEdge ??= this.draftEdges.createSvg("path");
+		this.draftEdge.setAttribute("d", curvedEdgePath(first, second));
+	}
+
+	private showDeleteTopic(node: ContextTreeNode): void {
+		new DeleteTopicModal(this.app, node, () => {
+			void moveTopicToTrash(this.app, node)
+				.then(() => {
+					// The deleted node can no longer be a valid expanded or focused
+					// graph state. Clear all transient selection before rebuilding.
+					this.openDetails.clear();
+					this.pinnedOpenNodeIds.delete(node.id);
+					this.pendingEditorPath = undefined;
+					this.dragConnection = undefined;
+					this.disconnectDrag = undefined;
+					this.draftEdge?.remove();
+					this.draftEdge = undefined;
+					this.focusedNodeId = undefined;
+					new Notice(movedToTrashNotice(node.title));
+					this.plugin.refreshOpenViews();
+				})
+				.catch((error: unknown) => {
+					console.error("Context Graph: failed to move topic to trash", error);
+					new Notice(COPY.notice.trashFailed);
+				});
+		}).open();
+	}
+
+	private async disconnectEdge(edge: SimLink): Promise<void> {
+		try {
+			if (!isDetachableGraphEdge(edge)) {
+				new Notice(COPY.notice.connectionRemoveAmbiguous);
+				return;
+			}
+			for (const link of edge.storedLinks) {
+				const owner = this.simNodes.find((node) => node.node.path === link.sourcePath)?.node;
+				if (!owner) throw new Error("The relation source is no longer in the graph.");
+				await removeRelation(this.app, owner, link);
+			}
+			new Notice(COPY.notice.connectionRemoved);
+			this.plugin.refreshOpenViews();
+		} catch (error) {
+			console.error("Context Graph: failed to disconnect cards", error);
+			new Notice(COPY.notice.connectionRemoveFailed);
+		}
 	}
 
 	private focusNode(nodeId?: string, restart = true): void {
 		if (!nodeId || !this.simulation) return;
 		const focus = this.simNodes.find((node) => node.id === nodeId);
 		if (!focus) return;
-		const dx = focus.x ?? 0;
-		const dy = focus.y ?? 0;
-		for (const node of this.simNodes) {
-			node.x = (node.x ?? 0) - dx;
-			node.y = (node.y ?? 0) - dy;
-			node.fx = undefined;
-			node.fy = undefined;
-		}
-		focus.x = 0;
-		focus.y = 0;
-		focus.fx = 0;
-		focus.fy = 0;
+		// Focusing is a camera operation, never a graph-layout operation.
+		// Translating every simulation node here used to erase a user's manually
+		// pinned positions (`fx`/`fy`) whenever they opened a card. Keeping the
+		// force coordinates untouched also makes a close restore the exact map
+		// context that preceded reading.
+		this.pan = {
+			x: -(focus.x ?? 0) * this.zoom,
+			y: -(focus.y ?? 0) * this.zoom,
+		};
 		this.focusedNodeId = nodeId;
 		this.fitWhenMeasured = false;
-		this.pan = { x: 0, y: 0 };
 		this.applyTransform();
 		this.syncCards();
 		this.paintGraph();
+		this.scheduleGraphViewStateSave();
 		if (restart) this.simulation.alpha(0.92).restart();
 	}
 
-	private cardRadius(node: SimNode): number {
-		return Math.hypot(node.size.width / 2, node.size.height / 2);
-	}
-
-	private linkDistance(edge: SimLink): number {
-		const source = typeof edge.source === "string" ? this.simNodes.find((node) => node.id === edge.source) : edge.source;
-		const target = typeof edge.target === "string" ? this.simNodes.find((node) => node.id === edge.target) : edge.target;
-		if (!source || !target) return 440;
-		return this.cardRadius(source) + this.cardRadius(target) + 100;
-	}
-
 	private paintGraph(): void {
+		if (this.paintFrame !== undefined) return;
+		this.paintFrame = window.requestAnimationFrame(() => {
+			this.paintFrame = undefined;
+			this.paintGraphNow();
+		});
+	}
+
+	/** Coalesce force ticks into one browser paint without forcing layout reads. */
+	private paintGraphNow(): void {
 		if (!this.viewport || !this.edges) return;
 		const width = this.viewport.clientWidth || 1200;
 		const height = this.viewport.clientHeight || 760;
@@ -425,34 +1229,109 @@ export class ContextTreeView extends ItemView {
 		if (!this.edges) return;
 		this.edges.setAttribute("viewBox", `0 0 ${width} ${height}`);
 		const wanted = new Set<string>();
+		const visibility = this.searchVisibility();
 		for (const edge of this.simLinks) {
 			const source = typeof edge.source === "string" ? undefined : edge.source;
 			const target = typeof edge.target === "string" ? undefined : edge.target;
 			if (!source || !target) continue;
-			const key = `${edge.from}\u0000${edge.to}`;
+			const key = edge.id;
 			wanted.add(key);
-			let path = this.edgeElements.get(key);
-			if (!path) {
-				path = this.edges.createSvg("path");
-				this.edgeElements.set(key, path);
+			let visual = this.edgeElements.get(key);
+			if (!visual) {
+				const path = this.edges.createSvg("path", { cls: "context-tree-edge" });
+				const firstEndpoint = this.createEdgeEndpoint(edge.id, edge.nodeA);
+				const secondEndpoint = this.createEdgeEndpoint(edge.id, edge.nodeB);
+				visual = {
+					path,
+					firstEndpoint,
+					secondEndpoint,
+				};
+				this.edgeElements.set(key, visual);
 			}
-			const x1 = centerX + (source.x ?? 0);
-			const y1 = centerY + (source.y ?? 0);
-			const x2 = centerX + (target.x ?? 0);
-			const y2 = centerY + (target.y ?? 0);
-			const dx = x2 - x1;
-			const dy = y2 - y1;
-			const length = Math.max(1, Math.hypot(dx, dy));
-			const curve = Math.min(56, length * 0.1);
-			const controlX = (x1 + x2) / 2 - (dy / length) * curve;
-			const controlY = (y1 + y2) / 2 + (dx / length) * curve;
-			path.setAttribute("d", `M ${x1} ${y1} Q ${controlX} ${controlY} ${x2} ${y2}`);
+			visual.path.setAttribute("data-relation", edge.types.join(" "));
+			const visibleBySearch = visibility.visible.has(edge.nodeA) && visibility.visible.has(edge.nodeB);
+			const visibleByRelation = isGraphEdgeVisible(edge, this.relationFilter);
+			const edgeVisible = visibleBySearch && visibleByRelation;
+			visual.path.toggleClass("is-filter-hidden", !edgeVisible);
+			const canDisconnect = isDetachableGraphEdge(edge);
+			visual.firstEndpoint.toggleClass("is-detachable", canDisconnect);
+			visual.secondEndpoint.toggleClass("is-detachable", canDisconnect);
+			const selected = edge.id === this.selectedEdgeId;
+			const connectedToHovered = !!this.hoveredNodeId
+				&& this.hoverNodeIds.has(edge.nodeA)
+				&& this.hoverNodeIds.has(edge.nodeB);
+			const endpointsVisible = edgeVisible && !this.inlineEdit && (selected || connectedToHovered);
+			visual.firstEndpoint.toggleClass("is-visible", endpointsVisible);
+			visual.secondEndpoint.toggleClass("is-visible", endpointsVisible);
+			visual.firstEndpoint.toggleClass("is-selected", selected);
+			visual.secondEndpoint.toggleClass("is-selected", selected);
+			visual.path.toggleClass("is-highlighted", selected);
+			visual.path.toggleClass("is-selected", selected);
+			visual.path.toggleClass("is-hover-related", connectedToHovered);
+			visual.path.toggleClass("is-hover-muted", !!this.hoveredNodeId && !connectedToHovered);
+			visual.path.toggleClass("is-muted", !this.hoveredNodeId && !!this.selectedEdgeId && !selected);
+			const endpoints = cardEdgeEndpoints(source, target);
+			const first = { x: centerX + endpoints.first.x, y: centerY + endpoints.first.y };
+			const second = { x: centerX + endpoints.second.x, y: centerY + endpoints.second.y };
+			const path = curvedEdgePath(first, second);
+			visual.path.setAttribute("d", path);
+			this.placeEdgeEndpoint(visual.firstEndpoint, first);
+			this.placeEdgeEndpoint(visual.secondEndpoint, second);
 		}
-		for (const [key, path] of this.edgeElements) {
+		for (const [key, visual] of this.edgeElements) {
 			if (wanted.has(key)) continue;
-			path.remove();
+			visual.path.remove();
+			visual.firstEndpoint.remove();
+			visual.secondEndpoint.remove();
 			this.edgeElements.delete(key);
 		}
+	}
+
+	/**
+	 * Existing links expose their actual card-boundary attachment points only
+	 * while their card is hovered or their relationship is selected. This keeps
+	 * the overview quiet while preserving an explicit direct-manipulation handle.
+	 */
+	private createEdgeEndpoint(edgeId: string, nodeId: string): HTMLElement {
+		const endpoint = this.scene!.createDiv({ cls: "context-tree-edge-endpoint" });
+		// This is a mouse-only direct-manipulation affordance. Do not flood the
+		// accessibility tree with one non-keyboard-operable control per edge end.
+		endpoint.setAttribute("aria-hidden", "true");
+		endpoint.tabIndex = -1;
+		endpoint.addEventListener("pointerdown", (event) => {
+			// Inspect first; deletion needs a second deliberate drag from the
+			// selected endpoint. This prevents a first exploratory drag from
+			// immediately becoming a destructive action.
+			if (this.selectedEdgeId !== edgeId) {
+				event.preventDefault();
+				event.stopPropagation();
+				this.selectEdge(edgeId);
+				return;
+			}
+			this.startDisconnectDrag(event, edgeId);
+		});
+		endpoint.addEventListener("pointerenter", () => this.setHoveredNode(nodeId));
+		endpoint.addEventListener("pointerleave", () => {
+			if (!this.disconnectDrag && this.selectedEdgeId !== edgeId) this.setHoveredNode();
+		});
+		return endpoint;
+	}
+
+	private placeEdgeEndpoint(endpoint: HTMLElement, point: { x: number; y: number }): void {
+		endpoint.style.left = `${point.x}px`;
+		endpoint.style.top = `${point.y}px`;
+	}
+
+	private selectEdge(edgeId: string): void {
+		if (this.selectedEdgeId === edgeId) return;
+		this.selectedEdgeId = edgeId;
+		this.paintGraph();
+	}
+
+	private clearSelectedEdge(): void {
+		if (!this.selectedEdgeId) return;
+		this.selectedEdgeId = undefined;
+		this.paintGraph();
 	}
 
 	private scheduleMeasure(): void {
@@ -469,72 +1348,154 @@ export class ContextTreeView extends ItemView {
 				changed = true;
 			}
 			if (!changed || !this.simulation) return;
-			this.collideForce?.radius((node) => this.cardRadius(node) + 30);
-			this.linkForce?.distance((edge) => this.linkDistance(edge));
+			this.collideForce?.radius((node) => cardRadius(node) + 30);
+			this.linkForce?.distance((link) => linkDistance(link, this.graph.physics.linkGap));
 			this.simulation.alpha(0.86).restart();
 		}, 90);
 	}
 
 	private finishOverviewFit(): void {
 		if (!this.fitWhenMeasured) return;
+		if (!this.viewport || this.viewport.clientWidth < 180 || this.viewport.clientHeight < 180) return;
 		this.fitGraph();
 		this.fitWhenMeasured = false;
 	}
 
 	private fitOverview(): void {
-		if (!this.focusedNodeId || !this.simulation) return;
-		this.focusNode(this.focusedNodeId, false);
+		if (!this.simulation) return;
 		this.fitWhenMeasured = true;
 		this.simulation.alpha(0.92).restart();
 	}
 
+	/**
+	 * Overview is intentionally a separate state from reading a card. Keeping an
+	 * expanded document while fitting every node makes both the document and the
+	 * graph illegible, so return to compact cards before calculating the camera.
+	 */
+	private async showOverview(): Promise<void> {
+		if (this.inlineEdit) await this.finishInlineMarkdownEditor();
+		if (this.inlineEdit) return;
+		this.clearSelectedEdge();
+		this.openDetails.clear();
+		// Overview is an explicit graph-wide reset, unlike a background click.
+		// It intentionally clears local reading pins as well.
+		this.pinnedOpenNodeIds.clear();
+		this.viewportBeforeDetails = undefined;
+		this.syncCards();
+		this.scheduleMeasure();
+		this.fitOverview();
+	}
+
 	private fitGraph(): void {
-		if (!this.viewport || !this.simNodes.length) return;
-		const width = this.viewport.clientWidth || 1200;
-		const height = this.viewport.clientHeight || 760;
+		const overviewZoom = this.overviewZoom();
+		if (overviewZoom === undefined) return;
+		this.zoom = Math.min(GRAPH_ZOOM.max, Math.max(GRAPH_ZOOM.hardMin, overviewZoom));
+		this.pan = { x: 0, y: 0 };
+		this.updateZoomLabel();
+		this.applyTransform();
+		this.scheduleGraphViewStateSave();
+	}
+
+	/** Computes the camera scale that fits every current card into this pane. */
+	private overviewZoom(): number | undefined {
+		if (!this.viewport || !this.simNodes.length) return undefined;
+		const width = this.viewport.clientWidth;
+		const height = this.viewport.clientHeight;
+		if (width < 180 || height < 180) return undefined;
 		let extentX = 1;
 		let extentY = 1;
 		for (const node of this.simNodes) {
-			const radius = this.cardRadius(node);
+			const radius = cardRadius(node);
 			extentX = Math.max(extentX, Math.abs(node.x ?? 0) + radius);
 			extentY = Math.max(extentY, Math.abs(node.y ?? 0) + radius);
 		}
 		const horizontal = Math.max(120, width / 2 - 48) / extentX;
 		const vertical = Math.max(120, height / 2 - 48) / extentY;
-		this.zoom = this.clampZoom(Math.min(1, horizontal, vertical));
-		this.pan = { x: 0, y: 0 };
-		this.updateZoomLabel();
-		this.applyTransform();
+		return Math.min(1, horizontal, vertical);
+	}
+
+	/**
+	 * CSS viewport units refer to the whole Obsidian window. Export the local
+	 * graph pane width so an expanded card stays inside a split pane instead of
+	 * overflowing into neighbouring views.
+	 */
+	private updateViewportCardWidth(width: number): void {
+		this.viewport?.style.setProperty("--ct-viewport-width", `${Math.max(0, width)}px`);
+	}
+
+	private closeDetailsForCanvas(): void {
+		if (!this.openDetails.size) return;
+		this.replaceOpenDetails(retainPinnedCards(this.openDetails, this.pinnedOpenNodeIds));
+		if (!this.openDetails.size) this.restoreViewportBeforeDetails();
+		this.syncCards();
+		this.scheduleMeasure();
 	}
 
 	private bindCanvasControls(viewport: HTMLElement): void {
-		let dragStart: { x: number; y: number; panX: number; panY: number } | undefined;
 		viewport.addEventListener("pointerdown", (event) => {
-			if ((event.target as Element).closest(".context-tree-card, .context-tree-zoom-controls")) return;
-			viewport.focus();
-			dragStart = { x: event.clientX, y: event.clientY, panX: this.pan.x, panY: this.pan.y };
-			viewport.setPointerCapture(event.pointerId);
-			viewport.addClass("is-panning");
+			if (this.disconnectDrag) return;
+			const target = event.target;
+			if (target instanceof Element && target.closest(".context-tree-card, .context-tree-graph-controls, .context-tree-search-panel")) return;
+			this.cards.closeMenus();
+			this.clearSelectedEdge();
+			if (this.inlineEdit && !this.isPinnedCard(this.inlineEdit.nodeId)) {
+				// A background click leaves source mode only after its current save
+				// settles. A conflict keeps the editor open instead of briefly showing
+				// a broken half-closed card.
+				void this.finishInlineMarkdownEditor().then(() => {
+					if (this.inlineEdit) return;
+					this.closeDetailsForCanvas();
+				});
+				return;
+			}
+			this.closeDetailsForCanvas();
+			// A pinned source editor owns the keyboard until its pencil is pressed.
+			// We still allow a background drag to pan the graph, but do not steal its
+			// text focus or turn it back into a Reading card.
+			if (!this.inlineEdit) viewport.focus();
+			this.startCanvasPan(event);
 		});
-		viewport.addEventListener("pointermove", (event) => {
-			if (!dragStart) return;
-			this.pan = { x: dragStart.panX + event.clientX - dragStart.x, y: dragStart.panY + event.clientY - dragStart.y };
-			this.applyTransform();
+		viewport.addEventListener("dblclick", (event) => {
+			const target = event.target;
+			if (target instanceof Element && target.closest(".context-tree-card, .context-tree-graph-controls, .context-tree-search-panel")) return;
+			event.preventDefault();
+			this.createInlineTopic();
 		});
-		const stopDragging = (event: PointerEvent) => {
-			if (!dragStart) return;
-			dragStart = undefined;
-			if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
-			viewport.removeClass("is-panning");
-		};
-		viewport.addEventListener("pointerup", stopDragging);
-		viewport.addEventListener("pointercancel", stopDragging);
 		viewport.addEventListener("wheel", (event) => {
-			if (!event.ctrlKey && !event.metaKey) return;
+			const editor = viewport.querySelector<HTMLTextAreaElement>(".context-tree-markdown-editor");
+			// Obsidian can retain the focused textarea as event.target after the
+			// pointer has left the card. Wheel ownership must follow the pointer,
+			// so inspect the element at its actual viewport coordinates first.
+			const pointerTarget = document.elementFromPoint(event.clientX, event.clientY) ?? event.target;
+			const isOverEditor = pointerTarget instanceof Element && !!pointerTarget.closest(".context-tree-markdown-editor");
+			const isOverSearch = pointerTarget instanceof Element && !!pointerTarget.closest(".context-tree-search-panel");
+			const action = canvasWheelAction({
+				isOverEditor,
+				isOverSearch,
+				isEditorFocused: document.activeElement === editor,
+			});
+			if (action === "ignore") return;
+			if (action === "scroll-editor" && editor) {
+				event.preventDefault();
+				editor.scrollBy({ left: event.deltaX, top: event.deltaY, behavior: "auto" });
+				return;
+			}
 			event.preventDefault();
 			this.zoomAt(viewport, event.clientX, event.clientY, this.clampZoom(this.zoom * (event.deltaY < 0 ? 1.12 : 0.89)));
 		}, { passive: false });
 		viewport.addEventListener("keydown", (event) => {
+			if (event.key === "Escape" && this.openDetails.size) {
+				event.preventDefault();
+				if (this.inlineEdit) {
+					if (this.isPinnedCard(this.inlineEdit.nodeId)) return;
+					void this.finishInlineMarkdownEditor().then(() => {
+						if (!this.inlineEdit) this.closeDetailsForCanvas();
+					});
+					return;
+				}
+				this.closeDetailsForCanvas();
+				return;
+			}
 			if (!event.ctrlKey && !event.metaKey) return;
 			if (event.key !== "+" && event.key !== "=" && event.key !== "-") return;
 			event.preventDefault();
@@ -543,8 +1504,20 @@ export class ContextTreeView extends ItemView {
 		});
 	}
 
+	/** Restore the map context that existed before a card became a reader view. */
+	private restoreViewportBeforeDetails(): void {
+		const previous = this.viewportBeforeDetails;
+		this.viewportBeforeDetails = undefined;
+		if (!previous) return;
+		this.pan = previous.pan;
+		this.zoom = previous.zoom;
+		this.updateZoomLabel();
+		this.applyTransform();
+	}
+
 	private clampZoom(value: number): number {
-		return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
+		const bounds = graphZoomBounds(this.overviewZoom());
+		return Math.min(bounds.max, Math.max(bounds.min, value));
 	}
 
 	private zoomAt(viewport: HTMLElement, clientX: number, clientY: number, nextZoom: number): void {
@@ -558,6 +1531,31 @@ export class ContextTreeView extends ItemView {
 		this.zoom = nextZoom;
 		this.updateZoomLabel();
 		this.applyTransform();
+		this.scheduleGraphViewStateSave();
+	}
+
+	private graphViewState() {
+		return {
+			pan: { ...this.pan },
+			zoom: this.zoom,
+			focusedNodeId: this.focusedNodeId,
+			pinnedOpenNodeIds: [...this.pinnedOpenNodeIds],
+			positions: Object.fromEntries(this.simNodes.map((node) => [node.id, {
+				x: node.x ?? 0,
+				y: node.y ?? 0,
+				pinned: node.fx !== undefined || node.fy !== undefined,
+			}])),
+		};
+	}
+
+	private scheduleGraphViewStateSave(): void {
+		if (!this.simNodes.length) return;
+		this.plugin.scheduleGraphViewStateSave(this.getGraphId(), this.graphViewState());
+	}
+
+	private async persistGraphViewState(): Promise<void> {
+		if (!this.simNodes.length) return;
+		await this.plugin.saveGraphViewState(this.getGraphId(), this.graphViewState());
 	}
 
 	private updateZoomLabel(): void {
@@ -565,8 +1563,16 @@ export class ContextTreeView extends ItemView {
 	}
 
 	private applyTransform(): void {
-		if (!this.scene) return;
+		if (!this.scene || !this.viewport) return;
 		this.scene.style.transform = `translate(${this.pan.x}px, ${this.pan.y}px) scale(${this.zoom})`;
+		// The graph scene is a transformed viewport-sized element. Keeping the
+		// grid inside it exposed that finite rectangle after panning or zooming.
+		// A tiled viewport background has no visible edge while still following
+		// the graph's origin and scale.
+		const gridStep = 18 * this.zoom;
+		this.viewport.style.setProperty("--ct-grid-step", `${gridStep}px`);
+		this.viewport.style.setProperty("--ct-grid-x", `${this.pan.x}px`);
+		this.viewport.style.setProperty("--ct-grid-y", `${this.pan.y}px`);
 	}
 
 	private openInternalLink(event: MouseEvent, sourcePath: string): void {

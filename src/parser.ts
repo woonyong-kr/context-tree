@@ -1,6 +1,9 @@
-import { App, TFile } from "obsidian";
-import { ContextTreeSettings } from "./settings";
-import { ContextTreeNode, ParsedTopic } from "./types";
+import { App } from "obsidian";
+import { GraphWorkspace, graphScopeIncludesPath } from "./domain/graph-workspace";
+import { noteLinkTarget } from "./domain/note-link";
+import { DIRECT_RELATION, isContextRelationType, relationItems } from "./domain/relations";
+import { markdownSummary, removeMarkdownSummary } from "./topic-content";
+import { ContextTreeLink, ContextTreeNode, ParsedTopic } from "./types";
 import { buildContextTree } from "./tree";
 
 function text(value: unknown): string {
@@ -15,6 +18,10 @@ function removeDocumentTitle(content: string): string {
 	return removeFrontmatter(content).replace(/^#\s+.*(?:\n|$)/, "").trim();
 }
 
+function documentTitle(content: string): string {
+	return removeFrontmatter(content).match(/^#\s+(.+?)(?:\r?\n|$)/)?.[1]?.trim() ?? "";
+}
+
 function firstParagraph(content: string): string {
 	return removeFrontmatter(content)
 		.replace(/^#\s+.*$/m, "")
@@ -23,20 +30,34 @@ function firstParagraph(content: string): string {
 		.find(Boolean) ?? "";
 }
 
-function extractLink(value: string): string {
-	const match = value.match(/^\[\[([^|#\]]+)/);
-	return match?.[1]?.trim() || value;
-}
+function extractLinks(app: App, rawValue: unknown, sourcePath: string): ContextTreeLink[] {
+	const seen = new Set<string>();
+	const links: ContextTreeLink[] = [];
 
-function belongsInFolder(file: TFile, folder: string): boolean {
-	return !folder || file.path === folder || file.path.startsWith(`${folder}/`);
+	for (const item of relationItems(rawValue)) {
+		const rawTarget = typeof item === "string"
+			? item
+			: item && typeof item === "object"
+				? text((item as Record<string, unknown>).target)
+				: "";
+		if (!rawTarget) continue;
+		const targetPath = app.metadataCache.getFirstLinkpathDest(noteLinkTarget(rawTarget), sourcePath)?.path;
+		if (!targetPath) continue;
+		const rawType = item && typeof item === "object" ? (item as Record<string, unknown>).type : undefined;
+		const type = isContextRelationType(rawType) ? rawType : DIRECT_RELATION;
+		const key = `${targetPath}\u0000${type}`;
+		if (seen.has(key)) continue;
+		seen.add(key);
+		links.push({ targetPath, type });
+	}
+	return links;
 }
 
 export async function loadContextTree(
 	app: App,
-	settings: ContextTreeSettings,
+	graph: GraphWorkspace,
 ): Promise<ContextTreeNode[]> {
-	const files = app.vault.getMarkdownFiles().filter((file) => belongsInFolder(file, settings.sourceFolder));
+	const files = app.vault.getMarkdownFiles().filter((file) => graphScopeIncludesPath(graph.scope, file.path));
 	const topics: ParsedTopic[] = [];
 
 	for (const file of files) {
@@ -46,7 +67,7 @@ export async function loadContextTree(
 		const content = await app.vault.cachedRead(file);
 		const parentLink = text(frontmatter.context_tree_parent);
 		const resolvedParent = parentLink
-			? app.metadataCache.getFirstLinkpathDest(extractLink(parentLink), file.path)?.path
+			? app.metadataCache.getFirstLinkpathDest(noteLinkTarget(parentLink), file.path)?.path
 			: undefined;
 
 		topics.push({
@@ -55,9 +76,10 @@ export async function loadContextTree(
 			id: `${file.path}::${text(frontmatter.context_tree_id) || file.path}`,
 			path: file.path,
 			parentPath: resolvedParent,
-			title: text(frontmatter.title) || file.basename,
-			summary: text(frontmatter.context_tree_summary) || firstParagraph(content),
-			body: removeDocumentTitle(content),
+			title: documentTitle(content) || text(frontmatter.title) || file.basename,
+			summary: markdownSummary(content) || text(frontmatter.context_tree_summary) || firstParagraph(removeMarkdownSummary(content)),
+			body: removeMarkdownSummary(removeDocumentTitle(content)),
+			links: extractLinks(app, frontmatter.context_tree_links, file.path),
 		});
 	}
 

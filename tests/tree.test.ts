@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildContextGraph } from "../src/radial-layout";
+import { buildContextGraph, isDetachableGraphEdge } from "../src/graph/model";
 import { buildContextTree } from "../src/tree";
-import { ParsedTopic } from "../src/types";
+import { ContextTreeLink, ParsedTopic } from "../src/types";
 
-function topic(path: string, title: string, parentPath?: string): ParsedTopic {
-	return { id: path, path, title, parentPath, summary: "summary", body: "body" };
+function topic(path: string, title: string, parentPath?: string, links: ContextTreeLink[] = []): ParsedTopic {
+	return { id: path, path, title, parentPath, summary: "summary", body: "body", links };
 }
 
 test("builds a stable parent-child keyword tree", () => {
@@ -47,6 +47,22 @@ test("breaks a parent cycle without dropping either topic", () => {
 	assert.deepEqual(roots[0]?.children.map((node) => node.title), ["A"]);
 });
 
+test("preserves every resolvable parent relation in the graph even when the tree breaks a cycle", () => {
+	const roots = buildContextTree([
+		topic("a", "A", "b"),
+		topic("b", "B", "c"),
+		topic("c", "C", "a"),
+	]);
+	const graph = buildContextGraph(roots);
+
+	assert.equal(graph.nodes.length, 3);
+	assert.deepEqual(
+		graph.edges.map((edge) => edge.id).sort(),
+		["a\u0000b", "a\u0000c", "b\u0000c"],
+	);
+	assert.ok(graph.edges.every((edge) => edge.types.includes("derived")));
+});
+
 test("keeps every keyword and relation when building the graph", () => {
 	const roots = buildContextTree([
 		topic("threads", "Threads", "pintos"),
@@ -57,8 +73,8 @@ test("keeps every keyword and relation when building the graph", () => {
 
 	assert.deepEqual(graph.nodes.map((item) => item.title).sort(), ["PintOS", "Sleep list", "Threads"]);
 	assert.deepEqual(graph.edges, [
-		{ from: "pintos", to: "threads" },
-		{ from: "threads", to: "sleep" },
+		{ id: "pintos\u0000threads", nodeA: "pintos", nodeB: "threads", types: ["derived"], storedLinks: [] },
+		{ id: "sleep\u0000threads", nodeA: "sleep", nodeB: "threads", types: ["derived"], storedLinks: [] },
 	]);
 });
 
@@ -71,5 +87,49 @@ test("keeps disconnected roots visible as graph vertices", () => {
 	const graph = buildContextGraph(roots);
 
 	assert.deepEqual(graph.nodes.map((node) => node.id).sort(), ["child", "orphan", "root"]);
-	assert.deepEqual(graph.edges, [{ from: "root", to: "child" }]);
+	assert.deepEqual(graph.edges, [{ id: "child\u0000root", nodeA: "child", nodeB: "root", types: ["derived"], storedLinks: [] }]);
+});
+
+test("adds typed cross-topic connections without removing the parent hierarchy", () => {
+	const roots = buildContextTree([
+		topic("pintos", "PintOS"),
+		topic("threads", "Threads", "pintos", [{ targetPath: "vm", type: "prerequisite" }]),
+		topic("vm", "Virtual memory"),
+	]);
+	const graph = buildContextGraph(roots);
+
+	assert.deepEqual(graph.edges, [
+		{ id: "pintos\u0000threads", nodeA: "pintos", nodeB: "threads", types: ["derived"], storedLinks: [] },
+		{
+			id: "threads\u0000vm",
+			nodeA: "threads",
+			nodeB: "vm",
+			types: ["prerequisite"],
+			storedLinks: [{ sourcePath: "threads", targetPath: "vm", type: "prerequisite" }],
+		},
+	]);
+});
+
+test("merges the same relationship stored from either endpoint into one undirected edge", () => {
+	const roots = buildContextTree([
+		topic("a", "A", undefined, [{ targetPath: "b", type: "related" }]),
+		topic("b", "B", undefined, [{ targetPath: "a", type: "related" }]),
+	]);
+	const graph = buildContextGraph(roots);
+
+	assert.equal(graph.edges.length, 1);
+	assert.deepEqual(graph.edges[0]?.types, ["related"]);
+	assert.equal(graph.edges[0]?.storedLinks.length, 2);
+});
+
+test("does not expose an ambiguous visual line as a destructive gesture", () => {
+	assert.equal(isDetachableGraphEdge({ types: ["related"], storedLinks: [{ sourcePath: "A.md", targetPath: "B.md", type: "related" }] }), true);
+	assert.equal(isDetachableGraphEdge({
+		types: ["related", "supports"],
+		storedLinks: [
+			{ sourcePath: "A.md", targetPath: "B.md", type: "related" },
+			{ sourcePath: "A.md", targetPath: "B.md", type: "supports" },
+		],
+	}), false);
+	assert.equal(isDetachableGraphEdge({ types: ["derived"], storedLinks: [] }), false);
 });

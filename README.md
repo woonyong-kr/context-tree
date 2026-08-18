@@ -1,92 +1,201 @@
-# Context Tree
+# Context Graph
 
-Context Tree is an Obsidian plugin for exploring Markdown knowledge without losing the path that led to it. It renders topic notes as connected keyword cards in a pannable, zoomable **force-directed graph**. Select a keyword to make it the centre; its connected concepts settle around it in 360 degrees. Click the card itself to open or close its Markdown details in place. Links inside expanded content keep Obsidian's normal navigation behavior.
+**Context Graph is an Obsidian plugin for exploring a deliberate set of Markdown notes as an expandable, editable knowledge graph.**
 
-The plugin is local-first: it reads Markdown already in the vault, makes no network request, sends no telemetry, and stores only its settings through Obsidian's plugin data API.
+It is for situations where a plain outline hides cross-links and a vault-wide graph hides the actual material: interview preparation, study maps, project design notes, research questions, and any topic that needs both a high-level map and the answer behind each keyword.
 
-## Why this exists
+Each card is one real Markdown note. Click a card to read it in place; use the pencil to toggle an in-card editor for that same source Markdown. There is no separate card database: note content and relationships remain ordinary Markdown/frontmatter.
 
-Long notes and unstructured graph views make it easy to lose both the overall concept map and the detail needed to study one branch. Context Tree keeps both visible:
+## What it does
 
-- **Keyword card:** a keyword and short summary for the overall structure.
-- **Centred card:** selecting a keyword moves it to the centre. Its neighbours are arranged by a physical graph simulation, not a left-to-right outline.
-- **Details:** clicking the card expands the existing Markdown content, including questions, answers, evidence, and links, inside that same card.
-- **Inline editing:** hover an expanded card and select the pencil icon to edit its Markdown body in place. Saving preserves the note's frontmatter and H1, including graph metadata.
-- **Collision-aware movement:** the card's measured size is fed back to the simulation. When details open, surrounding cards move aside instead of sitting underneath it.
-- **Two reading scales:** a compact overview automatically fits the full graph; opening a card restores a comfortable reading zoom.
+- Shows only notes that explicitly opt in with `context_tree: true`.
+- Places cards in a pannable, zoomable force-directed graph rather than a fixed left-to-right tree.
+- Keeps a selected keyword in view while neighbouring concepts settle around it; there is no fixed root or forced reading direction.
+- Reveals a hovered card's existing edge endpoints without activating the rest of the graph.
+- Expands Markdown in the card; the surrounding cards move through the simulation instead of remaining underneath it.
+- Creates a card from empty canvas space, creates a connected card with `+`, and creates a peer relationship by dragging the magnetic connection point that appears on a card's nearest edge to another card.
+- Reads and writes ordinary Obsidian wikilinks in frontmatter, including aliases and heading links.
+- Supports `related`, `prerequisite`, `supports`, `contrasts`, and `follow-up` relationships.
+- Keeps the title and short card description in normal Markdown, so Live Preview, Source mode, Sync, Git, and other Markdown tools remain compatible.
+- Lets one opted-in note appear in more than one independently scoped graph. Each graph keeps its own range, physics, camera, and intentional card placement.
+- Searches title, visible summary, and Markdown body while retaining one-hop context; filters visible relationship types without changing the underlying notes.
 
-The graph has keyword cards, not duplicate question and answer cards. Questions and answers live in the expanded keyword card, where they retain their context.
+## Install
 
-## Canvas controls
+Context Graph is distributed as a standard Obsidian plugin release.
 
-- Drag empty canvas space to pan.
-- Hold `Ctrl` (or `Command` on macOS) and use the mouse wheel to zoom.
-- With the canvas focused, `Ctrl`/`Command` + `+` or `-` also zooms.
-- Use the compact `−` / `+` controls when a modifier key is inconvenient.
-- **Re-center** returns the selected keyword to the centre. The circular control restores the overview zoom.
-- Switching cards preserves the zoom you selected; only the circular overview control changes it automatically.
+1. Download `main.js`, `manifest.json`, and `styles.css` from a release.
+2. Create `<vault>/.obsidian/plugins/context-graph/`.
+3. Copy all three files into that directory.
+4. Restart or reload Obsidian, then enable **Context Graph** in **Settings → Community plugins**.
+5. Run **Context Graph: 지식 그래프 열기** from the command palette or select the ribbon icon.
 
-## Markdown contract
+If you used the pre-0.4.0 local build, move its three plugin files and `data.json` from `.obsidian/plugins/context-tree/` to `.obsidian/plugins/context-graph/`, then replace `context-tree` with `context-graph` in `.obsidian/community-plugins.json` before reloading Obsidian.
 
-Opt in per topic note with `context_tree: true`. Connect a child with a wikilink in `context_tree_parent`.
+For development, use the instructions in [Development](#development) instead.
+
+## Quick start
+
+Create two ordinary notes such as these:
 
 ```md
 ---
-title: Threads
 context_tree: true
-context_tree_id: pintos-threads
-context_tree_parent: "[[PintOS]]"
-context_tree_summary: Thread state transitions and scheduling.
+---
+
+# PintOS
+
+> [!summary] 카드 요약
+> A small operating-system project used to study threads, processes, and virtual memory.
+
+## What should I be able to explain?
+
+Explain the problem, the design decision, the implementation boundary, and how it was verified.
+```
+
+```md
+---
+context_tree: true
+context_tree_links:
+  - target: "[[PintOS]]"
+    type: prerequisite
+---
+
+# Thread scheduling
+
+> [!summary] 카드 요약
+> State transitions, interrupts, and the scheduler's selection point.
+
+## Why avoid busy waiting?
+
+A blocked thread should not consume CPU time while it waits for a deadline.
+```
+
+Open the graph and both notes appear as cards joined by one relationship. Use the graph manager to create independent graphs scoped to all opted-in notes, a folder, or an intentionally curated set. The same note can be included in several graphs.
+
+## Markdown contract
+
+Context Graph is an intentional workspace, not a visualisation of every note or wikilink in a vault.
+
+| Field | Purpose |
+| --- | --- |
+| `context_tree: true` | Opt a note into the graph. |
+| `context_tree_parent: "[[Topic]]"` | Optional imported/provenance relationship. It appears as a peer `derived` edge, not as a rigid child column. |
+| `context_tree_links` | Optional typed links between any two opted-in notes. |
+| `> [!summary] 카드 요약` | Optional visible Markdown summary used below the card title. |
+
+```md
+---
+context_tree: true
+context_tree_parent: "[[Operating systems]]"
+context_tree_links:
+  - target: "[[Virtual memory|VM]]"
+    type: prerequisite
+  - target: "[[Priority inversion#Donation]]"
+    type: follow-up
 ---
 
 # Threads
 
-## Expected questions
-
-### Why use a sleep list instead of busy-waiting?
-
-Blocked threads do not consume CPU time. The timer interrupt moves only due threads back to the ready queue.
-
-### When does a context switch happen after a timer interrupt?
-
-The interrupt handler requests a yield; the scheduler switches after interrupt return.
-
-## References
-
-- [[PintOS implementation notes]]
+> [!summary] 카드 요약
+> Scheduling concepts and the questions that verify them.
 ```
 
-Only opted-in notes are rendered. If **Source folder** is configured, the note must also live under that folder. A note whose parent is not another opted-in note becomes a root card. Invalid self-links and parent cycles are also kept visible as root cards rather than making the view fail.
+Relationships are **visual peers**. A connection can be stored in either endpoint note, and Context Graph merges reciprocal records into one visible edge. `related` and `contrasts` are symmetric: their storage endpoint is not shown as a conceptual start or end. `prerequisite`, `supports`, and `follow-up` retain their direction in card details. A graph card can therefore have any number of connections; an edge's source file is only a portable Markdown storage detail.
 
-## Commands
+Older notes using `context_tree_summary` in YAML are read for compatibility. Context Graph never performs a background rewrite of unrelated notes.
 
-- **Context Tree: Open knowledge tree** — open the custom view.
-- **Context Tree: Refresh knowledge tree** — reload opted-in Markdown notes.
+## Interactions
+
+| Action | Result |
+| --- | --- |
+| Click a card | Open or close its Markdown details in place. Clicking empty canvas closes the current detail card. |
+| Drag empty canvas | Pan the graph. |
+| Drag a compact card | Move that graph node and persist its deliberate position. |
+| Drag ordinary space in an expanded reading card | Pan the graph without closing the card. Markdown links, controls, and source editing keep their native interaction. |
+| Mouse wheel or the controls | Zoom at the pointer or graph centre. The lower zoom bound follows the current overview, so a large graph can always be fitted. Keyboard `Ctrl`/`Command` + `+`/`-` also works while the graph has focus. |
+| Layers control | Create or switch an independent graph, then add an existing opted-in note without moving or duplicating its Markdown file. |
+| Search / filter controls | Search card title, summary, and body; keep direct context visible; choose which relation types are drawn. |
+| `+` on a card | Create a blank related note beside the source note and start its in-card Markdown editing. |
+| Double-click empty canvas | Create a blank graph note. |
+| Hover a card, then drag its magnetic edge point onto another card | Add a peer `related` link, stored in the card where the drag began. Existing lines and the drag preview attach to the same precise card perimeter points. Hovering a card reveals its existing relationship endpoints; a click selects one relationship. |
+| Pencil | Toggle full source Markdown editing inside the expanded card. Clicking another card or empty canvas finishes editing and returns to reading mode. This is an in-card editor, not Obsidian's full native editor surface. |
+| Vertical `…` menu | Move a topic to Obsidian's configured trash after confirmation. |
+| Relation chip | Centre and open the linked card. |
+| Existing relationship endpoint | Click an existing endpoint to select its peer edge and reveal both precise endpoints. For a single authored relationship only, drag either selected endpoint onto empty canvas to remove that exact Markdown relationship. Multiple relations merged into one visual line are never deleted by this gesture. Dropping over a card or a graph control cancels the gesture. |
+
+The graph preserves your overview pan/zoom before you open a card, then restores it when the card closes. The circular control fits the whole graph again.
+
+## Editing and safety
+
+Markdown is the source of truth.
+
+- A card title is the note's first H1 (or the filename if no H1 exists).
+- The card summary is the visible `summary` callout shown above.
+- The rest of the note is rendered as the expandable details.
+- Source-note changes, creates, renames, deletes, and frontmatter updates refresh an open graph automatically.
+- Only a single direct, authored relationship endpoint is detachable. After selecting that endpoint, dropping it on empty canvas removes exactly that direct relationship record; it never rewrites a `context_tree_parent` provenance edge or a second relationship merged into the same line. Moving a card to trash intentionally leaves other notes' links intact, so restoring the note restores its context.
+
+Graph definitions and view state are local plugin settings: graph name, scope, physics, camera, and pinned card positions are intentionally independent from the Markdown notes. This lets the same Markdown remain reusable across distinct views, but those graph-workspace settings do not currently travel with a copied note unless the plugin data is also copied.
+
+The plugin has no network client, telemetry, remote-code loader, or hidden document store. It uses Obsidian's Vault and frontmatter APIs only for the files you opt in.
+
+## Scope and current limitations
+
+- The graph is designed and manually verified on desktop Obsidian. Mobile is not a supported release target until touch and screen-reader behaviour receive a dedicated device test pass.
+- It is intended for deliberately authored topic graphs, not for rendering every note in a very large vault. Use the graph manager's **폴더 아래의 노트** or **직접 추가한 노트** scope to keep a workspace focused.
+- Relation type is currently stored and displayed in card chips; edge colour and directional semantics are deliberately not overloaded. Every visible edge remains peer-to-peer.
 
 ## Development
 
+Requirements: Node.js 20 or newer and a local Obsidian vault.
+
 ```bash
-npm install
-npm run build
-npm run lint
+npm ci
+npm run check
 ```
 
-For local development, copy `main.js`, `manifest.json`, and `styles.css` into `<vault>/.obsidian/plugins/context-tree/`, reload Obsidian, and enable **Context Tree**.
+`npm run check` runs ESLint, strict TypeScript type checking, a production esbuild bundle, and Node unit tests.
 
-## Design and dependency notes
+For iterative development:
 
-The interaction model follows the public Graph view documentation for panning, zooming, centring, repulsion, and link distance. The implementation uses the local [`d3-force`](https://github.com/d3/d3-force) dependency (ISC) for its simulation; card rendering and Markdown integration are native to this plugin.
+```bash
+npm run dev
+```
 
-- [Obsidian Graph view documentation](https://help.obsidian.md/plugins/graph)
-- [TheBrain tutorials](https://www.thebrain.com/support/tutorials) — selected concept as the navigation centre
-- [Graph Explorer](https://github.com/dsebastien/obsidian-graph-explorer-base-view) (MIT) — public Obsidian graph integration reference
+Copy the generated `main.js`, plus `manifest.json` and `styles.css`, to:
 
-No source code from GPL-licensed graph plugins is included. They were considered only as independent behavioural references during design.
+```text
+<vault>/.obsidian/plugins/context-graph/
+```
 
-## Release and directory submission
+Then reload Obsidian. `main.js` is a generated release artifact and is intentionally not committed to this repository.
 
-Every release tag must exactly match `manifest.json`'s version. Attach `main.js`, `manifest.json`, and `styles.css` as release assets. After the first public release, submit the listing through the official [Obsidian Community directory](https://community.obsidian.md/) with an Obsidian account linked to GitHub. The current directory submission flow is not a pull request to `obsidianmd/obsidian-releases`.
+## Project structure
+
+```text
+src/
+  domain/     Link and relation vocabulary shared by parsing and storage
+  graph/      Directionless graph model and D3 force/geometry helpers
+  ui/         Card rendering and user-facing copy
+  parser.ts   Markdown/frontmatter to topic documents
+  topic-store.ts  Minimal Vault writes for notes and relationships
+  view.ts     Obsidian view lifecycle and direct manipulation
+tests/        Node unit tests for graph, content, relation, and geometry rules
+```
+
+The boundary is intentional: parsing and graph geometry are framework-light and testable; Obsidian effects stay in the parser, store, and view.
+
+## Contributing
+
+Issues and pull requests are welcome. Please:
+
+1. Keep Markdown as the sole durable data format.
+2. Avoid adding network access, telemetry, or Electron-only behaviour without a documented user need.
+3. Add a focused regression test for parser, graph-model, storage-format, or geometry changes where feasible.
+4. Run `npm run check` and include the result in the pull request.
+5. For interaction changes, include a short desktop verification note covering card opening, Markdown editing, pan/zoom, and relationship authoring.
 
 ## License
 
-MIT
+[MIT](LICENSE)

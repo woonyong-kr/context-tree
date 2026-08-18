@@ -1,6 +1,6 @@
 .context-tree-view {
-	--ct-card: color-mix(in srgb, var(--background-primary) 90%, var(--background-secondary));
-	--ct-card-hover: color-mix(in srgb, var(--background-primary) 96%, var(--background-modifier-hover));
+	--ct-card: color-mix(in srgb, var(--background-secondary) 84%, var(--background-primary));
+	--ct-card-hover: color-mix(in srgb, var(--background-secondary) 70%, var(--background-primary));
 	--ct-border: color-mix(in srgb, var(--background-modifier-border) 82%, transparent);
 	--ct-edge: color-mix(in srgb, var(--text-faint) 30%, transparent);
 	--ct-dot: color-mix(in srgb, var(--text-faint) 23%, transparent);
@@ -12,26 +12,7 @@
 	overflow: hidden;
 }
 
-.context-tree-toolbar {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 16px;
-	padding: 13px 20px;
-	border-bottom: 1px solid var(--ct-border);
-	background: var(--background-primary);
-}
-
-.context-tree-toolbar h2 {
-	margin: 0;
-	font-size: 0.96rem;
-	letter-spacing: -0.01em;
-}
-
-.context-tree-actions { display: flex; gap: 6px; }
-
 .context-tree-action,
-.context-tree-source,
 .context-tree-zoom-button {
 	border: 1px solid var(--ct-border);
 	border-radius: 7px;
@@ -41,11 +22,9 @@
 	cursor: pointer;
 }
 
-.context-tree-action,
-.context-tree-source { padding: 5px 8px; }
+.context-tree-action { padding: 5px 8px; }
 
 .context-tree-action:hover,
-.context-tree-source:hover,
 .context-tree-zoom-button:hover {
 	border-color: var(--text-muted);
 	color: var(--text-normal);
@@ -54,11 +33,15 @@
 
 .context-tree-viewport {
 	position: relative;
+	container-type: inline-size;
 	min-height: 0;
 	flex: 1;
 	overflow: hidden;
 	cursor: grab;
-	background: var(--background-primary);
+	background-color: var(--background-primary);
+	background-image: radial-gradient(circle at 1px 1px, var(--ct-dot) 1px, transparent 1.2px);
+	background-position: var(--ct-grid-x, 0px) var(--ct-grid-y, 0px);
+	background-size: var(--ct-grid-step, 18px) var(--ct-grid-step, 18px);
 	outline: none;
 }
 
@@ -68,8 +51,6 @@
 	position: absolute;
 	inset: 0;
 	transform-origin: center;
-	background-image: radial-gradient(circle at 1px 1px, var(--ct-dot) 1px, transparent 1.2px);
-	background-size: 18px 18px;
 }
 
 .context-tree-edges {
@@ -79,6 +60,25 @@
 	height: 100%;
 	overflow: visible;
 	pointer-events: none;
+	z-index: 0;
+}
+
+.context-tree-draft-edges {
+	position: absolute;
+	inset: 0;
+	z-index: 3;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	overflow: visible;
+}
+
+.context-tree-draft-edges path {
+	fill: none;
+	stroke: var(--text-normal);
+	stroke-width: 1.5;
+	stroke-dasharray: 5 5;
+	stroke-linecap: round;
 }
 
 .context-tree-edges path {
@@ -89,33 +89,391 @@
 	vector-effect: non-scaling-stroke;
 }
 
+.context-tree-edge-endpoint {
+	position: absolute;
+	z-index: 3;
+	box-sizing: border-box;
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	opacity: 0;
+	pointer-events: none;
+	transform: translate(-50%, -50%);
+	transition: opacity 130ms ease;
+}
+
+.context-tree-edge-endpoint::before {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 7px;
+	height: 7px;
+	border: 1.5px solid var(--text-muted);
+	border-radius: 50%;
+	background: var(--ct-card);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--background-primary) 70%, transparent);
+	content: "";
+	transform: translate(-50%, -50%);
+	transition: width 130ms ease, height 130ms ease, border-color 130ms ease, background 130ms ease, box-shadow 130ms ease;
+}
+
+.context-tree-edge-endpoint.is-visible { opacity: 1; }
+
+.context-tree-edge-endpoint.is-visible.is-detachable {
+	pointer-events: auto;
+	cursor: pointer;
+}
+
+.context-tree-edge-endpoint.is-visible.is-detachable.is-selected { cursor: grab; }
+
+.context-tree-edge-endpoint.is-selected::before {
+	width: 11px;
+	height: 11px;
+	border-color: var(--interactive-accent);
+	background: var(--background-primary);
+	box-shadow: 0 0 0 4px color-mix(in srgb, var(--interactive-accent) 18%, transparent);
+}
+
+.context-tree-edge-endpoint.is-disconnecting { cursor: grabbing; }
+.context-tree-edge-endpoint.is-disconnecting::before { border-color: var(--text-error); }
+
+.context-tree-edge.is-highlighted {
+	stroke: var(--text-normal);
+	stroke-width: 1.8;
+	opacity: 1;
+}
+
+.context-tree-edge.is-selected {
+	stroke: var(--interactive-accent);
+	stroke-width: 1.8;
+	opacity: 1;
+}
+
+.context-tree-edge.is-muted {
+	opacity: 0.18;
+}
+
+/* Hover is a one-hop lens: the active card and direct relationship stay
+   legible while the rest of the graph recedes without changing geometry. */
+.context-tree-edge.is-hover-related {
+	stroke: var(--text-normal);
+	stroke-width: 1.8;
+	opacity: 1;
+}
+
+.context-tree-edge.is-hover-muted { opacity: 0.14; }
+
+/* Filtering changes visibility, never graph geometry. Keeping the force model
+   stable avoids a disorienting re-layout for every keystroke or checkbox. */
+.context-tree-edge.is-filter-hidden { display: none; }
+
 .context-tree-node {
 	position: absolute;
+	z-index: 1;
 	transform: translate(-50%, -50%);
 	will-change: left, top;
 }
 
+.context-tree-node.is-node-dragging { z-index: 4; }
+.context-tree-node.is-search-hidden { display: none; }
+.context-tree-node.is-search-context .context-tree-card { opacity: 0.5; }
+.context-tree-node.is-search-match .context-tree-card {
+	border-color: var(--interactive-accent);
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 20%, transparent), 0 14px 34px rgba(0, 0, 0, 0.15);
+}
+.context-tree-node.is-hover-origin .context-tree-card {
+	border-color: var(--text-normal);
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-normal) 18%, transparent), 0 14px 34px rgba(0, 0, 0, 0.16);
+}
+.context-tree-node.is-hover-neighbour .context-tree-card {
+	border-color: color-mix(in srgb, var(--text-muted) 72%, var(--ct-border));
+}
+.context-tree-node.is-hover-muted .context-tree-card { opacity: 0.24; }
+
+.context-tree-node.is-node-dragging .context-tree-card {
+	cursor: grabbing;
+	box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24), 0 0 0 2px color-mix(in srgb, var(--text-normal) 18%, transparent);
+}
+
 .context-tree-card {
+	position: relative;
 	box-sizing: border-box;
-	width: 276px;
+	/* 100vw is the whole Obsidian window. Cards must fit their own graph pane. */
+	width: min(var(--ct-card-width, 276px), max(160px, calc(var(--ct-viewport-width, 100vw) - 32px)));
+	min-height: 92px;
 	padding: 15px 16px;
 	border: 1px solid var(--ct-border);
 	border-radius: 14px;
-	background: var(--ct-card);
-	box-shadow: 0 9px 28px rgba(0, 0, 0, 0.09);
+	cursor: grab;
+	background: var(--ct-card) !important;
+	background-image: none !important;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16), inset 0 1px color-mix(in srgb, var(--text-on-accent) 7%, transparent);
 	transition:
 		width 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
 		box-shadow 170ms ease,
-		border-color 170ms ease,
-		background 170ms ease,
-		transform 170ms ease;
+	border-color 170ms ease,
+	background 170ms ease,
+	transform 170ms ease,
+	opacity 120ms ease;
+}
+
+.context-tree-card-quick-actions {
+	position: absolute;
+	top: 8px;
+	right: 40px;
+	z-index: 2;
+	display: flex;
+	gap: 3px;
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(-2px);
+	pointer-events: none;
+	transition: opacity 150ms ease, transform 150ms ease, visibility 0s linear 150ms;
+}
+
+.context-tree-card-detail-action { display: none; }
+.context-tree-card.is-detail-open .context-tree-card-detail-action { display: inline-flex; }
+.context-tree-card-pin { display: none; }
+/* Themes frequently restyle generic button classes. Pin is a stateful control,
+   so its expanded-card visibility must not depend on a theme's button rule. */
+.context-tree-card.is-detail-open .context-tree-card-quick-action.context-tree-card-pin {
+	display: inline-flex !important;
+}
+
+.context-tree-card-pin[aria-pressed="true"] {
+	border-color: var(--interactive-accent);
+	background: color-mix(in srgb, var(--interactive-accent) 18%, var(--background-primary));
+	color: var(--interactive-accent);
+}
+
+.context-tree-card-more {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	z-index: 3;
+}
+
+.context-tree-card-menu {
+	position: absolute;
+	top: calc(100% + 6px);
+	right: 0;
+	left: auto;
+	z-index: 6;
+	min-width: 132px;
+	padding: 4px;
+	border: 1px solid var(--ct-border);
+	border-radius: 9px;
+	background: var(--ct-card);
+	box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+	opacity: 0;
+	pointer-events: none;
+	transform: translateY(-4px) scale(0.98);
+	transform-origin: right top;
+	transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.context-tree-card-more.is-open .context-tree-card-menu {
+	opacity: 1;
+	pointer-events: auto;
+	transform: translateY(0) scale(1);
+}
+
+.context-tree-card-menu-item {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	padding: 7px 8px;
+	border: 0 !important;
+	border-radius: 6px;
+	background: transparent !important;
+	color: var(--text-muted);
+	font: inherit;
+	font-size: 0.76rem;
+	text-align: left;
+	cursor: pointer;
+}
+
+.context-tree-card-trigger:active { cursor: grabbing; }
+
+.context-tree-card-menu-item:hover,
+.context-tree-card-menu-item:focus-visible {
+	background: var(--background-modifier-hover) !important;
+	color: var(--text-normal);
+	outline: none;
+}
+
+.context-tree-card-menu-item.is-destructive:hover,
+.context-tree-card-menu-item.is-destructive:focus-visible {
+	color: var(--text-error);
+}
+
+.context-tree-graph-list {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+	margin: 12px 0 20px;
+}
+
+.context-tree-graph-list-item {
+	padding: 8px 10px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 7px;
+	background: var(--background-primary);
+	color: var(--text-normal);
+	text-align: left;
+	cursor: pointer;
+}
+
+.context-tree-graph-list-item:hover,
+.context-tree-graph-list-item.is-active {
+	border-color: var(--interactive-accent);
+	background: var(--background-modifier-hover);
+}
+
+.context-tree-card:hover .context-tree-card-quick-actions,
+.context-tree-card:focus-within .context-tree-card-quick-actions,
+.context-tree-card.is-pinned .context-tree-card-quick-actions,
+.context-tree-node.is-drag-connection-source .context-tree-card-quick-actions {
+	opacity: 1;
+	transform: translateY(0);
+	pointer-events: auto;
+	visibility: visible;
+	transition-delay: 0s;
+}
+
+.context-tree-card-quick-action {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 25px;
+	height: 25px;
+	padding: 0;
+	border: 1px solid var(--ct-border);
+	border-radius: 7px;
+	background: var(--background-primary);
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+/* A single magnetic perimeter anchor appears where the pointer is closest to
+   a card edge. It is a generous hit target around one precise graph point. */
+.context-tree-connect-port {
+	position: absolute;
+	z-index: 3;
+	top: var(--ct-port-y, 0%);
+	left: var(--ct-port-x, 50%);
+	box-sizing: border-box;
+	width: 28px;
+	height: 28px;
+	margin: 0;
+	padding: 0;
+	border: 0 !important;
+	border-radius: 50% !important;
+	background: transparent !important;
+	box-shadow: none !important;
+	cursor: crosshair;
+	outline: none;
+	opacity: 0;
+	pointer-events: none;
+	transform: translate(-50%, -50%);
+	transition: opacity 120ms ease;
+}
+
+.context-tree-connect-port.is-visible {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.context-tree-connect-port::before {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 8px;
+	height: 8px;
+	border: 1.5px solid color-mix(in srgb, var(--text-muted) 78%, var(--ct-border));
+	border-radius: 50%;
+	background: var(--ct-card);
+	content: "";
+	transform: translate(-50%, -50%);
+	transition: width 150ms ease, height 150ms ease, background 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.context-tree-connect-port.is-visible::before,
+.context-tree-connect-port:focus-visible::before,
+.context-tree-node.is-drag-connection-source .context-tree-connect-port::before {
+	width: 12px;
+	height: 12px;
+	border-color: var(--text-normal);
+	background: var(--background-primary);
+	box-shadow: 0 0 0 4px color-mix(in srgb, var(--text-muted) 14%, transparent);
+}
+
+.context-tree-connect-port.is-drag-source-port::before,
+.context-tree-connect-port.is-drag-target-port::before {
+	width: 14px;
+	height: 14px;
+	border-color: var(--text-accent);
+	background: var(--background-primary);
+	box-shadow: 0 0 0 5px color-mix(in srgb, var(--text-accent) 18%, transparent);
+}
+
+.context-tree-card-quick-action:hover,
+.context-tree-card-quick-action:focus-visible {
+	border-color: var(--text-normal);
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+	outline: none;
+}
+
+.context-tree-card-trigger {
+	display: block !important;
+	box-sizing: border-box;
+	min-height: 0 !important;
+	height: auto !important;
+	min-width: 0;
+	width: 100%;
+	margin: 0;
+	padding: 0 44px 0 0;
+	border: 0 !important;
+	border-radius: 0 !important;
+	background: transparent !important;
+	background-image: none !important;
+	box-shadow: none !important;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	white-space: normal;
+	cursor: pointer;
+}
+
+.context-tree-card-trigger > * {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	border-radius: 0 !important;
+	background: transparent !important;
+	background-image: none !important;
+	box-shadow: none !important;
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+
+.context-tree-card-trigger:focus-visible {
+	border-radius: 7px;
+	outline: 2px solid var(--interactive-accent);
+	outline-offset: 4px;
 }
 
 .context-tree-card:hover {
 	border-color: color-mix(in srgb, var(--text-muted) 78%, var(--ct-border));
-	background: var(--ct-card-hover);
+	background: var(--ct-card-hover) !important;
 	box-shadow: 0 16px 36px rgba(0, 0, 0, 0.15);
-	transform: translateY(-4px) scale(1.018);
 }
 
 .context-tree-node.is-focused .context-tree-card {
@@ -123,17 +481,101 @@
 	box-shadow: 0 14px 34px rgba(0, 0, 0, 0.15);
 }
 
-.context-tree-card:focus-visible {
-	outline: 2px solid var(--interactive-accent);
-	outline-offset: 3px;
+.context-tree-node.is-drag-connection-source .context-tree-card {
+	border-color: var(--text-normal);
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-normal) 18%, transparent), 0 14px 34px rgba(0, 0, 0, 0.15);
+}
+
+.context-tree-node.is-drag-connection-target .context-tree-card {
+	border-color: var(--text-normal);
+	background: var(--ct-card-hover) !important;
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-normal) 11%, transparent), 0 14px 34px rgba(0, 0, 0, 0.15);
 }
 
 .context-tree-card.is-detail-open {
-	width: min(620px, calc(100vw - 74px));
+	display: flex;
+	flex-direction: column;
+	width: min(620px, max(180px, calc(var(--ct-viewport-width, 100vw) - 40px)));
 	padding: 18px 20px;
+	cursor: grab;
 }
 
+.context-tree-card.is-panning { cursor: grabbing; }
+
+/* Source and Reading are two modes of one Markdown document. Source mode
+   replaces the rendered projection with the complete note text, including
+   frontmatter title, summary callout, and typed relationships. */
+.context-tree-card.is-editing {
+	height: var(--ct-source-card-height);
+	min-height: 0;
+	/* There is one card surface in Source mode. The Markdown editor is the
+	   card interior, not a second panel placed inside it. */
+	padding: 0;
+	overflow: hidden;
+	cursor: default;
+}
+
+.context-tree-card.is-editing:focus-within {
+	border-color: var(--interactive-accent);
+	box-shadow:
+		0 0 0 2px color-mix(in srgb, var(--interactive-accent) 18%, transparent),
+		0 14px 34px rgba(0, 0, 0, 0.15);
+}
+
+.context-tree-card.is-editing .context-tree-card-trigger {
+	/* Do not leave a second, non-editable title and summary above Source mode.
+	   They are part of the Markdown source and must have one editing surface. */
+	display: none !important;
+}
+
+/* Source mode keeps the card-level controls in the same place as Reading
+   mode. Only the pencil changes meaning: it finishes editing and returns to
+   Reading. The view commits any pending source change before deletion. */
+.context-tree-card.is-editing .context-tree-card-quick-actions {
+	opacity: 1;
+	visibility: visible;
+	transform: translateY(0);
+	pointer-events: auto;
+}
+
+.context-tree-markdown-editor {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	flex: 1;
+	height: auto;
+	min-height: 0;
+	resize: none;
+	/* Match Obsidian Source mode: no nested input chrome, only the enclosing
+	   note card owns the border and background. */
+	/* Reserve a fixed utility rail for pin, the edit-mode toggle and ⋮. The
+	   Markdown itself never scrolls or paints underneath those controls. */
+	padding: 48px 20px 18px;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	color: var(--text-normal);
+	font-family: var(--font-monospace);
+	font-size: 0.86em;
+	line-height: 1.58;
+	tab-size: 2;
+	scrollbar-gutter: stable;
+	overscroll-behavior: contain;
+}
+
+.context-tree-markdown-editor:focus {
+	outline: 0;
+}
+
+/* Expanded cards reserve one stable action rail: pin, edit and ⋮. This
+   prevents long titles or summaries from painting under controls that remain
+   visible for a pinned working card. */
+.context-tree-card.is-detail-open .context-tree-card-trigger { padding-right: 96px; }
+.context-tree-card.has-wrapped-title .context-tree-title { white-space: normal !important; }
+.context-tree-card:not(.is-detail-open):not(.has-wrapped-title) .context-tree-title { white-space: nowrap !important; }
+
 .context-tree-title {
+	margin: 0 !important;
 	color: var(--text-normal);
 	font-size: 1rem;
 	font-weight: 700;
@@ -142,10 +584,11 @@
 }
 
 .context-tree-summary {
-	margin-top: 8px;
+	margin: 8px 0 0 !important;
 	color: var(--ct-muted);
 	font-size: 0.81rem;
 	line-height: 1.52;
+	text-align: left;
 }
 
 .context-tree-detail-wrap {
@@ -162,11 +605,58 @@
 }
 
 .context-tree-card.is-detail-open .context-tree-detail-wrap {
-	max-height: 2400px;
+	/* The renderer records the actual Markdown height in --ct-detail-height. */
+	max-height: var(--ct-detail-height, 2400px);
 	margin-top: 16px;
 	opacity: 1;
 	transform: translateY(0);
 	pointer-events: auto;
+}
+
+.context-tree-card.is-editing .context-tree-detail-wrap {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	min-width: 0;
+	width: 100%;
+	margin: 0;
+	max-height: none;
+	opacity: 1;
+	transform: none;
+	pointer-events: auto;
+	overflow: hidden;
+}
+
+.context-tree-edit-conflict {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 7px 10px;
+	margin-top: 8px;
+	padding: 8px 10px;
+	border: 1px solid color-mix(in srgb, var(--text-warning) 56%, var(--ct-border));
+	border-radius: 8px;
+	background: color-mix(in srgb, var(--text-warning) 9%, var(--ct-card));
+	color: var(--text-muted);
+	font-size: 0.76rem;
+	line-height: 1.45;
+}
+
+.context-tree-edit-conflict-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.context-tree-edit-conflict button {
+	padding: 3px 6px;
+	border: 1px solid var(--ct-border);
+	border-radius: 6px;
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font: inherit;
+	cursor: pointer;
 }
 
 .context-tree-detail {
@@ -182,72 +672,47 @@
 .context-tree-detail h2 { font-size: 1.04rem; }
 .context-tree-detail h3 { font-size: 0.96rem; }
 .context-tree-detail pre { max-width: 100%; }
-.context-tree-source { margin-top: 13px; }
 
-.context-tree-detail-actions {
+.context-tree-connections {
 	display: flex;
-	justify-content: flex-end;
-	height: 0;
-	position: relative;
-	z-index: 1;
-}
-
-.context-tree-edit {
-	display: inline-flex;
+	flex-wrap: wrap;
+	align-content: flex-start;
 	align-items: center;
-	justify-content: center;
-	width: 27px;
-	height: 27px;
-	padding: 0;
-	border: 1px solid transparent;
-	border-radius: 7px;
+	gap: 4px;
+	margin-top: 14px;
+	padding-top: 13px;
+	border-top: 1px solid var(--ct-border);
+}
+
+.context-tree-connection {
+	display: inline-flex;
+	min-width: 0;
+	max-width: 100%;
+	align-items: center;
+	gap: 3px;
+}
+
+.context-tree-connection-jump {
+	border: 0;
+	border-radius: 6px;
 	background: transparent;
-	color: var(--text-faint);
-	cursor: pointer;
-	opacity: 0;
-	transform: translateY(-4px);
-	transition: opacity 150ms ease, transform 150ms ease, background 150ms ease, color 150ms ease;
-}
-
-.context-tree-card.is-detail-open:hover .context-tree-edit,
-.context-tree-edit:focus-visible { opacity: 1; transform: translateY(0); }
-.context-tree-edit:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
-
-.context-tree-editor { padding-top: 2px; }
-.context-tree-editor-label { margin-bottom: 7px; color: var(--text-faint); font-size: 0.73rem; font-weight: 600; }
-.context-tree-editor-input {
-	box-sizing: border-box;
-	width: 100%;
-	min-height: 260px;
-	resize: vertical;
-	padding: 10px 11px;
-	border: 1px solid var(--ct-border);
-	border-radius: 8px;
-	background: var(--background-primary);
-	color: var(--text-normal);
-	font-family: var(--font-monospace);
-	font-size: 0.8rem;
-	line-height: 1.55;
-}
-.context-tree-editor-input:focus { border-color: var(--interactive-accent); outline: none; }
-.context-tree-editor-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 10px; }
-.context-tree-editor-save,
-.context-tree-editor-cancel {
-	border: 1px solid var(--ct-border);
-	border-radius: 7px;
-	padding: 5px 9px;
-	background: var(--background-primary);
 	color: var(--text-muted);
-	font-size: 0.76rem;
 	cursor: pointer;
 }
-.context-tree-editor-save { border-color: var(--interactive-accent); color: var(--interactive-accent); }
-.context-tree-editor-save:hover { background: color-mix(in srgb, var(--interactive-accent) 13%, var(--background-primary)); }
-.context-tree-editor-cancel:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
-.context-tree-editor-save:disabled,
-.context-tree-editor-cancel:disabled { cursor: wait; opacity: 0.55; }
 
-.context-tree-zoom-controls {
+.context-tree-connection-jump {
+	padding: 4px 7px;
+	border: 1px solid var(--ct-border);
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--background-primary) 72%, transparent);
+	font-size: 0.76rem;
+	text-align: left;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.context-tree-connection-jump:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
+.context-tree-graph-controls {
 	position: absolute;
 	right: 16px;
 	bottom: 15px;
@@ -262,12 +727,86 @@
 	box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08);
 }
 
+.context-tree-search-panel {
+	position: absolute;
+	right: 16px;
+	bottom: 57px;
+	z-index: 5;
+	display: none;
+	box-sizing: border-box;
+	width: min(304px, calc(100% - 32px));
+	padding: 10px;
+	border: 1px solid var(--ct-border);
+	border-radius: 10px;
+	background: color-mix(in srgb, var(--background-primary) 94%, transparent);
+	box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.context-tree-search-panel.is-open { display: block; }
+
+.context-tree-search-panel input[type="search"] {
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 30px;
+	padding: 5px 8px;
+	border: 1px solid var(--ct-border);
+	border-radius: 7px;
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font: inherit;
+	font-size: 0.8rem;
+}
+
+.context-tree-relation-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 5px 7px;
+	margin-top: 10px;
+}
+
+.context-tree-filter-label {
+	flex-basis: 100%;
+	color: var(--text-muted);
+	font-size: 0.72rem;
+}
+
+.context-tree-relation-filter {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	color: var(--text-muted);
+	font-size: 0.72rem;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.context-tree-relation-filter input { margin: 0; }
+
+.context-tree-search-empty {
+	display: none;
+	margin-top: 8px;
+	color: var(--text-muted);
+	font-size: 0.76rem;
+}
+
+.context-tree-search-empty.is-visible { display: block; }
+
 .context-tree-zoom-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	width: 27px;
 	height: 26px;
 	padding: 0;
 	font-size: 1rem;
 	line-height: 1;
+}
+
+.context-tree-control-divider {
+	width: 1px;
+	height: 18px;
+	margin: 0 2px;
+	background: var(--ct-border);
 }
 
 .context-tree-zoom-label {
@@ -279,10 +818,49 @@
 	font-variant-numeric: tabular-nums;
 }
 
-.context-tree-empty { padding: 48px; color: var(--text-muted); }
+.context-tree-empty {
+	align-self: flex-start;
+	width: min(480px, calc(100% - 64px));
+	margin: clamp(64px, 14vh, 144px) auto 0;
+	padding: 28px 30px;
+	border: 1px solid var(--ct-border);
+	border-radius: 14px;
+	background: var(--background-primary-alt);
+	box-shadow: 0 18px 46px rgb(0 0 0 / 12%);
+	color: var(--text-muted);
+}
+
+.context-tree-empty-eyebrow {
+	margin: 0 0 8px;
+	color: var(--text-faint);
+	font-size: 0.78rem;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+}
+
+.context-tree-empty h2 {
+	margin: 0;
+	color: var(--text-normal);
+	font-size: 1.08rem;
+}
+
+.context-tree-empty-status { margin: 12px 0 0; color: var(--text-muted); line-height: 1.55; }
+.context-tree-empty-next { margin: 7px 0 0; color: var(--text-faint); line-height: 1.5; }
+.context-tree-empty-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.context-tree-empty-actions .context-tree-action:first-child { background: var(--background-modifier-hover); }
 
 @media (max-width: 700px) {
-	.context-tree-toolbar { align-items: flex-start; flex-direction: column; }
-	.context-tree-card { width: min(258px, calc(100vw - 54px)); }
-	.context-tree-card.is-detail-open { width: min(520px, calc(100vw - 40px)); }
+	.context-tree-card { width: min(258px, max(160px, calc(var(--ct-viewport-width, 100vw) - 32px))); }
+	.context-tree-card.is-detail-open { width: min(520px, max(180px, calc(var(--ct-viewport-width, 100vw) - 40px))); }
+}
+
+@media (hover: none) {
+	.context-tree-card-quick-actions { opacity: 1; transform: translateY(0); }
+	.context-tree-card-quick-actions { visibility: visible; pointer-events: auto; transition-delay: 0s; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.context-tree-card,
+	.context-tree-detail-wrap,
+	.context-tree-connect-port::before { transition: none; }
 }
