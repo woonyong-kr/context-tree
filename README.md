@@ -13,7 +13,7 @@ Each card is one real Markdown note. Click a card to read it in place; use the p
 - Keeps a selected keyword in view while neighbouring concepts settle around it; there is no fixed root or forced reading direction.
 - Reveals a hovered card's existing edge endpoints without activating the rest of the graph.
 - Expands Markdown in the card; the surrounding cards move through the simulation instead of remaining underneath it.
-- Creates a card from empty canvas space, creates a connected card with `+`, and creates a peer relationship by dragging the magnetic connection point that appears on a card's nearest edge to another card.
+- Creates a card from empty canvas space or the graph toolbar, and creates a peer relationship by dragging the magnetic connection point that appears on a card's nearest edge to another card.
 - Reads and writes ordinary Obsidian wikilinks in frontmatter, including aliases and heading links.
 - Supports `related`, `prerequisite`, `supports`, `contrasts`, and `follow-up` relationships.
 - Keeps the title and short card description in normal Markdown, so Live Preview, Source mode, Sync, Git, and other Markdown tools remain compatible.
@@ -116,8 +116,7 @@ Older notes using `context_tree_summary` in YAML are read for compatibility. Con
 | Mouse wheel or the controls | Zoom at the pointer or graph centre. The lower zoom bound follows the current overview, so a large graph can always be fitted. Keyboard `Ctrl`/`Command` + `+`/`-` also works while the graph has focus. |
 | Layers control | Create or switch an independent graph, then add an existing opted-in note without moving or duplicating its Markdown file. |
 | Search / filter controls | Search card title, summary, and body; keep direct context visible; choose which relation types are drawn. |
-| `+` on a card | Create a blank related note beside the source note and start its in-card Markdown editing. |
-| Double-click empty canvas | Create a blank graph note. |
+| New card control or double-click empty canvas | Create a blank graph note and start its in-card Markdown editing. |
 | Hover a card, then drag its magnetic edge point onto another card | Add a peer `related` link, stored in the card where the drag began. Existing lines and the drag preview attach to the same precise card perimeter points. Hovering a card reveals its existing relationship endpoints; a click selects one relationship. |
 | Pencil | Toggle full source Markdown editing inside the expanded card. Clicking another card or empty canvas finishes editing and returns to reading mode. This is an in-card editor, not Obsidian's full native editor surface. |
 | Vertical `…` menu | Move a topic to Obsidian's configured trash after confirmation. |

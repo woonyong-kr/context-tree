@@ -209,20 +209,18 @@ export class TopicCardRenderer {
 		this.renderedDetails.clear();
 	}
 
+	/** A graph refresh keeps card elements and positions, but replaces stale Markdown. */
+	invalidateDetails(): void {
+		this.renderedDetails.clear();
+	}
+
 	/** The canvas and card navigation use this to keep overflow menus transient. */
 	closeMenus(): void {
 		this.closeActiveMenu();
 	}
 
-	refreshDetails(card: HTMLElement, node: ContextTreeNode): void {
-		this.updateHeader(card, node);
-		card.querySelector(".context-tree-detail-wrap")?.remove();
-		this.renderedDetails.delete(node.id);
-		this.ensureDetails(card, node);
-	}
-
 	startInlineMarkdownEditing(
-	element: HTMLElement,
+		element: HTMLElement,
 		source: string,
 		callbacks: InlineMarkdownEditorCallbacks,
 	): void {
@@ -252,10 +250,10 @@ export class TopicCardRenderer {
 			callbacks.onInput(editor.value);
 		});
 		window.setTimeout(() => {
+			if (!editor.isConnected) return;
 			editor.focus();
 			editor.setSelectionRange(0, 0);
-			editor.scrollTop = 0;
-			editor.scrollLeft = 0;
+			scroller.scrollTo({ left: 0, top: 0, behavior: "auto" });
 		}, 0);
 	}
 
@@ -292,11 +290,11 @@ export class TopicCardRenderer {
 
 	replaceInlineMarkdownSource(element: HTMLElement, source: string): void {
 		const editor = element.querySelector<HTMLTextAreaElement>(".context-tree-markdown-editor");
+		const scroller = element.querySelector<HTMLElement>(".context-tree-markdown-editor-scroll");
 		if (!editor) return;
 		editor.value = source;
 		this.resizeInlineMarkdownEditor(editor);
-		editor.scrollTop = 0;
-		editor.scrollLeft = 0;
+		scroller?.scrollTo({ left: 0, top: 0, behavior: "auto" });
 		element.querySelector(".context-tree-edit-conflict")?.remove();
 		editor.focus();
 	}
@@ -308,9 +306,15 @@ export class TopicCardRenderer {
 	}
 
 	updateHeader(card: HTMLElement, node: ContextTreeNode): void {
-		card.querySelector<HTMLElement>(".context-tree-title")?.setText(node.title);
+		const trigger = card.querySelector<HTMLElement>(".context-tree-card-trigger");
+		const title = card.querySelector<HTMLElement>(".context-tree-title");
+		title?.setText(node.title);
+		trigger?.setAttribute("aria-label", cardToggleLabel(node.title));
 		const summary = card.querySelector<HTMLElement>(".context-tree-summary");
-		if (summary) summary.setText(node.summary);
+		if (node.summary) {
+			if (summary) summary.setText(node.summary);
+			else trigger?.createSpan({ cls: "context-tree-summary", text: node.summary });
+		} else summary?.remove();
 	}
 
 	private updateCollapsedWidth(card: HTMLElement, titleText: string, isOpen: boolean): void {
@@ -379,6 +383,7 @@ export class TopicCardRenderer {
 	private ensureDetails(card: HTMLElement, node: ContextTreeNode): void {
 		if (this.renderedDetails.has(node.id)) return;
 		this.renderedDetails.add(node.id);
+		card.querySelector(".context-tree-detail-wrap")?.remove();
 		const wrapper = card.createDiv({ cls: "context-tree-detail-wrap" });
 		const detail = wrapper.createDiv({ cls: "context-tree-detail markdown-rendered" });
 		void MarkdownRenderer.render(this.app, node.body, detail, node.path, this.component)

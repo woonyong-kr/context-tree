@@ -29,8 +29,7 @@ jobs:
             - name: Build plugin
               run: |
                   npm ci
-                  npm run test
-                  npm run build
+                  npm run check
 
             - name: Check for optional styles
               id: styles

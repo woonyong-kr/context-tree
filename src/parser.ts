@@ -14,6 +14,30 @@ function removeFrontmatter(content: string): string {
 	return content.replace(/^---\s*\n[\s\S]*?\n---\s*\n?/, "").trim();
 }
 
+/**
+ * Returns only the frontmatter entries that change how a note participates in
+ * the graph. The raw YAML is preserved so nested relationship lists do not
+ * need a second, incomplete YAML parser in the editor path.
+ */
+export function topicGraphMetadataSignature(content: string): string {
+	const frontmatter = content.match(/^---\s*\r?\n([\s\S]*?)\r?\n---(?:\s*\r?\n|$)/)?.[1] ?? "";
+	const lines = frontmatter.split(/\r?\n/);
+	const entry = (key: string): string => {
+		const start = lines.findIndex((line) => line.startsWith(`${key}:`));
+		if (start < 0) return "";
+		const value = [lines[start]!];
+		for (let index = start + 1; index < lines.length; index += 1) {
+			const line = lines[index]!;
+			if (/^\S/.test(line)) break;
+			value.push(line);
+		}
+		return value.join("\n").trim();
+	};
+	return ["context_tree", "context_tree_id", "context_tree_parent", "context_tree_links", "title", "context_tree_summary"]
+		.map(entry)
+		.join("\n\u0000\n");
+}
+
 function removeDocumentTitle(content: string): string {
 	return removeFrontmatter(content).replace(/^#\s+.*(?:\n|$)/, "").trim();
 }

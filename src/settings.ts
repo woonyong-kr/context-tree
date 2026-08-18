@@ -84,9 +84,9 @@ export class ContextTreeSettingTab extends PluginSettingTab {
 				.setLimits(min, max, step)
 				.setValue(graph.physics[key])
 				.setDynamicTooltip()
-				.onChange(async (value) => {
+				.onChange((value) => {
 					graph.physics[key] = value;
-					await this.plugin.saveSettings();
+					this.plugin.scheduleGraphPhysicsSave(graph.id);
 				}),
 			);
 	}

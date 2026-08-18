@@ -708,23 +708,17 @@
 }
 
 .context-tree-connection-jump {
-	border: 0;
-	border-radius: 6px;
-	background: transparent;
-	color: var(--text-muted);
-	cursor: pointer;
-}
-
-.context-tree-connection-jump {
 	padding: 4px 7px;
 	border: 1px solid var(--ct-border);
 	border-radius: 999px;
 	background: color-mix(in srgb, var(--background-primary) 72%, transparent);
+	color: var(--text-muted);
 	font-size: 0.76rem;
 	text-align: left;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	cursor: pointer;
 }
 .context-tree-connection-jump:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
 .context-tree-graph-controls {
@@ -871,8 +865,13 @@
 }
 
 @media (hover: none) {
-	.context-tree-card-quick-actions { opacity: 1; transform: translateY(0); }
-	.context-tree-card-quick-actions { visibility: visible; pointer-events: auto; transition-delay: 0s; }
+	.context-tree-card-quick-actions {
+		opacity: 1;
+		visibility: visible;
+		pointer-events: auto;
+		transform: translateY(0);
+		transition-delay: 0s;
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -19,6 +19,8 @@ export default class ContextTreePlugin extends Plugin {
 	private refreshTimer?: number;
 	private viewStateTimer?: number;
 	private definitionRefreshTimer?: number;
+	private physicsSaveTimer?: number;
+	private readonly pendingPhysicsGraphIds = new Set<string>();
 	private settingsSaveQueue: Promise<void> = Promise.resolve();
 	private readonly definitionPaths = new Map<string, string>();
 
@@ -142,8 +144,26 @@ export default class ContextTreePlugin extends Plugin {
 		await this.persistSettings();
 	}
 
-	async saveSettings(): Promise<void> {
-		await Promise.all(this.settings.graphs.map((graph) => this.writeGraphDefinition(graph)));
+	/** Coalesce slider input into one write for the graph being adjusted. */
+	scheduleGraphPhysicsSave(graphId: string): void {
+		this.pendingPhysicsGraphIds.add(graphId);
+		if (this.physicsSaveTimer !== undefined) window.clearTimeout(this.physicsSaveTimer);
+		this.physicsSaveTimer = window.setTimeout(() => {
+			this.physicsSaveTimer = undefined;
+			void this.flushGraphPhysicsSaves().catch((error: unknown) => {
+				console.error("Context Graph: failed to save graph physics", error);
+			});
+		}, 240);
+	}
+
+	private async flushGraphPhysicsSaves(): Promise<void> {
+		const graphIds = [...this.pendingPhysicsGraphIds];
+		this.pendingPhysicsGraphIds.clear();
+		const graphs = graphIds
+			.map((graphId) => this.getGraph(graphId))
+			.filter((graph): graph is GraphWorkspace => graph !== undefined);
+		if (!graphs.length) return;
+		await Promise.all(graphs.map((graph) => this.writeGraphDefinition(graph)));
 		await this.persistSettings();
 		this.refreshOpenViews();
 	}
@@ -163,6 +183,12 @@ export default class ContextTreePlugin extends Plugin {
 			void this.persistSettings();
 		}
 		if (this.definitionRefreshTimer !== undefined) window.clearTimeout(this.definitionRefreshTimer);
+		if (this.physicsSaveTimer !== undefined) window.clearTimeout(this.physicsSaveTimer);
+		if (this.pendingPhysicsGraphIds.size) {
+			void this.flushGraphPhysicsSaves().catch((error: unknown) => {
+				console.error("Context Graph: failed to flush graph physics", error);
+			});
+		}
 	}
 
 	/** Returns the Vault file backing a graph, when this graph has been migrated. */
