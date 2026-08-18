@@ -26,7 +26,7 @@ import {
 	SimNode,
 	simulationLinkFor,
 } from "./graph/simulation";
-import { loadContextTree } from "./parser";
+import { loadContextTree, topicDisplayContent } from "./parser";
 import { buildContextGraph, GraphRelationType, isDetachableGraphEdge } from "./graph/model";
 import { ContextTreeLink, ContextTreeNode } from "./types";
 import { addRelation, createTopic, moveTopicToTrash, removeRelation } from "./topic-store";
@@ -719,7 +719,12 @@ export class ContextTreeView extends FileView {
 		}
 		if (edit.hasConflict || edit.saveFailed) return;
 		this.inlineEdit = undefined;
-		await this.refresh();
+		const node = this.simNodes.find((candidate) => candidate.id === edit.nodeId);
+		const element = this.nodeElements.get(edit.nodeId);
+		if (!node || !element) return;
+		Object.assign(node.node, topicDisplayContent(edit.content, node.node));
+		this.cards.finishInlineMarkdownEditing(element, edit.nodeId);
+		this.syncCards();
 	}
 
 	private showInlineMarkdownConflict(edit: NonNullable<ContextTreeView["inlineEdit"]>): void {
@@ -1463,11 +1468,12 @@ export class ContextTreeView extends FileView {
 		});
 		viewport.addEventListener("wheel", (event) => {
 			const editor = viewport.querySelector<HTMLTextAreaElement>(".context-tree-markdown-editor");
+			const editorScroller = viewport.querySelector<HTMLElement>(".context-tree-markdown-editor-scroll");
 			// Obsidian can retain the focused textarea as event.target after the
 			// pointer has left the card. Wheel ownership must follow the pointer,
 			// so inspect the element at its actual viewport coordinates first.
 			const pointerTarget = document.elementFromPoint(event.clientX, event.clientY) ?? event.target;
-			const isOverEditor = pointerTarget instanceof Element && !!pointerTarget.closest(".context-tree-markdown-editor");
+			const isOverEditor = pointerTarget instanceof Element && !!pointerTarget.closest(".context-tree-markdown-editor-scroll");
 			const isOverSearch = pointerTarget instanceof Element && !!pointerTarget.closest(".context-tree-search-panel");
 			const action = canvasWheelAction({
 				isOverEditor,
@@ -1475,9 +1481,9 @@ export class ContextTreeView extends FileView {
 				isEditorFocused: document.activeElement === editor,
 			});
 			if (action === "ignore") return;
-			if (action === "scroll-editor" && editor) {
+			if (action === "scroll-editor" && editorScroller) {
 				event.preventDefault();
-				editor.scrollBy({ left: event.deltaX, top: event.deltaY, behavior: "auto" });
+				editorScroller.scrollBy({ left: event.deltaX, top: event.deltaY, behavior: "auto" });
 				return;
 			}
 			event.preventDefault();

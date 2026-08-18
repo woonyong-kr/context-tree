@@ -515,6 +515,12 @@
 	cursor: default;
 }
 
+/* Preserve an opened card's exact graph footprint across Reading ↔ Source.
+   Closing the card removes this value from the renderer. */
+.context-tree-card.is-detail-open {
+	min-height: var(--ct-open-card-height, 0);
+}
+
 .context-tree-card.is-editing:focus-within {
 	border-color: var(--interactive-accent);
 	box-shadow:
@@ -542,15 +548,11 @@
 	display: block;
 	box-sizing: border-box;
 	width: 100%;
-	flex: 1;
-	height: auto;
-	min-height: 0;
+	min-height: 100%;
 	resize: none;
 	/* Match Obsidian Source mode: no nested input chrome, only the enclosing
 	   note card owns the border and background. */
-	/* Reserve a fixed utility rail for pin, the edit-mode toggle and ⋮. The
-	   Markdown itself never scrolls or paints underneath those controls. */
-	padding: 48px 20px 18px;
+	padding: 0 20px 18px;
 	border: 0;
 	border-radius: 0;
 	background: transparent;
@@ -559,6 +561,19 @@
 	font-size: 0.86em;
 	line-height: 1.58;
 	tab-size: 2;
+	overflow: hidden;
+}
+
+/* The toolbar spacer is outside the scrollport, so source text can never
+   travel underneath the card's fixed pin, edit, and overflow controls. */
+.context-tree-editor-toolbar-spacer {
+	flex: 0 0 48px;
+}
+
+.context-tree-markdown-editor-scroll {
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
 	scrollbar-gutter: stable;
 	overscroll-behavior: contain;
 }
@@ -714,8 +729,9 @@
 .context-tree-connection-jump:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
 .context-tree-graph-controls {
 	position: absolute;
-	right: 16px;
-	bottom: 15px;
+	/* A theme must not turn this canvas HUD into an in-flow, centre control.
+	   Anchor all four inset sides explicitly to the viewport's bottom-right. */
+	inset: auto 16px 15px auto;
 	z-index: 4;
 	display: flex;
 	align-items: center;

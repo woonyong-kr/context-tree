@@ -30,6 +30,23 @@ function firstParagraph(content: string): string {
 		.find(Boolean) ?? "";
 }
 
+/**
+ * Builds the card text that can change without rebuilding its graph node.
+ * Frontmatter is intentionally left to the full parser because parent and
+ * relationship changes can alter the graph topology.
+ */
+export function topicDisplayContent(
+	content: string,
+	fallback: Pick<ContextTreeNode, "title" | "summary">,
+): Pick<ContextTreeNode, "title" | "summary" | "body"> {
+	const body = removeMarkdownSummary(removeDocumentTitle(content));
+	return {
+		title: documentTitle(content) || fallback.title,
+		summary: markdownSummary(content) || fallback.summary || firstParagraph(body),
+		body,
+	};
+}
+
 function extractLinks(app: App, rawValue: unknown, sourcePath: string): ContextTreeLink[] {
 	const seen = new Set<string>();
 	const links: ContextTreeLink[] = [];
@@ -70,15 +87,19 @@ export async function loadContextTree(
 			? app.metadataCache.getFirstLinkpathDest(noteLinkTarget(parentLink), file.path)?.path
 			: undefined;
 
+		const display = topicDisplayContent(content, {
+			title: text(frontmatter.title) || file.basename,
+			summary: text(frontmatter.context_tree_summary),
+		});
 		topics.push({
 			// A frontmatter id is useful to people, but the view state must stay
 			// unambiguous even when two notes accidentally reuse one.
 			id: `${file.path}::${text(frontmatter.context_tree_id) || file.path}`,
 			path: file.path,
 			parentPath: resolvedParent,
-			title: documentTitle(content) || text(frontmatter.title) || file.basename,
-			summary: markdownSummary(content) || text(frontmatter.context_tree_summary) || firstParagraph(removeMarkdownSummary(content)),
-			body: removeMarkdownSummary(removeDocumentTitle(content)),
+			title: display.title,
+			summary: display.summary,
+			body: display.body,
 			links: extractLinks(app, frontmatter.context_tree_links, file.path),
 		});
 	}

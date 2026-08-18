@@ -10,6 +10,9 @@ const INLINE_EDITOR_LINE_HEIGHT = 22;
 const INLINE_EDITOR_CHROME_HEIGHT = 112;
 
 export function inlineEditorCardHeight(measuredHeight: number, source: string): number {
+	// Source mode is entered from an open card. Keeping that measured footprint
+	// prevents the force layout from treating an editor toggle as a graph edit.
+	if (measuredHeight > 0) return Math.ceil(measuredHeight);
 	const sourceLineCount = Math.max(1, source.split(/\r?\n/).length);
 	const sourceEstimate = INLINE_EDITOR_CHROME_HEIGHT + sourceLineCount * INLINE_EDITOR_LINE_HEIGHT;
 	return Math.min(

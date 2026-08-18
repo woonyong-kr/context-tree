@@ -157,6 +157,10 @@ export class TopicCardRenderer {
 		card.toggleClass("is-detail-open", state.isOpen);
 		card.toggleClass("is-editing", state.isEditing);
 		card.toggleClass("is-pinned", state.isPinned);
+		if (!state.isOpen) {
+			card.style.removeProperty("--ct-open-card-height");
+			card.style.removeProperty("--ct-source-card-height");
+		}
 		const pinButton = card.querySelector<HTMLButtonElement>(".context-tree-card-pin");
 		if (pinButton) {
 			const label = state.isPinned ? COPY.actions.unpinCard : COPY.actions.pinCard;
@@ -228,10 +232,13 @@ export class TopicCardRenderer {
 		// Markdown scrolls inside that footprint instead of moving other cards.
 		const editorHeight = inlineEditorCardHeight(card.getBoundingClientRect().height, source);
 		card.style.setProperty("--ct-source-card-height", `${editorHeight}px`);
+		card.style.setProperty("--ct-open-card-height", `${editorHeight}px`);
 		const wrapper = card.querySelector<HTMLElement>(".context-tree-detail-wrap") ?? card.createDiv({ cls: "context-tree-detail-wrap" });
 		wrapper.empty();
 		wrapper.addClass("is-editing");
-		const editor = wrapper.createEl("textarea", {
+		wrapper.createDiv({ cls: "context-tree-editor-toolbar-spacer" });
+		const scroller = wrapper.createDiv({ cls: "context-tree-markdown-editor-scroll" });
+		const editor = scroller.createEl("textarea", {
 			cls: "context-tree-markdown-editor",
 			attr: {
 				"aria-label": COPY.labels.inlineMarkdownEditor,
@@ -239,7 +246,11 @@ export class TopicCardRenderer {
 			},
 		});
 		editor.value = source;
-		editor.addEventListener("input", () => callbacks.onInput(editor.value));
+		this.resizeInlineMarkdownEditor(editor);
+		editor.addEventListener("input", () => {
+			this.resizeInlineMarkdownEditor(editor);
+			callbacks.onInput(editor.value);
+		});
 		window.setTimeout(() => {
 			editor.focus();
 			editor.setSelectionRange(0, 0);
@@ -271,14 +282,29 @@ export class TopicCardRenderer {
 		});
 	}
 
+	/** Replaces only the card interior; its graph node and outer DOM stay put. */
+	finishInlineMarkdownEditing(element: HTMLElement, nodeId: string): void {
+		const card = element.querySelector<HTMLElement>(".context-tree-card");
+		if (!card) return;
+		card.querySelector(".context-tree-detail-wrap")?.remove();
+		this.renderedDetails.delete(nodeId);
+	}
+
 	replaceInlineMarkdownSource(element: HTMLElement, source: string): void {
 		const editor = element.querySelector<HTMLTextAreaElement>(".context-tree-markdown-editor");
 		if (!editor) return;
 		editor.value = source;
+		this.resizeInlineMarkdownEditor(editor);
 		editor.scrollTop = 0;
 		editor.scrollLeft = 0;
 		element.querySelector(".context-tree-edit-conflict")?.remove();
 		editor.focus();
+	}
+
+	private resizeInlineMarkdownEditor(editor: HTMLTextAreaElement): void {
+		editor.setCssProps({ height: "0px" });
+		const viewportHeight = editor.parentElement?.clientHeight ?? 0;
+		editor.setCssProps({ height: `${Math.max(editor.scrollHeight, viewportHeight)}px` });
 	}
 
 	updateHeader(card: HTMLElement, node: ContextTreeNode): void {
