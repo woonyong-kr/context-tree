@@ -11,6 +11,7 @@ import ContextTreePlugin from "./main";
 import { graphHoverNodeIds, graphSearchVisibility, isGraphEdgeVisible } from "./domain/graph-filter";
 import type { GraphSearchVisibility } from "./domain/graph-filter";
 import { graphNoteFolder, GraphWorkspace } from "./domain/graph-workspace";
+import { shouldFitInitialOverview } from "./domain/initial-viewport";
 import { decideInlineEditorSave } from "./domain/inline-editor-save";
 import { DIRECT_RELATION, contextRelationLabel, isSymmetricRelation, RELATION_TYPES } from "./domain/relations";
 import {
@@ -512,13 +513,15 @@ export class ContextTreeView extends FileView {
 		if (savedView) {
 			this.pan = { ...savedView.pan };
 			this.zoom = this.clampZoom(savedView.zoom);
+			this.updateZoomLabel();
+			this.applyTransform();
 		}
 		this.syncCards();
 		this.createSimulation();
 		if (!preserveViewport && !savedView) this.focusNode(focusId);
 		this.openPendingEditor();
 		this.paintGraph();
-		this.fitWhenMeasured = !preserveViewport;
+		this.fitWhenMeasured = shouldFitInitialOverview(preserveViewport, savedView !== undefined);
 		this.hasRenderedGraph = true;
 		this.scheduleMeasure();
 	}
