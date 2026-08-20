@@ -107,10 +107,9 @@ export class TopicCardRenderer {
 			const target = event.target;
 			if (!(target instanceof Element)) return;
 			const action = cardPointerAction({
-				// The title/summary owns the primary click that opens a card. Do not
-				// capture it as a graph drag gesture: pointer capture can cause
-				// browsers to cancel the button click after the gesture target changes.
-				// The surrounding card frame stays draggable in Reading and Source.
+				// A click still toggles the card; movement beyond the view threshold
+				// turns the same title/summary surface into a practical drag handle.
+				isCardToggleTarget: !!target.closest(".context-tree-card-trigger"),
 				isInteractiveTarget: !!target.closest("a, input, textarea, select, [contenteditable=true], .context-tree-markdown-editor-scroll, .context-tree-card-trigger, .context-tree-card-quick-action, .context-tree-card-more, .context-tree-connect-port, .context-tree-connection-jump"),
 				// Reading Markdown preserves native selection and scrolling. The card
 				// frame remains the explicit graph-drag surface.

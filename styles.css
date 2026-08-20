@@ -449,7 +449,7 @@
 	font: inherit;
 	text-align: left;
 	white-space: normal;
-	cursor: pointer;
+	cursor: grab;
 }
 
 .context-tree-card-trigger > * {

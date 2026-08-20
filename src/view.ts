@@ -4,6 +4,7 @@ import { canvasWheelAction } from "./domain/canvas-wheel-action";
 import { canvasWheelSurface } from "./domain/canvas-wheel-target";
 import { canvasPointerAction } from "./domain/canvas-pointer-action";
 import { cardOpenEffects, type CardOpenIntent } from "./domain/card-open-action";
+import { hasCardDragExceededClickThreshold } from "./domain/card-pointer-action";
 import { canDisconnectAtDrop } from "./domain/disconnect-drop-action";
 import { normalizePinnedCardIds, openCardAlongsidePins, retainPinnedCards } from "./domain/card-pin-state";
 import ContextTreePlugin from "./main";
@@ -1011,7 +1012,6 @@ export class ContextTreeView extends FileView {
 		const simNode = this.simNodes.find((candidate) => candidate.id === node.id);
 		if (!simNode) return;
 		const captureTarget = event.currentTarget instanceof HTMLElement ? event.currentTarget : undefined;
-		captureTarget?.setPointerCapture(event.pointerId);
 		this.dragNode = {
 			nodeId: node.id,
 			pointerId: event.pointerId,
@@ -1073,14 +1073,18 @@ export class ContextTreeView extends FileView {
 	private updateNodeDrag(event: PointerEvent): void {
 		const drag = this.dragNode;
 		if (!drag || event.pointerId !== drag.pointerId) return;
-		const deltaScreen = {
-			x: event.clientX - drag.originPointer.x,
-			y: event.clientY - drag.originPointer.y,
-		};
-		if (!drag.moved && Math.hypot(deltaScreen.x, deltaScreen.y) < 5) return;
+		if (!drag.moved && !hasCardDragExceededClickThreshold(drag.originPointer, {
+			x: event.clientX,
+			y: event.clientY,
+		})) return;
 		const simNode = this.simNodes.find((candidate) => candidate.id === drag.nodeId);
 		if (!simNode) return;
-		drag.moved = true;
+		if (!drag.moved) {
+			drag.moved = true;
+			// Delay capture until this is a drag. Immediate capture on the card
+			// would steal an ordinary title-button click before it can toggle.
+			drag.captureTarget?.setPointerCapture(event.pointerId);
+		}
 		event.preventDefault();
 		const delta = graphPointerDelta(drag.originPointer, { x: event.clientX, y: event.clientY }, this.zoom);
 		simNode.fx = drag.originGraph.x + delta.x;
