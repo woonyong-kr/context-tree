@@ -1,6 +1,9 @@
 import { App, Component, MarkdownRenderer, setIcon } from "obsidian";
 import { cardPointerAction } from "../domain/card-pointer-action";
-import { inlineEditorCardHeight } from "../domain/inline-editor-layout";
+import {
+	inlineEditorCardHeight,
+	retainsInlineEditorFootprint,
+} from "../domain/inline-editor-layout";
 import { settledReadingCardHeight } from "../domain/reading-card-layout";
 import { CardAnchor, cardAnchorAtPoint } from "../graph/simulation";
 import { ContextTreeNode } from "../types";
@@ -19,6 +22,7 @@ export interface TopicCardRendererCallbacks {
 	onConnectionCandidate: (nodeId?: string, anchor?: CardAnchor) => void;
 	onPin: (node: ContextTreeNode) => void;
 	onEdit: (node: ContextTreeNode) => void;
+	onOpenSource: (node: ContextTreeNode) => void;
 	onMoveToTrash: (node: ContextTreeNode) => void;
 	onOpenInternalLink: (event: MouseEvent, sourcePath: string) => void;
 	onNavigateConnection: (nodeId: string) => void;
@@ -160,9 +164,10 @@ export class TopicCardRenderer {
 		card.toggleClass("is-detail-open", state.isOpen);
 		card.toggleClass("is-editing", state.isEditing);
 		card.toggleClass("is-pinned", state.isPinned);
-		if (!state.isOpen) {
+		if (!retainsInlineEditorFootprint(state.isOpen, card.hasClass("has-fixed-open-footprint"))) {
 			card.style.removeProperty("--ct-open-card-height");
 			card.style.removeProperty("--ct-source-card-height");
+			card.removeClass("has-fixed-open-footprint");
 		}
 		const pinButton = card.querySelector<HTMLButtonElement>(".context-tree-card-pin");
 		if (pinButton) {
@@ -255,6 +260,7 @@ export class TopicCardRenderer {
 		const editorHeight = inlineEditorCardHeight(readingCardHeight, source);
 		card.style.setProperty("--ct-source-card-height", `${editorHeight}px`);
 		card.style.setProperty("--ct-open-card-height", `${editorHeight}px`);
+		card.addClass("has-fixed-open-footprint");
 		const wrapper = card.querySelector<HTMLElement>(".context-tree-detail-wrap") ?? card.createDiv({ cls: "context-tree-detail-wrap" });
 		wrapper.empty();
 		wrapper.addClass("is-editing");
@@ -474,6 +480,11 @@ export class TopicCardRenderer {
 			cls: "context-tree-card-menu",
 			attr: { role: "menu", hidden: "true", "aria-hidden": "true" },
 		});
+		const openSourceItem = menu.createEl("button", {
+			cls: "context-tree-card-menu-item",
+			text: COPY.actions.openSourceBesideGraph,
+			attr: { role: "menuitem" },
+		});
 		const deleteItem = menu.createEl("button", {
 			cls: "context-tree-card-menu-item is-destructive",
 			text: COPY.actions.moveToTrash,
@@ -483,6 +494,11 @@ export class TopicCardRenderer {
 			event.stopPropagation();
 			if (this.activeMenu?.wrap === menuWrap) this.closeActiveMenu();
 			else this.openMenu(menuWrap, trigger, menu);
+		});
+		openSourceItem.addEventListener("click", (event) => {
+			event.stopPropagation();
+			this.closeActiveMenu();
+			this.callbacks.onOpenSource(node);
 		});
 		deleteItem.addEventListener("click", (event) => {
 			event.stopPropagation();

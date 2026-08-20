@@ -123,6 +123,7 @@ Older notes using `context_tree_summary` in YAML are read for compatibility. Con
 | New card control or double-click empty canvas | Create a blank graph note and start its in-card Markdown editing. |
 | Hover a card, then drag its magnetic edge point onto another card | Add a peer `related` link, stored in the card where the drag began. Existing lines and the drag preview attach to the same precise card perimeter points. Hovering a card reveals its existing relationship endpoints; a click selects one relationship. |
 | Pencil | Toggle full source Markdown editing inside the expanded card. A background click or another card finishes a non-pinned edit and returns it to Reading; a pinned Source card remains available as a reference. This is an in-card editor, not Obsidian's full native editor surface. |
+| More → Open source on the right | Open the same Markdown note in a native Obsidian pane to the right of the graph. The graph position and camera stay unchanged. |
 | Vertical `…` menu | Move a topic to Obsidian's configured trash after confirmation. |
 | Relation chip | Centre and open the linked card. |
 | Existing relationship endpoint | Click an existing endpoint to select its peer edge and reveal both precise endpoints. For a single authored relationship only, drag either selected endpoint onto empty canvas to remove that exact Markdown relationship. Multiple relations merged into one visual line are never deleted by this gesture. Dropping over a card or a graph control cancels the gesture. |

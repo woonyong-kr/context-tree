@@ -526,6 +526,24 @@
 	min-height: var(--ct-open-card-height, 0);
 }
 
+/* After Source captures the Reading footprint, edited Markdown may change its
+   intrinsic height but not the card's outer graph box. Reading content scrolls
+   inside the preserved box until the reader deliberately closes the card. */
+.context-tree-card.has-fixed-open-footprint.is-detail-open:not(.is-editing) {
+	height: var(--ct-open-card-height);
+	min-height: 0;
+	overflow: hidden;
+}
+
+.context-tree-card.has-fixed-open-footprint.is-detail-open:not(.is-editing) .context-tree-detail-wrap {
+	flex: 1;
+	min-height: 0;
+	max-height: none;
+	overflow: auto;
+	scrollbar-gutter: stable;
+	overscroll-behavior: contain;
+}
+
 .context-tree-card.is-editing:focus-within {
 	border-color: var(--interactive-accent);
 	box-shadow:

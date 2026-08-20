@@ -6,8 +6,9 @@
 
 1. 일반 카드 클릭은 **제자리에서** Reading 카드를 열거나 닫는다. 클릭은 카메라를 이동시키지 않으며, 막 열린 카드의 그래프 좌표는 고정한다. 카드 크기가 바뀐 뒤에는 주변 카드만 충돌 여유 공간을 갱신할 수 있다.
 2. 관계 칩 탐색과 검색 결과 선택처럼 사용자가 명시적으로 `이동`을 선택한 경우에만 카메라를 해당 카드로 이동한다. 카메라 이동도 카드 좌표나 물리 배치를 바꾸지 않는다.
-3. Reading과 Source는 같은 카드의 두 표현이다. 전환 중 카드의 외곽 폭·높이와 다른 카드의 좌표는 유지된다. Source 편집기는 카드 내부에서만 스크롤한다.
+3. Reading과 Source는 같은 카드의 두 표현이다. Source에 들어갈 때 확정한 외곽 폭·높이는 Markdown을 수정하고 Reading으로 돌아와도 카드를 닫을 때까지 유지한다. 바뀐 내용이 길어지면 Source와 Reading 모두 카드 내부에서만 스크롤하며 카드와 다른 카드의 좌표를 바꾸지 않는다.
 4. Markdown 상세가 아직 렌더링·펼침 중이면 Source 전환은 완성된 Reading 높이를 얻을 때까지 기다린다. 중간 애니메이션 높이를 저장하지 않는다.
+5. **더보기 → 원본을 오른쪽에서 열기**는 같은 Markdown 노트를 현재 그래프 오른쪽의 세로 분할 pane에 연다. 이 탐색은 그래프 좌표·카메라·관계를 바꾸지 않는다.
 
 ## 포인터와 키보드
 
@@ -36,7 +37,8 @@
 | 계약 범위 | 구현 경계 | 자동 검증 |
 | --- | --- | --- |
 | 제자리 열기와 명시적 탐색 | `card-open-action.ts`, `ContextTreeView.openNode()` | `card-open-action.test.ts` |
-| Reading ↔ Source 풋프린트 | `reading-card-layout.ts`, `TopicCardRenderer.waitForStableReadingCardHeight()` | `reading-card-layout.test.ts`, `inline-editor-layout.test.ts` |
+| Reading ↔ Source 풋프린트 | `reading-card-layout.ts`, `inline-editor-layout.ts`, `TopicCardRenderer.waitForStableReadingCardHeight()` | `reading-card-layout.test.ts`, `inline-editor-layout.test.ts` |
+| 오른쪽 원본 pane | `TopicCardRenderer.createMoreMenu()`, `ContextTreeView.openSourceFileBesideGraph()` | `copy.test.ts`, Desktop UI 검증 |
 | 카드 표면·본문 드래그 구분 | `card-pointer-action.ts` | `card-pointer-action.test.ts` |
 | 배경 클릭·드래그 구분 | `canvas-pointer-action.ts` | `canvas-pointer-action.test.ts` |
 | 휠 소유권 | `canvas-wheel-target.ts`, `canvas-wheel-action.ts` | `canvas-wheel-target.test.ts`, `canvas-wheel-action.test.ts` |
@@ -56,7 +58,8 @@ Obsidian에서 플러그인을 다시 활성화한다. 짧은 카드와 화면�
 2. **Reading 이동:** 열린 카드의 테두리 또는 여백을 끌면 그 카드만 이동한다. 본문
    Markdown을 드래그하면 텍스트 선택이 유지되고, 빈 캔버스를 끌면 캔버스만 이동한다.
 3. **Source 전환:** 긴 카드를 Source로 전환했을 때 카드 외곽 폭·높이와 다른 카드의
-   좌표가 유지된다. 내용은 카드 내부에서만 스크롤되고 상단 제어 아이콘과 겹치지 않는다.
+   좌표가 유지된다. 내용을 추가·삭제하고 Reading으로 돌아와도 외곽과 좌표는 그대로이며,
+   내용은 카드 내부에서만 스크롤되고 상단 제어 아이콘과 겹치지 않는다.
 4. **휠 소유권:** Source textarea에 포커스를 둔 채 포인터를 편집기 위와 배경 위로 각각
    옮겨 휠을 사용한다. 전자는 편집기만 스크롤하고 후자는 포커스와 무관하게 그래프만
    확대·축소한다. 검색 패널 위 휠은 검색 결과의 고유 스크롤을 유지한다.
@@ -65,3 +68,5 @@ Obsidian에서 플러그인을 다시 활성화한다. 짧은 카드와 화면�
    동작으로 닫히거나 포커스를 빼앗기지 않는다.
 6. **관계 안전:** 연결점은 다른 카드 위에 놓을 때만 관계를 만든다. 선택된 단일 직접
    관계 끝점만 빈 캔버스에 놓아 제거할 수 있으며, 카드·도구·그래프 밖에 놓으면 취소된다.
+7. **원본 pane:** 카드의 **더보기 → 원본을 오른쪽에서 열기**를 선택하면 같은 노트가
+   오른쪽 세로 분할에 열리고, 그래프 카드·카메라·관계는 그대로 남는다.

@@ -20,3 +20,12 @@ export function inlineEditorCardHeight(measuredHeight: number, source: string): 
 		Math.max(MIN_INLINE_EDITOR_HEIGHT, Math.ceil(measuredHeight), sourceEstimate),
 	);
 }
+
+/**
+ * Source and Reading are two projections of one open card. Once Source has
+ * captured the Reading footprint, keep that exact outer box until the card is
+ * closed; changed Markdown may scroll inside it but must not move the graph.
+ */
+export function retainsInlineEditorFootprint(isOpen: boolean, hasEnteredSource: boolean): boolean {
+	return isOpen && hasEnteredSource;
+}

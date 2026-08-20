@@ -108,6 +108,7 @@ export class ContextTreeView extends FileView {
 		visibility: GraphSearchVisibility;
 	};
 	private paintFrame?: number;
+	private sourceLeaf?: WorkspaceLeaf;
 	private readonly relationFilter = new Set<GraphRelationType>(["derived", ...RELATION_TYPES]);
 	private searchPanel?: HTMLElement;
 
@@ -121,6 +122,7 @@ export class ContextTreeView extends FileView {
 			onConnectionCandidate: (nodeId, anchor) => this.setConnectionCandidate(nodeId, anchor),
 			onPin: (node) => void this.toggleCardPin(node),
 			onEdit: (node) => void this.toggleInlineMarkdownEditor(node),
+			onOpenSource: (node) => void this.openNodeSourceBesideGraph(node),
 			onMoveToTrash: (node) => void this.deleteFromCard(node),
 			onOpenInternalLink: (event, sourcePath) => this.openInternalLink(event, sourcePath),
 			onNavigateConnection: (nodeId) => void this.navigateToNode(nodeId),
@@ -823,7 +825,38 @@ export class ContextTreeView extends FileView {
 	private async openInlineMarkdownSource(): Promise<void> {
 		const edit = this.inlineEdit;
 		if (!edit) return;
-		await this.app.workspace.getLeaf("tab").openFile(edit.file);
+		await this.openSourceFileBesideGraph(edit.file);
+	}
+
+	private async openNodeSourceBesideGraph(node: ContextTreeNode): Promise<void> {
+		this.cards.closeMenus();
+		if (this.inlineEdit?.nodeId === node.id) await this.finishInlineMarkdownEditor();
+		const file = this.app.vault.getAbstractFileByPath(node.path);
+		if (!(file instanceof TFile)) {
+			new Notice(COPY.notice.sourceMissing);
+			return;
+		}
+		await this.openSourceFileBesideGraph(file);
+	}
+
+	private async openSourceFileBesideGraph(file: TFile): Promise<void> {
+		try {
+			let leafIsOpen = false;
+			if (this.sourceLeaf) {
+				this.app.workspace.iterateAllLeaves((candidate) => {
+					if (candidate === this.sourceLeaf) leafIsOpen = true;
+				});
+			}
+			const leaf = leafIsOpen && this.sourceLeaf
+				? this.sourceLeaf
+				: this.app.workspace.getLeaf("split", "vertical");
+			this.sourceLeaf = leaf;
+			await leaf.openFile(file, { active: true });
+			await this.app.workspace.revealLeaf(leaf);
+		} catch (error) {
+			console.error("Context Graph: failed to open source beside graph", error);
+			new Notice(COPY.notice.openSourceFailed);
+		}
 	}
 
 	private openPendingEditor(): void {
