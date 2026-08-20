@@ -333,7 +333,6 @@ export class ContextTreeView extends FileView {
 
 	private createGraphControls(parent: HTMLElement): void {
 		const controls = parent.createDiv({ cls: "context-tree-graph-controls" });
-		this.createIconControl(controls, "layers-3", COPY.actions.manageGraphs, () => this.openGraphWorkspaceModal());
 		this.createIconControl(controls, "search", COPY.actions.searchGraph, () => this.toggleSearchPanel("search"));
 		this.createIconControl(controls, "sliders-horizontal", COPY.actions.filterRelations, () => this.toggleSearchPanel("filter"));
 		this.createIconControl(controls, "file-plus-2", COPY.actions.newCard, () => this.createInlineTopic());
