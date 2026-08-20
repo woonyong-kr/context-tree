@@ -29,6 +29,11 @@ The audit must report no production dependency vulnerabilities, and the final
 two commands must produce no output. Review the generated `main.js` locally;
 it is intentionally ignored and must never be committed.
 
+Complete the [Desktop release regression procedure](ux-contract.md#desktop-릴리스-회귀-절차)
+in a local Obsidian vault and retain its results with the release record. The
+automated suite cannot independently prove pointer coordinates, final rendered
+geometry, or Obsidian's native scrolling behaviour.
+
 ## Publish a version
 
 Use `npm version` to keep the package, manifest, and compatibility map in

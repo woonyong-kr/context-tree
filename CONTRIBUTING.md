@@ -14,6 +14,8 @@ Markdown in the vault as the only durable source of truth.
 4. Run `npm run check`.
 5. For an interaction change, manually verify desktop Obsidian: opening and
    closing a card, editing Markdown, pan/zoom, and the affected graph gesture.
+   The exact release-grade sequence is in the [UX contract's Desktop regression
+   procedure](docs/ux-contract.md#desktop-릴리스-회귀-절차).
 
 ## Pull request expectations
 
