@@ -517,7 +517,7 @@
 	   card interior, not a second panel placed inside it. */
 	padding: 0;
 	overflow: hidden;
-	cursor: default;
+	cursor: grab;
 }
 
 /* Preserve an opened card's exact graph footprint across Reading ↔ Source.
@@ -599,6 +599,7 @@
 	overflow: auto;
 	scrollbar-gutter: stable;
 	overscroll-behavior: contain;
+	cursor: default;
 }
 
 .context-tree-markdown-editor:focus {

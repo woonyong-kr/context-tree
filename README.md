@@ -116,7 +116,7 @@ Older notes using `context_tree_summary` in YAML are read for compatibility. Con
 | Click a card | Open or close its Markdown details in place. Clicking empty canvas closes the current detail card. |
 | Drag empty canvas | Pan the graph. |
 | Drag a compact card | Move that graph node and persist its deliberate position. |
-| Drag the frame or padding of a compact or expanded reading card | Move that graph node without changing the camera. Markdown text keeps native selection and copy behaviour. |
+| Drag a card frame, Reading padding, or the Source toolbar gap | Move that graph node whether or not the open card is pinned, without changing the camera. Markdown text and the Source editor keep native selection, editing, and scrolling. |
 | Mouse wheel or the controls | Scroll the Source editor when the pointer is over that editor; otherwise zoom at the pointer or graph centre, regardless of the focused control. The lower zoom bound follows the current overview, so a large graph can always be fitted. Keyboard `Ctrl`/`Command` + `+`/`-` also works while the graph has focus. |
 | Layers control | Create or switch an independent graph, then add an existing opted-in note without moving or duplicating its Markdown file. |
 | Search / filter controls | Search card title, summary, and body; keep direct context visible; choose which relation types are drawn. |
