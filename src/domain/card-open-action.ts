@@ -7,10 +7,12 @@ export type CardOpenIntent = "open-in-place" | "navigate-to-card";
 
 export interface CardOpenEffects {
 	movesCamera: boolean;
+	/** A user interaction must win over an initial asynchronous overview fit. */
+	cancelsPendingOverviewFit: boolean;
 }
 
 export function cardOpenEffects(intent: CardOpenIntent): CardOpenEffects {
 	return intent === "navigate-to-card"
-		? { movesCamera: true }
-		: { movesCamera: false };
+		? { movesCamera: true, cancelsPendingOverviewFit: true }
+		: { movesCamera: false, cancelsPendingOverviewFit: true };
 }

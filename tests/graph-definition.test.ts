@@ -26,6 +26,7 @@ test("a definition file never uses a filesystem traversal name", () => {
 
 	assert.equal(graph.id, "graph");
 	assert.equal(graphDefinitionFileName({ id: graph.id, name: ".." }), "graph.context-graph");
+	assert.equal(graphDefinitionFileName({ id: "../private", name: "..." }), "..-private.context-graph");
 });
 
 test("same display names receive separate graph definition files", () => {

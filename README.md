@@ -32,7 +32,7 @@ Context Graph is distributed as a standard Obsidian plugin release.
 2. Create `<vault>/.obsidian/plugins/context-graph/`.
 3. Copy all three files into that directory.
 4. Restart or reload Obsidian, then enable **Context Graph** in **Settings → Community plugins**.
-5. Run **Context Graph: 지식 그래프 열기** from the command palette or select the ribbon icon.
+5. Run **Context Graph: 기본 지식 그래프 열기** from the command palette or select the ribbon icon.
 
 If you used the pre-0.4.0 local build, move its three plugin files and `data.json` from `.obsidian/plugins/context-tree/` to `.obsidian/plugins/context-graph/`, then replace `context-tree` with `context-graph` in `.obsidian/community-plugins.json` before reloading Obsidian.
 
@@ -116,13 +116,13 @@ Older notes using `context_tree_summary` in YAML are read for compatibility. Con
 | Click a card | Open or close its Markdown details in place. Clicking empty canvas closes the current detail card. |
 | Drag empty canvas | Pan the graph. |
 | Drag a compact card | Move that graph node and persist its deliberate position. |
-| Drag ordinary space in an expanded reading card | Pan the graph without closing the card. Markdown links, controls, and source editing keep their native interaction. |
-| Mouse wheel or the controls | Zoom at the pointer or graph centre. The lower zoom bound follows the current overview, so a large graph can always be fitted. Keyboard `Ctrl`/`Command` + `+`/`-` also works while the graph has focus. |
+| Drag the frame or padding of a compact or expanded reading card | Move that graph node without changing the camera. Markdown text keeps native selection and copy behaviour. |
+| Mouse wheel or the controls | Scroll the Source editor when the pointer is over that editor; otherwise zoom at the pointer or graph centre, regardless of the focused control. The lower zoom bound follows the current overview, so a large graph can always be fitted. Keyboard `Ctrl`/`Command` + `+`/`-` also works while the graph has focus. |
 | Layers control | Create or switch an independent graph, then add an existing opted-in note without moving or duplicating its Markdown file. |
 | Search / filter controls | Search card title, summary, and body; keep direct context visible; choose which relation types are drawn. |
 | New card control or double-click empty canvas | Create a blank graph note and start its in-card Markdown editing. |
 | Hover a card, then drag its magnetic edge point onto another card | Add a peer `related` link, stored in the card where the drag began. Existing lines and the drag preview attach to the same precise card perimeter points. Hovering a card reveals its existing relationship endpoints; a click selects one relationship. |
-| Pencil | Toggle full source Markdown editing inside the expanded card. Clicking another card or empty canvas finishes editing and returns to reading mode. This is an in-card editor, not Obsidian's full native editor surface. |
+| Pencil | Toggle full source Markdown editing inside the expanded card. A background click or another card finishes a non-pinned edit and returns it to Reading; a pinned Source card remains available as a reference. This is an in-card editor, not Obsidian's full native editor surface. |
 | Vertical `…` menu | Move a topic to Obsidian's configured trash after confirmation. |
 | Relation chip | Centre and open the linked card. |
 | Existing relationship endpoint | Click an existing endpoint to select its peer edge and reveal both precise endpoints. For a single authored relationship only, drag either selected endpoint onto empty canvas to remove that exact Markdown relationship. Multiple relations merged into one visual line are never deleted by this gesture. Dropping over a card or a graph control cancels the gesture. |
@@ -142,6 +142,8 @@ Markdown is the source of truth.
 Graph definitions and view state are local plugin settings: graph name, scope, physics, camera, and pinned card positions are intentionally independent from the Markdown notes. This lets the same Markdown remain reusable across distinct views, but those graph-workspace settings do not currently travel with a copied note unless the plugin data is also copied.
 
 The plugin has no network client, telemetry, remote-code loader, or hidden document store. It uses Obsidian's Vault and frontmatter APIs only for the files you opt in.
+
+For the full local-data boundary and vulnerability reporting process, see [SECURITY.md](SECURITY.md).
 
 ## Scope and current limitations
 
@@ -173,6 +175,8 @@ Copy the generated `main.js`, plus `manifest.json` and `styles.css`, to:
 ```
 
 Then reload Obsidian. `main.js` is a generated release artifact and is intentionally not committed to this repository.
+
+Maintainers should follow the [release and Community directory process](docs/release-process.md) before publishing a version.
 
 ## Project structure
 

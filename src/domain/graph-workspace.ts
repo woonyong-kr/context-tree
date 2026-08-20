@@ -1,4 +1,4 @@
-import { DEFAULT_GRAPH_PHYSICS, GraphPhysics } from "../graph/simulation";
+import { DEFAULT_GRAPH_PHYSICS, GRAPH_PHYSICS_LIMITS, GraphPhysics } from "../graph/simulation";
 
 /**
  * A graph is a saved lens over Markdown notes, never a second copy of them.
@@ -29,12 +29,26 @@ export interface GraphViewState {
 
 export type GraphScopeInput = Partial<GraphScope> & Pick<GraphScope, "kind">;
 
+function recordFrom(value: unknown): Record<string, unknown> | undefined {
+	return value && typeof value === "object" && !Array.isArray(value)
+		? value as Record<string, unknown>
+		: undefined;
+}
+
+function finiteNumber(value: unknown): number | undefined {
+	return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
 function normalizedPath(path: string): string {
 	return path.trim().replace(/^\/+|\/+$/g, "");
 }
 
-function uniquePaths(paths: readonly string[]): string[] {
-	return [...new Set(paths.map(normalizedPath).filter(Boolean))];
+function uniquePaths(paths: unknown): string[] {
+	if (!Array.isArray(paths)) return [];
+	return [...new Set(paths
+		.filter((path): path is string => typeof path === "string")
+		.map(normalizedPath)
+		.filter(Boolean))];
 }
 
 function scopeFrom(input: GraphScopeInput): GraphScope {
@@ -46,7 +60,23 @@ function scopeFrom(input: GraphScopeInput): GraphScope {
 	};
 }
 
-function slug(text: string): string {
+function graphPhysicsFrom(input: unknown): GraphPhysics {
+	const candidate = recordFrom(input);
+	const bounded = (value: unknown, key: keyof GraphPhysics): number => {
+		const number = finiteNumber(value);
+		const limits = GRAPH_PHYSICS_LIMITS[key];
+		if (number === undefined) return DEFAULT_GRAPH_PHYSICS[key];
+		return Math.min(limits.max, Math.max(limits.min, number));
+	};
+	return {
+		linkStrength: bounded(candidate?.linkStrength, "linkStrength"),
+		repulsion: bounded(candidate?.repulsion, "repulsion"),
+		linkGap: bounded(candidate?.linkGap, "linkGap"),
+	};
+}
+
+/** Normalises a graph identifier before it can become a settings or Vault key. */
+export function graphWorkspaceId(text: string): string {
 	// Keep Unicode letters so independently named Korean workspaces do not all
 	// collapse into `graph`, while still excluding path separators and filename
 	// characters that are unsafe in a vault folder.
@@ -58,13 +88,17 @@ function slug(text: string): string {
 		.replace(/-+/g, "-")
 		.replace(/^-+|-+$/g, "");
 	// `.` and `..` are legal-looking after separator removal but are directory
-	// traversal segments on every supported filesystem.
-	return safe === "." || safe === ".." || !safe ? "graph" : safe;
+	// traversal segments on every supported filesystem. These object prototype
+	// keys are equally unsafe because graph ids index persisted plain objects.
+	return safe === "." || safe === ".." || safe === "__proto__"
+		|| safe === "constructor" || safe === "prototype" || !safe
+		? "graph"
+		: safe;
 }
 
 function nextId(name: string, existingIds: readonly string[]): string {
 	const used = new Set(existingIds);
-	const base = slug(name);
+	const base = graphWorkspaceId(name);
 	if (!used.has(base)) return base;
 	let index = 2;
 	while (used.has(`${base}-${index}`)) index += 1;
@@ -90,7 +124,7 @@ export function createGraphWorkspace(
 		id,
 		name: normalizedName,
 		scope: normalizedScope,
-		physics: { ...DEFAULT_GRAPH_PHYSICS, ...physics },
+		physics: graphPhysicsFrom(physics),
 	};
 }
 
@@ -101,6 +135,46 @@ export function createGraphWorkspace(
  */
 export function graphNoteFolder(graph: Pick<GraphWorkspace, "id" | "scope">): string {
 	return graph.scope.folders[0] ?? `maps/context-graph/${graph.id}`;
+}
+
+/**
+ * Local view state is an optimisation, not source data. Reject partial or
+ * malformed persisted state so an old/corrupt settings file cannot create NaN
+ * transforms or accidentally restore another graph's camera.
+ */
+export function migrateGraphViewStates(stored: unknown, graphIds: readonly string[]): Record<string, GraphViewState> {
+	const candidates = recordFrom(stored);
+	if (!candidates) return {};
+	const migrated: Record<string, GraphViewState> = {};
+	for (const graphId of new Set(graphIds)) {
+		const candidate = recordFrom(candidates[graphId]);
+		const pan = recordFrom(candidate?.pan);
+		const zoom = finiteNumber(candidate?.zoom);
+		const positions = recordFrom(candidate?.positions);
+		const panX = finiteNumber(pan?.x);
+		const panY = finiteNumber(pan?.y);
+		if (panX === undefined || panY === undefined || zoom === undefined || zoom <= 0 || !positions) continue;
+		const validPositions: GraphViewState["positions"] = {};
+		for (const [nodeId, value] of Object.entries(positions)) {
+			const position = recordFrom(value);
+			const x = finiteNumber(position?.x);
+			const y = finiteNumber(position?.y);
+			if (x === undefined || y === undefined) continue;
+			validPositions[nodeId] = { x, y, pinned: position?.pinned === true };
+		}
+		const focusedNodeId = typeof candidate?.focusedNodeId === "string" ? candidate.focusedNodeId : undefined;
+		const pinnedOpenNodeIds = Array.isArray(candidate?.pinnedOpenNodeIds)
+			? [...new Set(candidate.pinnedOpenNodeIds.filter((nodeId): nodeId is string => typeof nodeId === "string"))]
+			: undefined;
+		migrated[graphId] = {
+			pan: { x: panX, y: panY },
+			zoom,
+			...(focusedNodeId ? { focusedNodeId } : {}),
+			...(pinnedOpenNodeIds ? { pinnedOpenNodeIds } : {}),
+			positions: validPositions,
+		};
+	}
+	return migrated;
 }
 
 function isInFolder(path: string, folder: string): boolean {
@@ -155,12 +229,17 @@ export function migrateGraphWorkspaces(
 	legacyPhysics: GraphPhysics | undefined,
 ): GraphWorkspace[] {
 	if (Array.isArray(stored) && stored.every(isGraphWorkspace) && stored.length > 0) {
-		return stored.map((graph, index) => ({
-			id: graph.id.trim() || `graph-${index + 1}`,
-			name: graph.name.trim() || "지식 그래프",
-			scope: scopeFrom(graph.scope),
-			physics: { ...DEFAULT_GRAPH_PHYSICS, ...graph.physics },
-		}));
+		const ids: string[] = [];
+		return stored.map((graph, index) => {
+			const id = nextId(graph.id.trim() || `graph-${index + 1}`, ids);
+			ids.push(id);
+			return {
+				id,
+				name: graph.name.trim() || "지식 그래프",
+				scope: scopeFrom(graph.scope),
+				physics: graphPhysicsFrom(graph.physics),
+			};
+		});
 	}
 	const folder = normalizedPath(legacySourceFolder ?? "");
 	return [createGraphWorkspace(

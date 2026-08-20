@@ -34,6 +34,13 @@ export const DEFAULT_GRAPH_PHYSICS: GraphPhysics = {
 	linkGap: 100,
 };
 
+/** One source of truth for the persisted values and Settings slider limits. */
+export const GRAPH_PHYSICS_LIMITS = {
+	linkStrength: { min: 0.1, max: 1, step: 0.02 },
+	repulsion: { min: 200, max: 1800, step: 20 },
+	linkGap: { min: 20, max: 260, step: 10 },
+} as const satisfies Record<keyof GraphPhysics, { min: number; max: number; step: number }>;
+
 export interface CardSize {
 	width: number;
 	height: number;

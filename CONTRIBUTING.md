@@ -29,3 +29,6 @@ Markdown in the vault as the only durable source of truth.
 Use semantic versions in `package.json` and `manifest.json`. The GitHub tag
 must exactly equal `manifest.json.version` (without a leading `v`), and
 `versions.json` must contain the matching minimum Obsidian version.
+
+Follow [the release process](docs/release-process.md) for the required local
+verification, release artifact, provenance, and Community directory checks.

@@ -352,7 +352,7 @@ export class TopicCardRenderer {
 		const title = card.querySelector<HTMLElement>(".context-tree-title");
 		if (!title) return;
 		card.removeClass("has-wrapped-title");
-		const quickActionSpace = 44;
+		const quickActionSpace = 44; // Reserved width for the fixed overflow menu rail.
 		const desired = Math.max(276, this.measureTitleWidth(title, titleText) + 32 + quickActionSpace);
 		const viewportWidth = card.closest<HTMLElement>(".context-tree-viewport")?.clientWidth ?? 500;
 		const maximum = Math.min(500, Math.max(160, viewportWidth - 32));

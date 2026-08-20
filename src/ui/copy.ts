@@ -95,6 +95,11 @@ export function cardToggleLabel(title: string): string {
 	return `${title} 카드 열기 또는 닫기`;
 }
 
+/** Settings API renders graph controls without the legacy graph heading. */
+export function graphPhysicsSettingName(graphName: string, settingName: string): string {
+	return `${graphName} · ${settingName}`;
+}
+
 export function movedToTrashNotice(title: string): string {
 	return `${title} 카드를 삭제했습니다.`;
 }

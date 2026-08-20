@@ -7,7 +7,7 @@ import {
 	parseGraphDefinition,
 	serializeGraphDefinition,
 } from "./domain/graph-definition";
-import { createGraphWorkspace, GraphScopeInput, GraphViewState, GraphWorkspace, graphScopeIncludesPath, includePathInScope, migrateGraphWorkspaces } from "./domain/graph-workspace";
+import { createGraphWorkspace, GraphScopeInput, GraphViewState, GraphWorkspace, graphScopeIncludesPath, includePathInScope, migrateGraphViewStates, migrateGraphWorkspaces } from "./domain/graph-workspace";
 import { GraphPhysics } from "./graph/simulation";
 import { ContextTreeSettingTab, ContextTreeSettings, DEFAULT_SETTINGS } from "./settings";
 import { GraphWorkspaceModal } from "./topic-modals";
@@ -78,7 +78,7 @@ export default class ContextTreePlugin extends Plugin {
 			defaultGraphId: graphs.some((graph) => graph.id === stored?.defaultGraphId)
 				? stored!.defaultGraphId!
 				: graphs[0]!.id,
-			viewStates: stored?.viewStates ?? {},
+			viewStates: migrateGraphViewStates(stored?.viewStates, graphs.map((graph) => graph.id)),
 		};
 	}
 
@@ -301,7 +301,7 @@ export default class ContextTreePlugin extends Plugin {
 	private async writeGraphDefinition(graph: GraphWorkspace): Promise<void> {
 		const existing = this.graphDefinitionFile(graph.id);
 		if (existing) {
-			await this.app.vault.modify(existing, serializeGraphDefinition(graph));
+			await this.app.vault.process(existing, () => serializeGraphDefinition(graph));
 			return;
 		}
 		await this.ensureFolder(GRAPH_DEFINITION_FOLDER);
@@ -310,7 +310,7 @@ export default class ContextTreePlugin extends Plugin {
 		if (file instanceof TFile) {
 			const existingGraph = parseGraphDefinition(await this.app.vault.cachedRead(file));
 			if (existingGraph?.id === graph.id) {
-				await this.app.vault.modify(file, serializeGraphDefinition(graph));
+				await this.app.vault.process(file, () => serializeGraphDefinition(graph));
 				this.definitionPaths.set(graph.id, file.path);
 				return;
 			}
@@ -338,7 +338,6 @@ export default class ContextTreePlugin extends Plugin {
 	private async waitForIndexedFile(path: string): Promise<TFile | undefined> {
 		let candidate = this.app.vault.getAbstractFileByPath(path);
 		if (candidate instanceof TFile) return candidate;
-		if (!(await this.app.vault.adapter.exists(path))) return undefined;
 		for (const delay of [20, 40, 80, 160]) {
 			await new Promise<void>((resolve) => window.setTimeout(resolve, delay));
 			candidate = this.app.vault.getAbstractFileByPath(path);

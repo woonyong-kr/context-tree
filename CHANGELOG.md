@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Keep a newly opened reader card at its graph coordinate, cancel delayed automatic overview fitting after a card interaction, and preserve the same card footprint when switching between Reading and Source.
+- Make wheel ownership follow the pointer, including independently scrolling the Source editor under the pointer when multiple pinned editors are open.
+- Validate persisted graph IDs, graph definitions, physics, scopes, and view state before they become Vault paths, object keys, or graph transforms.
+- Label searchable physics controls with their graph name so identically named controls remain unambiguous in current Obsidian settings UI.
+- Align README interaction guidance with the UX contract and replace direct Vault modification/adapter probing with Obsidian-recommended Vault APIs.
+
 ## 0.4.0
 
 - Rename the local plugin identity to **Context Graph** (`context-graph`) and document the installation migration from the old `context-tree` folder.

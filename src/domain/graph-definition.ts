@@ -1,4 +1,4 @@
-import { GraphWorkspace, migrateGraphWorkspaces } from "./graph-workspace";
+import { graphWorkspaceId, GraphWorkspace, migrateGraphWorkspaces } from "./graph-workspace";
 
 /**
  * Context Graph workspaces are first-class Vault files. The custom extension
@@ -21,7 +21,7 @@ export function graphDefinitionFileName(graph: Pick<GraphWorkspace, "id" | "name
 		.replace(/\s+/g, " ")
 		.replace(/^\.+|\.+$/g, "")
 		.trim();
-	return `${stem || graph.id || "지식 그래프"}.${GRAPH_DEFINITION_EXTENSION}`;
+	return `${stem || graphWorkspaceId(graph.id) || "지식 그래프"}.${GRAPH_DEFINITION_EXTENSION}`;
 }
 
 export function graphDefinitionPath(graph: Pick<GraphWorkspace, "id" | "name">): string {

@@ -885,6 +885,7 @@ export class ContextTreeView extends FileView {
 		}
 		this.syncCards();
 		const effects = cardOpenEffects(intent);
+		if (effects.cancelsPendingOverviewFit) this.fitWhenMeasured = false;
 		if (effects.movesCamera) this.focusNode(nodeId);
 		this.setViewTimeout(() => this.scheduleMeasure(), 220);
 		this.setViewTimeout(() => this.scheduleMeasure(), 520);
@@ -1545,11 +1546,16 @@ export class ContextTreeView extends FileView {
 			this.createInlineTopic();
 		});
 		viewport.addEventListener("wheel", (event) => {
-			const editorScroller = viewport.querySelector<HTMLElement>(".context-tree-markdown-editor-scroll");
 			// Obsidian can retain the focused textarea as event.target after the
 			// pointer has left the card. Wheel ownership must follow the pointer,
 			// so inspect the element at its actual viewport coordinates first.
 			const pointerTarget = document.elementFromPoint(event.clientX, event.clientY) ?? event.target;
+			// Multiple pinned Source cards can exist at once. The scrollport must
+			// belong to the card under the pointer, not whichever editor was first
+			// in the viewport DOM.
+			const editorScroller = pointerTarget instanceof Element
+				? pointerTarget.closest<HTMLElement>(".context-tree-markdown-editor-scroll")
+				: undefined;
 			const isOverEditor = pointerTarget instanceof Element && !!pointerTarget.closest(".context-tree-markdown-editor-scroll");
 			const isOverSearch = pointerTarget instanceof Element && !!pointerTarget.closest(".context-tree-search-panel");
 			const action = canvasWheelAction({

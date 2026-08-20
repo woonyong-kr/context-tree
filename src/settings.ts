@@ -1,8 +1,8 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import { GraphPhysics } from "./graph/simulation";
+import { GRAPH_PHYSICS_LIMITS, GraphPhysics } from "./graph/simulation";
 import { GraphViewState, GraphWorkspace } from "./domain/graph-workspace";
 import ContextTreePlugin from "./main";
-import { COPY } from "./ui/copy";
+import { COPY, graphPhysicsSettingName } from "./ui/copy";
 
 export interface ContextTreeSettings {
 	graphs: GraphWorkspace[];
@@ -37,18 +37,18 @@ export class ContextTreeSettingTab extends PluginSettingTab {
 	 */
 	getSettingDefinitions(): unknown[] {
 		return this.plugin.settings.graphs.flatMap((graph) => [
-			this.physicsDefinition(graph, COPY.settings.linkStrengthName, COPY.settings.linkStrengthDescription, "linkStrength", 0.1, 1, 0.02),
-			this.physicsDefinition(graph, COPY.settings.repulsionName, COPY.settings.repulsionDescription, "repulsion", 200, 1800, 20),
-			this.physicsDefinition(graph, COPY.settings.linkGapName, COPY.settings.linkGapDescription, "linkGap", 20, 260, 10),
+			this.physicsDefinition(graph, COPY.settings.linkStrengthName, COPY.settings.linkStrengthDescription, "linkStrength", true),
+			this.physicsDefinition(graph, COPY.settings.repulsionName, COPY.settings.repulsionDescription, "repulsion", true),
+			this.physicsDefinition(graph, COPY.settings.linkGapName, COPY.settings.linkGapDescription, "linkGap", true),
 		]);
 	}
 
 	private renderGraphPhysics(container: HTMLElement, graph: GraphWorkspace): void {
 		new Setting(container).setName(graph.name).setHeading();
 		container.createEl("p", { cls: "setting-item-description", text: COPY.settings.physicsDescription });
-		this.addPhysicsSlider(new Setting(container), graph, COPY.settings.linkStrengthName, COPY.settings.linkStrengthDescription, "linkStrength", 0.1, 1, 0.02);
-		this.addPhysicsSlider(new Setting(container), graph, COPY.settings.repulsionName, COPY.settings.repulsionDescription, "repulsion", 200, 1800, 20);
-		this.addPhysicsSlider(new Setting(container), graph, COPY.settings.linkGapName, COPY.settings.linkGapDescription, "linkGap", 20, 260, 10);
+		this.addPhysicsSlider(new Setting(container), graph, COPY.settings.linkStrengthName, COPY.settings.linkStrengthDescription, "linkStrength");
+		this.addPhysicsSlider(new Setting(container), graph, COPY.settings.repulsionName, COPY.settings.repulsionDescription, "repulsion");
+		this.addPhysicsSlider(new Setting(container), graph, COPY.settings.linkGapName, COPY.settings.linkGapDescription, "linkGap");
 	}
 
 	private physicsDefinition(
@@ -56,14 +56,12 @@ export class ContextTreeSettingTab extends PluginSettingTab {
 		name: string,
 		desc: string,
 		key: keyof GraphPhysics,
-		min: number,
-		max: number,
-		step: number,
+		includeGraphName = false,
 	): unknown {
 		return {
-			name,
+			name: includeGraphName ? graphPhysicsSettingName(graph.name, name) : name,
 			desc,
-			render: (setting: Setting) => this.addPhysicsSlider(setting, graph, name, desc, key, min, max, step),
+			render: (setting: Setting) => this.addPhysicsSlider(setting, graph, name, desc, key),
 		};
 	}
 
@@ -73,15 +71,13 @@ export class ContextTreeSettingTab extends PluginSettingTab {
 		name: string,
 		description: string,
 		key: keyof GraphPhysics,
-		min: number,
-		max: number,
-		step: number,
 	): void {
+		const limits = GRAPH_PHYSICS_LIMITS[key];
 		setting
 			.setName(name)
 			.setDesc(description)
 			.addSlider((slider) => slider
-				.setLimits(min, max, step)
+				.setLimits(limits.min, limits.max, limits.step)
 				.setValue(graph.physics[key])
 				.setDynamicTooltip()
 				.onChange((value) => {
