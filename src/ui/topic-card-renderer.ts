@@ -1,6 +1,7 @@
 import { App, Component, MarkdownRenderer, setIcon } from "obsidian";
 import { cardPointerAction } from "../domain/card-pointer-action";
 import { inlineEditorCardHeight } from "../domain/inline-editor-layout";
+import { settledReadingCardHeight } from "../domain/reading-card-layout";
 import { CardAnchor, cardAnchorAtPoint } from "../graph/simulation";
 import { ContextTreeNode } from "../types";
 import { COPY, cardToggleLabel } from "./copy";
@@ -14,7 +15,6 @@ export interface TopicCardRendererCallbacks {
 	onToggle: (nodeId: string) => void;
 	onOpen: (nodeId: string) => void;
 	onCardDragStart: (event: PointerEvent, node: ContextTreeNode) => void;
-	onOpenCardPanStart: (event: PointerEvent, node: ContextTreeNode) => void;
 	onConnectionStart: (event: PointerEvent, node: ContextTreeNode, anchor: CardAnchor) => void;
 	onConnectionCandidate: (nodeId?: string, anchor?: CardAnchor) => void;
 	onPin: (node: ContextTreeNode) => void;
@@ -60,6 +60,8 @@ export interface InlineMarkdownEditorCallbacks {
  */
 export class TopicCardRenderer {
 	private readonly renderedDetails = new Set<string>();
+	private readonly detailReady = new Set<string>();
+	private readonly detailRenderings = new Map<string, Promise<void>>();
 	private activeMenu?: { wrap: HTMLElement; trigger: HTMLButtonElement; menu: HTMLElement };
 
 	constructor(
@@ -101,16 +103,17 @@ export class TopicCardRenderer {
 			const target = event.target;
 			if (!(target instanceof Element)) return;
 			const action = cardPointerAction({
-				isOpen: card.hasClass("is-detail-open"),
 				isEditing: card.hasClass("is-editing"),
 				// The title/summary owns the primary click that opens a card. Do not
-				// capture it as a graph drag or pan gesture: pointer capture can cause
+				// capture it as a graph drag gesture: pointer capture can cause
 				// browsers to cancel the button click after the gesture target changes.
-				// The card's surrounding surface remains the drag/pan affordance.
+				// The surrounding card surface stays draggable in both Reading states.
 				isInteractiveTarget: !!target.closest("a, input, textarea, select, [contenteditable=true], .context-tree-card-trigger, .context-tree-card-quick-action, .context-tree-card-more, .context-tree-connect-port, .context-tree-connection-jump"),
+				// Reading Markdown preserves native selection and scrolling. The card
+				// frame remains the explicit graph-drag surface.
+				isTextSelectionTarget: !!target.closest(".context-tree-detail"),
 			});
 			if (action === "move-node") this.callbacks.onCardDragStart(event, node);
-			if (action === "pan-graph") this.callbacks.onOpenCardPanStart(event, node);
 		});
 		card.addEventListener("pointerenter", () => this.callbacks.onHover(node.id));
 		card.addEventListener("pointermove", (event) => {
@@ -207,11 +210,29 @@ export class TopicCardRenderer {
 	reset(): void {
 		this.closeActiveMenu();
 		this.renderedDetails.clear();
+		this.detailReady.clear();
+		this.detailRenderings.clear();
 	}
 
 	/** A graph refresh keeps card elements and positions, but replaces stale Markdown. */
 	invalidateDetails(): void {
 		this.renderedDetails.clear();
+		this.detailReady.clear();
+		this.detailRenderings.clear();
+	}
+
+	/** Wait for Markdown before fixing Source mode to the complete Reading footprint. */
+	async waitForStableReadingCardHeight(element: HTMLElement, nodeId: string): Promise<number> {
+		await this.detailRenderings.get(nodeId);
+		const card = element.querySelector<HTMLElement>(".context-tree-card");
+		if (!card) return 0;
+		const wrapper = card.querySelector<HTMLElement>(".context-tree-detail-wrap");
+		return settledReadingCardHeight({
+			cardHeight: card.getBoundingClientRect().height,
+			detailHeight: wrapper?.getBoundingClientRect().height ?? 0,
+			detailContentHeight: wrapper?.scrollHeight ?? 0,
+			isDetailReady: this.detailReady.has(nodeId),
+		}) ?? card.getBoundingClientRect().height;
 	}
 
 	/** The canvas and card navigation use this to keep overflow menus transient. */
@@ -222,13 +243,16 @@ export class TopicCardRenderer {
 	startInlineMarkdownEditing(
 		element: HTMLElement,
 		source: string,
+		readingCardHeight: number,
 		callbacks: InlineMarkdownEditorCallbacks,
 	): void {
 		const card = element.querySelector<HTMLElement>(".context-tree-card");
 		if (!card) return;
 		// Source mode keeps the expanded Reading card's graph footprint. The
 		// Markdown scrolls inside that footprint instead of moving other cards.
-		const editorHeight = inlineEditorCardHeight(card.getBoundingClientRect().height, source);
+		// `readingCardHeight` is captured before `is-editing` replaces the Reading
+		// layout, so CSS mode changes cannot shrink the value we preserve.
+		const editorHeight = inlineEditorCardHeight(readingCardHeight, source);
 		card.style.setProperty("--ct-source-card-height", `${editorHeight}px`);
 		card.style.setProperty("--ct-open-card-height", `${editorHeight}px`);
 		const wrapper = card.querySelector<HTMLElement>(".context-tree-detail-wrap") ?? card.createDiv({ cls: "context-tree-detail-wrap" });
@@ -286,6 +310,8 @@ export class TopicCardRenderer {
 		if (!card) return;
 		card.querySelector(".context-tree-detail-wrap")?.remove();
 		this.renderedDetails.delete(nodeId);
+		this.detailReady.delete(nodeId);
+		this.detailRenderings.delete(nodeId);
 	}
 
 	replaceInlineMarkdownSource(element: HTMLElement, source: string): void {
@@ -386,7 +412,7 @@ export class TopicCardRenderer {
 		card.querySelector(".context-tree-detail-wrap")?.remove();
 		const wrapper = card.createDiv({ cls: "context-tree-detail-wrap" });
 		const detail = wrapper.createDiv({ cls: "context-tree-detail markdown-rendered" });
-		void MarkdownRenderer.render(this.app, node.body, detail, node.path, this.component)
+		const rendering = MarkdownRenderer.render(this.app, node.body, detail, node.path, this.component)
 			.then(() => {
 				if (!wrapper.isConnected || wrapper.hasClass("is-editing")) return;
 				detail.addEventListener("click", (event) => this.callbacks.onOpenInternalLink(event, node.path));
@@ -398,9 +424,16 @@ export class TopicCardRenderer {
 				this.callbacks.onMeasure();
 			})
 			.catch((error: unknown) => {
-			console.error("Context Graph: failed to render card Markdown", error);
+				console.error("Context Graph: failed to render card Markdown", error);
 				detail.setText(COPY.notice.renderFailed);
+				this.callbacks.onMeasure();
 			});
+		this.detailRenderings.set(node.id, rendering);
+		void rendering.then(() => {
+			if (this.detailRenderings.get(node.id) !== rendering) return;
+			this.detailRenderings.delete(node.id);
+			this.detailReady.add(node.id);
+		});
 	}
 
 	private renderConnections(wrapper: HTMLElement, node: ContextTreeNode): void {
@@ -424,6 +457,8 @@ export class TopicCardRenderer {
 	private removeDetails(card: HTMLElement, nodeId: string): void {
 		card.querySelector(".context-tree-detail-wrap")?.remove();
 		this.renderedDetails.delete(nodeId);
+		this.detailReady.delete(nodeId);
+		this.detailRenderings.delete(nodeId);
 	}
 
 	private createMoreMenu(parent: HTMLElement, node: ContextTreeNode): void {

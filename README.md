@@ -1,5 +1,9 @@
 # Context Graph
 
+## UX contract
+
+Interaction behavior is specified in the single product contract: [docs/ux-contract.md](docs/ux-contract.md).
+
 **Context Graph is an Obsidian plugin for exploring a deliberate set of Markdown notes as an expandable, editable knowledge graph.**
 
 It is for situations where a plain outline hides cross-links and a vault-wide graph hides the actual material: interview preparation, study maps, project design notes, research questions, and any topic that needs both a high-level map and the answer behind each keyword.

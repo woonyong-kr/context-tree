@@ -1,6 +1,9 @@
 import { FileView, Notice, setIcon, TFile, ViewStateResult, WorkspaceLeaf } from "obsidian";
 import { GRAPH_DEFINITION_EXTENSION } from "./domain/graph-definition";
 import { canvasWheelAction } from "./domain/canvas-wheel-action";
+import { canvasPointerAction } from "./domain/canvas-pointer-action";
+import { cardOpenEffects, type CardOpenIntent } from "./domain/card-open-action";
+import { canDisconnectAtDrop } from "./domain/disconnect-drop-action";
 import { normalizePinnedCardIds, openCardAlongsidePins, retainPinnedCards } from "./domain/card-pin-state";
 import ContextTreePlugin from "./main";
 import { graphHoverNodeIds, graphSearchVisibility, isGraphEdgeVisible } from "./domain/graph-filter";
@@ -48,13 +51,16 @@ type PointerCaptureTarget = HTMLElement | SVGPathElement;
 
 /**
  * An interactive ego graph. Topic cards contain Markdown directly; the graph
- * is physical rather than a tree layout so cards push one another apart when
- * their details open.
+ * is physical rather than a tree layout. Expanded cards retain their graph
+ * position while surrounding compact cards make space for their details.
  */
 export class ContextTreeView extends FileView {
 	private readonly openDetails = new Set<string>();
 	/** Open-card pins are per graph view and intentionally never enter Markdown. */
 	private readonly pinnedOpenNodeIds = new Set<string>();
+	/** Temporary D3 pins keep expanded readers stationary without persisting them
+	 * as manually positioned cards. The saved coordinates are restored on close. */
+	private readonly openCardPositionLocks = new Map<string, Pick<SimNode, "fx" | "fy">>();
 	private readonly nodeElements = new Map<string, HTMLElement>();
 	private readonly edgeElements = new Map<string, EdgeVisual>();
 	private readonly cards: TopicCardRenderer;
@@ -67,7 +73,7 @@ export class ContextTreeView extends FileView {
 	private selectedEdgeId?: string;
 	private hoveredAnchor?: { nodeId: string; anchor: CardAnchor };
 	private dragNode?: { nodeId: string; pointerId: number; originPointer: { x: number; y: number }; originGraph: { x: number; y: number }; captureTarget?: HTMLElement; moved: boolean };
-	private canvasPan?: { pointerId: number; originPointer: { x: number; y: number }; originPan: { x: number; y: number }; captureTarget: HTMLElement; sourceNodeId?: string; moved: boolean };
+	private canvasPan?: { pointerId: number; originPointer: { x: number; y: number }; originPan: { x: number; y: number }; captureTarget: HTMLElement; moved: boolean; dismissUnpinnedEditorOnClick: boolean };
 	private suppressNextToggleFor?: string;
 	private dragConnection?: { sourceId: string; sourceAnchor: CardAnchor; targetId?: string; targetAnchor?: CardAnchor; pointerId: number; x: number; y: number };
 	private disconnectDrag?: { edgeId: string; pointerId: number; captureTarget: PointerCaptureTarget; start: { x: number; y: number } };
@@ -110,7 +116,6 @@ export class ContextTreeView extends FileView {
 			onToggle: (nodeId) => void this.toggleNodeFromCard(nodeId),
 			onOpen: (nodeId) => void this.openNodeFromCard(nodeId),
 			onCardDragStart: (event, node) => this.startNodeDrag(event, node),
-			onOpenCardPanStart: (event, node) => this.startCanvasPan(event, node.id),
 			onConnectionStart: (event, node, anchor) => this.startDragConnection(event, node, anchor),
 			onConnectionCandidate: (nodeId, anchor) => this.setConnectionCandidate(nodeId, anchor),
 			onPin: (node) => void this.toggleCardPin(node),
@@ -280,6 +285,7 @@ export class ContextTreeView extends FileView {
 		this.simLinks = [];
 		this.openDetails.clear();
 		this.pinnedOpenNodeIds.clear();
+		this.openCardPositionLocks.clear();
 		this.nodeElements.clear();
 		this.edgeElements.clear();
 		this.cards.reset();
@@ -465,6 +471,7 @@ export class ContextTreeView extends FileView {
 		if (savedView) {
 			this.pinnedOpenNodeIds.clear();
 			for (const id of normalizePinnedCardIds(savedView.pinnedOpenNodeIds, availableIds)) this.pinnedOpenNodeIds.add(id);
+			this.openCardPositionLocks.clear();
 			this.openDetails.clear();
 			for (const id of this.pinnedOpenNodeIds) this.openDetails.add(id);
 		} else {
@@ -495,6 +502,7 @@ export class ContextTreeView extends FileView {
 				fy: saved?.fy ?? (persisted?.pinned ? persisted.y : undefined),
 			};
 		});
+		this.syncOpenCardPositionLocks();
 		this.simLinks = graph.edges.map(simulationLinkFor);
 		if (!this.simNodes.some((node) => node.id === this.hoveredNodeId)) this.hoveredNodeId = undefined;
 		this.refreshHoverNodeIds();
@@ -504,7 +512,7 @@ export class ContextTreeView extends FileView {
 		}
 		this.syncCards();
 		this.createSimulation();
-		if (!preserveViewport && !savedView) this.focusNode(focusId, false);
+		if (!preserveViewport && !savedView) this.focusNode(focusId);
 		this.openPendingEditor();
 		this.paintGraph();
 		this.fitWhenMeasured = !preserveViewport;
@@ -656,6 +664,13 @@ export class ContextTreeView extends FileView {
 			const source = await this.app.vault.read(file);
 			this.clearSelectedEdge();
 			this.replaceOpenDetails(openCardAlongsidePins(this.pinnedOpenNodeIds, node.id));
+			// Let Markdown settle before deriving the Source footprint. A height read
+			// during the opening transition is only the first animation frame.
+			this.syncCards();
+			const readingElement = this.nodeElements.get(node.id);
+			const readingCardHeight = readingElement
+				? await this.cards.waitForStableReadingCardHeight(readingElement, node.id)
+				: 0;
 			this.inlineEdit = {
 				nodeId: node.id,
 				file,
@@ -667,7 +682,7 @@ export class ContextTreeView extends FileView {
 			this.syncCards();
 			const element = this.nodeElements.get(node.id);
 			if (!element) return;
-			this.cards.startInlineMarkdownEditing(element, source, {
+			this.cards.startInlineMarkdownEditing(element, source, readingCardHeight, {
 				onInput: (content) => this.queueInlineMarkdownSave(content),
 				onCopyDraft: () => void this.copyInlineMarkdownDraft(),
 				onReloadSource: () => void this.reloadInlineMarkdownSource(),
@@ -858,18 +873,19 @@ export class ContextTreeView extends FileView {
 			this.focusNode(nodeId);
 			return;
 		}
-		this.openNode(nodeId);
+		this.openNode(nodeId, "navigate-to-card");
 	}
 
-	/** Card expansion deliberately recentres the graph; secondary card actions do not. */
-	private openNode(nodeId: string, shouldFocus = true): void {
+	/** Opening beneath the pointer preserves the camera; relationship navigation does not. */
+	private openNode(nodeId: string, intent: CardOpenIntent = "open-in-place"): void {
 		const hadOpenCard = this.openDetails.size > 0;
 		this.replaceOpenDetails(openCardAlongsidePins(this.pinnedOpenNodeIds, nodeId));
 		if (!hadOpenCard) {
 			this.viewportBeforeDetails = { pan: { ...this.pan }, zoom: this.zoom };
 		}
 		this.syncCards();
-		if (shouldFocus) this.focusNode(nodeId);
+		const effects = cardOpenEffects(intent);
+		if (effects.movesCamera) this.focusNode(nodeId);
 		this.setViewTimeout(() => this.scheduleMeasure(), 220);
 		this.setViewTimeout(() => this.scheduleMeasure(), 520);
 	}
@@ -885,7 +901,7 @@ export class ContextTreeView extends FileView {
 		// Source edit first, but keep a pinned editor available as reference
 		// material while the reader opens or pins another card.
 		if (this.inlineEdit?.nodeId !== node.id && !(await this.settleUnpinnedInlineEditor())) return;
-		if (!this.openDetails.has(node.id)) this.openNode(node.id, false);
+		if (!this.openDetails.has(node.id)) this.openNode(node.id);
 		if (this.pinnedOpenNodeIds.has(node.id)) this.pinnedOpenNodeIds.delete(node.id);
 		else this.pinnedOpenNodeIds.add(node.id);
 		this.replaceOpenDetails(openCardAlongsidePins(this.pinnedOpenNodeIds, node.id));
@@ -908,6 +924,37 @@ export class ContextTreeView extends FileView {
 	private replaceOpenDetails(next: ReadonlySet<string>): void {
 		this.openDetails.clear();
 		for (const id of next) this.openDetails.add(id);
+		this.syncOpenCardPositionLocks();
+	}
+
+	/**
+	 * Expanding changes a card's collision radius. Keep the reader at its exact
+	 * current graph coordinate while that measurement settles; only surrounding
+	 * compact cards may respond to the new footprint.
+	 */
+	private syncOpenCardPositionLocks(): void {
+		const nodesById = new Map(this.simNodes.map((node) => [node.id, node]));
+		for (const [nodeId, position] of this.openCardPositionLocks) {
+			const node = nodesById.get(nodeId);
+			if (!node || this.openDetails.has(nodeId)) continue;
+			node.fx = position.fx;
+			node.fy = position.fy;
+			this.openCardPositionLocks.delete(nodeId);
+		}
+		for (const node of this.simNodes) {
+			if (!this.openDetails.has(node.id)) continue;
+			if (!this.openCardPositionLocks.has(node.id)) {
+				this.openCardPositionLocks.set(node.id, { fx: node.fx, fy: node.fy });
+			}
+			node.fx = node.x ?? node.fx ?? 0;
+			node.fy = node.y ?? node.fy ?? 0;
+		}
+	}
+
+	/** Keep a deliberate drag while Reading open when its temporary lock is released. */
+	private retainOpenCardManualPosition(node: SimNode): void {
+		if (!this.openCardPositionLocks.has(node.id)) return;
+		this.openCardPositionLocks.set(node.id, { fx: node.fx, fy: node.fy });
 	}
 
 	private createInlineTopic(): void {
@@ -940,12 +987,7 @@ export class ContextTreeView extends FileView {
 		};
 	}
 
-	/**
-	 * An expanded card is a reading surface. Its non-interactive area pans the
-	 * graph so the reader can inspect surrounding context without background-
-	 * clicking and closing the card. Compact cards still move their own node.
-	 */
-	private startCanvasPan(event: PointerEvent, sourceNodeId?: string): void {
+	private startCanvasPan(event: PointerEvent, dismissUnpinnedEditorOnClick = false): void {
 		if (event.button !== 0 || this.dragConnection || this.disconnectDrag || this.canvasPan) return;
 		const captureTarget = event.currentTarget;
 		if (!(captureTarget instanceof HTMLElement)) return;
@@ -956,8 +998,8 @@ export class ContextTreeView extends FileView {
 			originPointer: { x: event.clientX, y: event.clientY },
 			originPan: { ...this.pan },
 			captureTarget,
-			sourceNodeId,
 			moved: false,
+			dismissUnpinnedEditorOnClick,
 		};
 	}
 
@@ -982,12 +1024,13 @@ export class ContextTreeView extends FileView {
 		this.canvasPan = undefined;
 		if (pan.captureTarget.hasPointerCapture(event.pointerId)) pan.captureTarget.releasePointerCapture(event.pointerId);
 		pan.captureTarget.removeClass("is-panning");
-		if (!pan.moved) return;
-		if (pan.sourceNodeId) {
-			this.suppressNextToggleFor = pan.sourceNodeId;
-			this.setViewTimeout(() => {
-				if (this.suppressNextToggleFor === pan.sourceNodeId) this.suppressNextToggleFor = undefined;
-			}, 0);
+		if (!pan.moved) {
+			if (pan.dismissUnpinnedEditorOnClick) {
+				void this.finishInlineMarkdownEditor().then(() => {
+					if (!this.inlineEdit) this.closeDetailsForCanvas();
+				});
+			}
+			return;
 		}
 		this.scheduleGraphViewStateSave();
 	}
@@ -1009,6 +1052,7 @@ export class ContextTreeView extends FileView {
 		simNode.fy = drag.originGraph.y + delta.y;
 		simNode.x = simNode.fx;
 		simNode.y = simNode.fy;
+		this.retainOpenCardManualPosition(simNode);
 		this.hoveredAnchor = undefined;
 		this.syncCards();
 		this.paintGraph();
@@ -1081,11 +1125,13 @@ export class ContextTreeView extends FileView {
 		if (drag.captureTarget.hasPointerCapture(event.pointerId)) drag.captureTarget.releasePointerCapture(event.pointerId);
 		drag.captureTarget.removeClass("is-disconnecting");
 		if (cancelled) return;
-		if (Math.hypot(event.clientX - drag.start.x, event.clientY - drag.start.y) < 6) return;
 		const releasedOver = document.elementFromPoint(event.clientX, event.clientY);
-		// Dropping on a card is an aborted gesture; graph controls are also not
-		// part of the canvas. Only an actual empty-canvas drop disconnects.
-		if (releasedOver?.closest(".context-tree-node, .context-tree-graph-controls, .context-tree-edge-endpoint")) return;
+		const isProtectedTarget = !!releasedOver?.closest(".context-tree-node, .context-tree-graph-controls, .context-tree-edge-endpoint, .context-tree-search-panel");
+		if (!canDisconnectAtDrop({
+			movedFarEnough: Math.hypot(event.clientX - drag.start.x, event.clientY - drag.start.y) >= 6,
+			isInsideCanvas: !!releasedOver && !!this.viewport?.contains(releasedOver),
+			isProtectedTarget,
+		})) return;
 		const edge = this.simLinks.find((candidate) => candidate.id === drag.edgeId);
 		if (edge) void this.disconnectEdge(edge);
 	}
@@ -1180,7 +1226,7 @@ export class ContextTreeView extends FileView {
 				.then(() => {
 					// The deleted node can no longer be a valid expanded or focused
 					// graph state. Clear all transient selection before rebuilding.
-					this.openDetails.clear();
+					this.replaceOpenDetails(new Set());
 					this.pinnedOpenNodeIds.delete(node.id);
 					this.pendingEditorPath = undefined;
 					this.dragConnection = undefined;
@@ -1217,7 +1263,7 @@ export class ContextTreeView extends FileView {
 		}
 	}
 
-	private focusNode(nodeId?: string, restart = true): void {
+	private focusNode(nodeId?: string): void {
 		if (!nodeId || !this.simulation) return;
 		const focus = this.simNodes.find((node) => node.id === nodeId);
 		if (!focus) return;
@@ -1236,7 +1282,6 @@ export class ContextTreeView extends FileView {
 		this.syncCards();
 		this.paintGraph();
 		this.scheduleGraphViewStateSave();
-		if (restart) this.simulation.alpha(0.92).restart();
 	}
 
 	private paintGraph(): void {
@@ -1423,7 +1468,7 @@ export class ContextTreeView extends FileView {
 		if (this.inlineEdit) await this.finishInlineMarkdownEditor();
 		if (this.inlineEdit) return;
 		this.clearSelectedEdge();
-		this.openDetails.clear();
+		this.replaceOpenDetails(new Set());
 		// Overview is an explicit graph-wide reset, unlike a background click.
 		// It intentionally clears local reading pins as well.
 		this.pinnedOpenNodeIds.clear();
@@ -1485,22 +1530,13 @@ export class ContextTreeView extends FileView {
 			if (target instanceof Element && target.closest(".context-tree-card, .context-tree-graph-controls, .context-tree-search-panel")) return;
 			this.cards.closeMenus();
 			this.clearSelectedEdge();
-			if (this.inlineEdit && !this.isPinnedCard(this.inlineEdit.nodeId)) {
-				// A background click leaves source mode only after its current save
-				// settles. A conflict keeps the editor open instead of briefly showing
-				// a broken half-closed card.
-				void this.finishInlineMarkdownEditor().then(() => {
-					if (this.inlineEdit) return;
-					this.closeDetailsForCanvas();
-				});
-				return;
-			}
-			this.closeDetailsForCanvas();
+			const action = canvasPointerAction({ hasUnpinnedEditor: !!this.inlineEdit && !this.isPinnedCard(this.inlineEdit.nodeId) });
+			if (action === "pan-canvas") this.closeDetailsForCanvas();
 			// A pinned source editor owns the keyboard until its pencil is pressed.
 			// We still allow a background drag to pan the graph, but do not steal its
 			// text focus or turn it back into a Reading card.
 			if (!this.inlineEdit) viewport.focus();
-			this.startCanvasPan(event);
+			this.startCanvasPan(event, action === "pan-or-dismiss-editor-on-click");
 		});
 		viewport.addEventListener("dblclick", (event) => {
 			const target = event.target;
@@ -1589,9 +1625,16 @@ export class ContextTreeView extends FileView {
 			positions: Object.fromEntries(this.simNodes.map((node) => [node.id, {
 				x: node.x ?? 0,
 				y: node.y ?? 0,
-				pinned: node.fx !== undefined || node.fy !== undefined,
+				pinned: this.isManuallyPositioned(node),
 			}])),
 		};
+	}
+
+	/** Temporary reader locks must never turn into persisted manual pins. */
+	private isManuallyPositioned(node: SimNode): boolean {
+		const beforeOpen = this.openCardPositionLocks.get(node.id);
+		if (beforeOpen) return beforeOpen.fx !== undefined || beforeOpen.fy !== undefined;
+		return node.fx !== undefined || node.fy !== undefined;
 	}
 
 	private scheduleGraphViewStateSave(): void {

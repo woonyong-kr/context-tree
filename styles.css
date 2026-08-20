@@ -1,4 +1,7 @@
 .context-tree-view {
+	/* Keep the graph readable at the same 1.2× scale in Reading and Source
+	   modes. Explicit rem-based text below uses this variable as well. */
+	--ct-font-scale: 1.2;
 	--ct-card: color-mix(in srgb, var(--background-secondary) 84%, var(--background-primary));
 	--ct-card-hover: color-mix(in srgb, var(--background-secondary) 70%, var(--background-primary));
 	--ct-border: color-mix(in srgb, var(--background-modifier-border) 82%, transparent);
@@ -291,7 +294,7 @@
 	background: transparent !important;
 	color: var(--text-muted);
 	font: inherit;
-	font-size: 0.76rem;
+	font-size: calc(0.76rem * var(--ct-font-scale));
 	text-align: left;
 	cursor: pointer;
 }
@@ -506,7 +509,9 @@
    replaces the rendered projection with the complete note text, including
    frontmatter title, summary callout, and typed relationships. */
 .context-tree-card.is-editing {
-	height: var(--ct-source-card-height);
+	/* The Reading measurement is installed synchronously after the mode switch.
+	   Keep the prior opened height as a paint-safe fallback during that handoff. */
+	height: var(--ct-source-card-height, var(--ct-open-card-height, auto));
 	min-height: 0;
 	/* There is one card surface in Source mode. The Markdown editor is the
 	   card interior, not a second panel placed inside it. */
@@ -592,6 +597,7 @@
 .context-tree-title {
 	margin: 0 !important;
 	color: var(--text-normal);
+	/* SVG control glyphs keep their original physical size at every text scale. */
 	font-size: 1rem;
 	font-weight: 700;
 	line-height: 1.38;
@@ -601,7 +607,7 @@
 .context-tree-summary {
 	margin: 8px 0 0 !important;
 	color: var(--ct-muted);
-	font-size: 0.81rem;
+	font-size: calc(0.81rem * var(--ct-font-scale));
 	line-height: 1.52;
 	text-align: left;
 }
@@ -654,7 +660,7 @@
 	border-radius: 8px;
 	background: color-mix(in srgb, var(--text-warning) 9%, var(--ct-card));
 	color: var(--text-muted);
-	font-size: 0.76rem;
+	font-size: calc(0.76rem * var(--ct-font-scale));
 	line-height: 1.45;
 }
 
@@ -678,14 +684,15 @@
 	max-width: 100%;
 	padding-top: 15px;
 	border-top: 1px solid var(--ct-border);
-	font-size: 0.88rem;
+	font-size: calc(0.88rem * var(--ct-font-scale));
 	line-height: 1.66;
+	cursor: text;
 }
 
 .context-tree-detail > :first-child { margin-top: 0; }
-.context-tree-detail h1 { font-size: 1.18rem; }
-.context-tree-detail h2 { font-size: 1.04rem; }
-.context-tree-detail h3 { font-size: 0.96rem; }
+.context-tree-detail h1 { font-size: calc(1.18rem * var(--ct-font-scale)); }
+.context-tree-detail h2 { font-size: calc(1.04rem * var(--ct-font-scale)); }
+.context-tree-detail h3 { font-size: calc(0.96rem * var(--ct-font-scale)); }
 .context-tree-detail pre { max-width: 100%; }
 
 .context-tree-connections {
@@ -713,7 +720,7 @@
 	border-radius: 999px;
 	background: color-mix(in srgb, var(--background-primary) 72%, transparent);
 	color: var(--text-muted);
-	font-size: 0.76rem;
+	font-size: calc(0.76rem * var(--ct-font-scale));
 	text-align: left;
 	white-space: nowrap;
 	overflow: hidden;
@@ -764,7 +771,7 @@
 	background: var(--background-primary);
 	color: var(--text-normal);
 	font: inherit;
-	font-size: 0.8rem;
+	font-size: calc(0.8rem * var(--ct-font-scale));
 }
 
 .context-tree-relation-filters {
@@ -777,7 +784,7 @@
 .context-tree-filter-label {
 	flex-basis: 100%;
 	color: var(--text-muted);
-	font-size: 0.72rem;
+	font-size: calc(0.72rem * var(--ct-font-scale));
 }
 
 .context-tree-relation-filter {
@@ -785,7 +792,7 @@
 	align-items: center;
 	gap: 4px;
 	color: var(--text-muted);
-	font-size: 0.72rem;
+	font-size: calc(0.72rem * var(--ct-font-scale));
 	white-space: nowrap;
 	cursor: pointer;
 }
@@ -796,7 +803,7 @@
 	display: none;
 	margin-top: 8px;
 	color: var(--text-muted);
-	font-size: 0.76rem;
+	font-size: calc(0.76rem * var(--ct-font-scale));
 }
 
 .context-tree-search-empty.is-visible { display: block; }
@@ -808,7 +815,7 @@
 	width: 27px;
 	height: 26px;
 	padding: 0;
-	font-size: 1rem;
+	font-size: calc(1rem * var(--ct-font-scale));
 	line-height: 1;
 }
 
@@ -823,7 +830,7 @@
 	min-width: 43px;
 	padding: 0 3px;
 	color: var(--text-faint);
-	font-size: 0.7rem;
+	font-size: calc(0.7rem * var(--ct-font-scale));
 	text-align: center;
 	font-variant-numeric: tabular-nums;
 }
@@ -843,7 +850,7 @@
 .context-tree-empty-eyebrow {
 	margin: 0 0 8px;
 	color: var(--text-faint);
-	font-size: 0.78rem;
+	font-size: calc(0.78rem * var(--ct-font-scale));
 	font-weight: 600;
 	letter-spacing: 0.02em;
 }
@@ -851,7 +858,7 @@
 .context-tree-empty h2 {
 	margin: 0;
 	color: var(--text-normal);
-	font-size: 1.08rem;
+	font-size: calc(1.08rem * var(--ct-font-scale));
 }
 
 .context-tree-empty-status { margin: 12px 0 0; color: var(--text-muted); line-height: 1.55; }
