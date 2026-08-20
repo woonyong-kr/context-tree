@@ -1550,9 +1550,9 @@ export class ContextTreeView extends FileView {
 			// pointer has left the card. Wheel ownership must follow the pointer,
 			// so inspect the element at its actual viewport coordinates first.
 			const pointerTarget = document.elementFromPoint(event.clientX, event.clientY) ?? event.target;
-			// Multiple pinned Source cards can exist at once. The scrollport must
-			// belong to the card under the pointer, not whichever editor was first
-			// in the viewport DOM.
+			// Resolve the scrollport from the pointer target rather than the first
+			// matching DOM node. Focus can remain on the textarea after the pointer
+			// has left its card.
 			const editorScroller = pointerTarget instanceof Element
 				? pointerTarget.closest<HTMLElement>(".context-tree-markdown-editor-scroll")
 				: undefined;
