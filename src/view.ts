@@ -1,6 +1,7 @@
 import { FileView, Notice, setIcon, TFile, ViewStateResult, WorkspaceLeaf } from "obsidian";
 import { GRAPH_DEFINITION_EXTENSION } from "./domain/graph-definition";
 import { canvasWheelAction } from "./domain/canvas-wheel-action";
+import { canvasWheelSurface } from "./domain/canvas-wheel-target";
 import { canvasPointerAction } from "./domain/canvas-pointer-action";
 import { cardOpenEffects, type CardOpenIntent } from "./domain/card-open-action";
 import { canDisconnectAtDrop } from "./domain/disconnect-drop-action";
@@ -1550,22 +1551,12 @@ export class ContextTreeView extends FileView {
 			// pointer has left the card. Wheel ownership must follow the pointer,
 			// so inspect the element at its actual viewport coordinates first.
 			const pointerTarget = document.elementFromPoint(event.clientX, event.clientY) ?? event.target;
-			// Resolve the scrollport from the pointer target rather than the first
-			// matching DOM node. Focus can remain on the textarea after the pointer
-			// has left its card.
-			const editorScroller = pointerTarget instanceof Element
-				? pointerTarget.closest<HTMLElement>(".context-tree-markdown-editor-scroll")
-				: undefined;
-			const isOverEditor = pointerTarget instanceof Element && !!pointerTarget.closest(".context-tree-markdown-editor-scroll");
-			const isOverSearch = pointerTarget instanceof Element && !!pointerTarget.closest(".context-tree-search-panel");
-			const action = canvasWheelAction({
-				isOverEditor,
-				isOverSearch,
-			});
+			const surface = canvasWheelSurface(pointerTarget instanceof Element ? pointerTarget : null);
+			const action = canvasWheelAction(surface);
 			if (action === "ignore") return;
-			if (action === "scroll-editor" && editorScroller) {
+			if (action === "scroll-editor" && surface.editorScroller) {
 				event.preventDefault();
-				editorScroller.scrollBy({ left: event.deltaX, top: event.deltaY, behavior: "auto" });
+				surface.editorScroller.scrollBy({ left: event.deltaX, top: event.deltaY, behavior: "auto" });
 				return;
 			}
 			event.preventDefault();

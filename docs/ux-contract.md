@@ -39,7 +39,7 @@
 | Reading ↔ Source 풋프린트 | `reading-card-layout.ts`, `TopicCardRenderer.waitForStableReadingCardHeight()` | `reading-card-layout.test.ts`, `inline-editor-layout.test.ts` |
 | 카드 표면·본문 드래그 구분 | `card-pointer-action.ts` | `card-pointer-action.test.ts` |
 | 배경 클릭·드래그 구분 | `canvas-pointer-action.ts` | `canvas-pointer-action.test.ts` |
-| 휠 소유권 | `canvas-wheel-action.ts` | `canvas-wheel-action.test.ts` |
+| 휠 소유권 | `canvas-wheel-target.ts`, `canvas-wheel-action.ts` | `canvas-wheel-target.test.ts`, `canvas-wheel-action.test.ts` |
 | 관계 삭제 드롭 안전성 | `disconnect-drop-action.ts` | `disconnect-drop-action.test.ts` |
 
 새 상호작용을 추가하거나 기존 항목을 바꿀 때는 이 표의 계약 문장, 구현 경계, 자동 검증을 함께 갱신한다. 테스트만 또는 구현만 별도로 바꾸는 것은 계약 변경으로 인정하지 않는다.
