@@ -160,7 +160,7 @@ npm ci
 npm run check
 ```
 
-`npm run check` runs ESLint, strict TypeScript type checking, a production esbuild bundle, and Node unit tests.
+`npm run check` runs ESLint, strict TypeScript type checking, a production esbuild bundle, and Node unit tests. Pull requests and releases also fail when `npm audit --omit=dev --audit-level=high` finds a production dependency vulnerability.
 
 For iterative development:
 

@@ -29,6 +29,7 @@ jobs:
             - name: Build plugin
               run: |
                   npm ci
+                  npm audit --omit=dev --audit-level=high
                   npm run check
 
             - name: Attest build provenance
