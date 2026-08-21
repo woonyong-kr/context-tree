@@ -4,16 +4,18 @@
  * callers must pass the element resolved at the wheel coordinates.
  */
 export type CanvasWheelSurface = {
-	isOverEditor: boolean;
+	isOverCardScroller: boolean;
 	isOverSearch: boolean;
-	editorScroller?: HTMLElement;
+	cardScroller?: HTMLElement;
 };
 
 export function canvasWheelSurface(target: Element | null): CanvasWheelSurface {
-	const editorScroller = target?.closest<HTMLElement>(".context-tree-markdown-editor-scroll") ?? undefined;
+	const cardScroller = target?.closest<HTMLElement>(".context-tree-markdown-editor-scroll")
+		?? target?.closest<HTMLElement>(".context-tree-detail-wrap")
+		?? undefined;
 	return {
-		isOverEditor: !!editorScroller,
+		isOverCardScroller: !!cardScroller,
 		isOverSearch: !!target?.closest(".context-tree-search-panel"),
-		editorScroller,
+		cardScroller,
 	};
 }

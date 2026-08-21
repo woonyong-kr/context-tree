@@ -10,18 +10,24 @@ function pointerTarget(...matchingSelectors: string[]): Element {
 
 test("resolves a Source editor from the pointer target instead of stale focus", () => {
 	const surface = canvasWheelSurface(pointerTarget(".context-tree-markdown-editor-scroll"));
-	assert.equal(surface.isOverEditor, true);
+	assert.equal(surface.isOverCardScroller, true);
 	assert.equal(surface.isOverSearch, false);
-	assert.ok(surface.editorScroller);
+	assert.ok(surface.cardScroller);
+});
+
+test("resolves a Reading card scrollport instead of zooming the canvas", () => {
+	const surface = canvasWheelSurface(pointerTarget(".context-tree-detail-wrap"));
+	assert.equal(surface.isOverCardScroller, true);
+	assert.ok(surface.cardScroller);
 });
 
 test("keeps background and search wheel ownership distinct", () => {
 	assert.deepEqual(canvasWheelSurface(null), {
-		isOverEditor: false,
+		isOverCardScroller: false,
 		isOverSearch: false,
-		editorScroller: undefined,
+		cardScroller: undefined,
 	});
 	const search = canvasWheelSurface(pointerTarget(".context-tree-search-panel"));
-	assert.equal(search.isOverEditor, false);
+	assert.equal(search.isOverCardScroller, false);
 	assert.equal(search.isOverSearch, true);
 });

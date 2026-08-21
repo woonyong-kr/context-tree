@@ -1,6 +1,6 @@
 import { FileView, Notice, setIcon, TFile, ViewStateResult, WorkspaceLeaf } from "obsidian";
 import { GRAPH_DEFINITION_EXTENSION } from "./domain/graph-definition";
-import { canvasWheelAction } from "./domain/canvas-wheel-action";
+import { canvasWheelAction, canvasWheelZoomPoint } from "./domain/canvas-wheel-action";
 import { canvasWheelSurface } from "./domain/canvas-wheel-target";
 import { canvasPointerAction } from "./domain/canvas-pointer-action";
 import { cardOpenEffects, type CardOpenIntent } from "./domain/card-open-action";
@@ -1587,19 +1587,23 @@ export class ContextTreeView extends FileView {
 		});
 		viewport.addEventListener("wheel", (event) => {
 			// Obsidian can retain the focused textarea as event.target after the
-			// pointer has left the card. Wheel ownership must follow the pointer,
-			// so inspect the element at its actual viewport coordinates first.
+			// pointer has left the card. Wheel ownership must follow the pointer:
+			// Reading and Source scroll inside the hovered card; canvas space zooms.
 			const pointerTarget = document.elementFromPoint(event.clientX, event.clientY) ?? event.target;
 			const surface = canvasWheelSurface(pointerTarget instanceof Element ? pointerTarget : null);
 			const action = canvasWheelAction(surface);
 			if (action === "ignore") return;
-			if (action === "scroll-editor" && surface.editorScroller) {
+			if (action === "scroll-card" && surface.cardScroller) {
 				event.preventDefault();
-				surface.editorScroller.scrollBy({ left: event.deltaX, top: event.deltaY, behavior: "auto" });
+				surface.cardScroller.scrollBy({ left: event.deltaX, top: event.deltaY, behavior: "auto" });
 				return;
 			}
 			event.preventDefault();
-			this.zoomAt(viewport, event.clientX, event.clientY, this.clampZoom(this.zoom * (event.deltaY < 0 ? 1.12 : 0.89)));
+			const zoomPoint = canvasWheelZoomPoint(
+				viewport.getBoundingClientRect(),
+				{ x: event.clientX, y: event.clientY },
+			);
+			this.zoomAt(viewport, zoomPoint.x, zoomPoint.y, this.clampZoom(this.zoom * (event.deltaY < 0 ? 1.12 : 0.89)));
 		}, { passive: false });
 		viewport.addEventListener("keydown", (event) => {
 			if (event.key === "Escape" && this.openDetails.size) {
