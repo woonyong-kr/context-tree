@@ -8,6 +8,7 @@ import { settledReadingCardHeight } from "../domain/reading-card-layout";
 import { CardAnchor, cardAnchorAtPoint } from "../graph/simulation";
 import { ContextTreeNode } from "../types";
 import { COPY, cardToggleLabel } from "./copy";
+import { createReadingMarkdownFrame } from "./reading-markdown-frame";
 
 export interface CardConnection {
 	label: string;
@@ -415,8 +416,9 @@ export class TopicCardRenderer {
 		this.renderedDetails.add(node.id);
 		card.querySelector(".context-tree-detail-wrap")?.remove();
 		const wrapper = card.createDiv({ cls: "context-tree-detail-wrap" });
-		const detail = wrapper.createDiv({ cls: "context-tree-detail markdown-rendered" });
-		const rendering = MarkdownRenderer.render(this.app, node.body, detail, node.path, this.component)
+		const detail = wrapper.createDiv({ cls: "context-tree-detail" });
+		const renderTarget = createReadingMarkdownFrame(detail);
+		const rendering = MarkdownRenderer.render(this.app, node.body, renderTarget, node.path, this.component)
 			.then(() => {
 				if (!wrapper.isConnected || wrapper.hasClass("is-editing")) return;
 				detail.addEventListener("click", (event) => this.callbacks.onOpenInternalLink(event, node.path));

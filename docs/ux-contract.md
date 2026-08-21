@@ -28,7 +28,7 @@
 2. 그래프 도구 모음은 뷰포트 우하단에 고정한다.
 3. 다중 그래프 관리는 명령 팔레트의 `지식 그래프 관리`로 진입한다. 도구 모음에는 사용 빈도가 낮고 의미가 모호한 레이어 버튼을 두지 않는다.
 4. 본문 텍스트는 1.2배로 읽기 쉽게 하되, 아이콘과 버튼의 물리적 크기·위치는 바꾸지 않는다.
-5. Reading 본문은 Obsidian `MarkdownRenderer`의 제목 단계·목록·인용·코드·링크·미디어·표 의미를 유지한다. 긴 카드의 내부 스크롤은 유지하되, 스크롤바는 hover 또는 focus 중에만 드러내 중첩 패널처럼 보이지 않게 한다.
+5. Reading 본문은 Obsidian의 native Reading View DOM 경계 안에서 `MarkdownRenderer`와 등록된 Markdown post-processor가 직접 렌더링한다. 제목·목록·task·callout·wikilink·embed·수식·코드·표·각주·지원 HTML 등 Obsidian이 지원하는 Markdown 문법을 플러그인이 부분 재구현하거나 평탄화하지 않는다. 문서의 첫 H1과 `[!summary]`는 카드 제목·요약으로 한 번만 표현하고, frontmatter를 포함한 불변 원문 전체는 Source에서 제공한다. 긴 카드의 내부 스크롤은 유지하되, 스크롤바는 hover 또는 focus 중에만 드러내 중첩 패널처럼 보이지 않게 한다.
 
 ## 검증 원칙
 
@@ -44,7 +44,7 @@
 | 카드 표면·본문 드래그 구분 | `card-pointer-action.ts` | `card-pointer-action.test.ts` |
 | 배경 클릭·드래그 구분 | `canvas-pointer-action.ts` | `canvas-pointer-action.test.ts` |
 | 휠 소유권과 중앙 기준 줌 | `canvas-wheel-target.ts`, `canvas-wheel-action.ts`, `ContextTreeView.zoomAt()` | `canvas-wheel-target.test.ts`, `canvas-wheel-action.test.ts` |
-| Markdown Reading 의미 | `TopicCardRenderer.ensureDetails()`, `topicDisplayContent()`, `styles.css` | `topic-display.test.ts`, Desktop UI 검증 |
+| Markdown Reading 의미 | `TopicCardRenderer.ensureDetails()`, `createReadingMarkdownFrame()`, `topicDisplayContent()`, `styles.css` | `reading-markdown-frame.test.ts`, `topic-display.test.ts`, Desktop UI 검증 |
 | 관계 삭제 드롭 안전성 | `disconnect-drop-action.ts` | `disconnect-drop-action.test.ts` |
 
 새 상호작용을 추가하거나 기존 항목을 바꿀 때는 이 표의 계약 문장, 구현 경계, 자동 검증을 함께 갱신한다. 테스트만 또는 구현만 별도로 바꾸는 것은 계약 변경으로 인정하지 않는다.
@@ -76,6 +76,8 @@ Obsidian에서 플러그인을 다시 활성화한다. 짧은 카드와 화면�
    관계 끝점만 빈 캔버스에 놓아 제거할 수 있으며, 카드·도구·그래프 밖에 놓으면 취소된다.
 7. **원본 pane:** 카드의 **더보기 → 원본을 오른쪽에서 열기**를 선택하면 같은 노트가
    오른쪽 세로 분할에 열리고, 그래프 카드·카메라·관계는 그대로 남는다.
-8. **Markdown Reading:** `##`·`###` 제목 단계, 목록, 인용, inline/fenced code, 내부 링크,
-   미디어와 표가 Obsidian Reading 의미로 구분되어 보인다. 긴 카드의 스크롤바는 평상시
-   숨고 카드 hover 또는 focus 중에만 얇게 나타난다.
+8. **Markdown Reading:** `##`·`###` 제목 단계, 목록·task, callout, inline/fenced code,
+   내부 링크·embed, 수식, 미디어, 표, 각주와 지원 HTML이 Obsidian Reading 의미로
+   렌더링되고 등록된 Markdown post-processor가 실행된다. 첫 H1·summary가 본문에
+   중복되지 않으며 Source에는 frontmatter를 포함한 전체 원문이 남는다. 긴 카드의
+   스크롤바는 평상시 숨고 카드 hover 또는 focus 중에만 얇게 나타난다.

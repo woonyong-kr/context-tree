@@ -750,65 +750,27 @@
 	cursor: text;
 }
 
-/* MarkdownRenderer supplies the semantic DOM. Preserve that hierarchy instead
-   of flattening every heading to nearly the body size. Theme variables keep
-   the Reading projection consistent with the active Obsidian theme. */
-.context-tree-detail > :first-child { margin-top: 0 !important; }
-.context-tree-detail > :last-child { margin-bottom: 0 !important; }
-.context-tree-detail :is(h1, h2, h3, h4, h5, h6) {
-	margin-block: 1.35em 0.55em;
-	line-height: 1.28;
-	letter-spacing: -0.012em;
+/* Mirror Obsidian's Reading View class boundary so the active theme, snippets,
+   and registered Markdown post-processors see the same host structure they do
+   in a native note. Only neutralise pane sizing; semantic styling stays owned
+   by Obsidian instead of being reimplemented by the graph. */
+.context-tree-detail :is(.markdown-reading-view, .markdown-preview-view, .markdown-preview-sizer) {
+	box-sizing: border-box;
+	min-width: 0;
+	width: 100%;
+	max-width: none;
+	min-height: 0;
+	margin: 0;
+	padding: 0;
+	background: transparent;
 }
-.context-tree-detail h1 {
-	color: var(--h1-color, var(--text-normal));
-	font-size: var(--h1-size, 1.7em);
-	font-weight: var(--h1-weight, 700);
+.context-tree-detail .markdown-preview-view {
+	position: static;
+	height: auto;
+	overflow: visible;
 }
-.context-tree-detail h2 {
-	color: var(--h2-color, var(--text-normal));
-	font-size: var(--h2-size, 1.45em);
-	font-weight: var(--h2-weight, 700);
-}
-.context-tree-detail h3 {
-	color: var(--h3-color, var(--text-normal));
-	font-size: var(--h3-size, 1.25em);
-	font-weight: var(--h3-weight, 650);
-}
-.context-tree-detail h4 {
-	color: var(--h4-color, var(--text-normal));
-	font-size: var(--h4-size, 1.1em);
-	font-weight: var(--h4-weight, 650);
-}
-.context-tree-detail h5 {
-	color: var(--h5-color, var(--text-normal));
-	font-size: var(--h5-size, 1em);
-	font-weight: var(--h5-weight, 650);
-}
-.context-tree-detail h6 {
-	color: var(--h6-color, var(--text-muted));
-	font-size: var(--h6-size, 0.9em);
-	font-weight: var(--h6-weight, 650);
-}
-.context-tree-detail p { margin-block: 0 0.9em; }
-.context-tree-detail :is(ul, ol) {
-	margin-block: 0.65em 1em;
-	padding-inline-start: 1.65em;
-}
-.context-tree-detail li { margin-block: 0.28em; }
-.context-tree-detail blockquote {
-	margin: 0.9em 0;
-	padding: 0.2em 0 0.2em 1em;
-	border-inline-start: 3px solid var(--quote-opening-modifier, var(--interactive-accent));
-	color: var(--text-muted);
-}
-.context-tree-detail :not(pre) > code {
-	padding: 0.12em 0.32em;
-	border-radius: 4px;
-	background: var(--code-background);
-	color: var(--code-normal);
-	font-size: 0.92em;
-}
+.context-tree-markdown-render-target > :first-child { margin-top: 0 !important; }
+.context-tree-markdown-render-target > :last-child { margin-bottom: 0 !important; }
 .context-tree-detail pre {
 	max-width: 100%;
 	overflow-x: auto;

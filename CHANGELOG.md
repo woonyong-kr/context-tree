@@ -3,7 +3,7 @@
 ## Unreleased
 
 - Keep wheel zoom centred on the graph viewport so zooming never doubles as an implicit pan gesture.
-- Restore visible Markdown hierarchy in Reading cards for headings, lists, quotes, code, media, and tables while keeping the active Obsidian theme authoritative.
+- Render Reading cards through Obsidian's native Reading View boundary and registered Markdown post-processors, preserving all Obsidian-supported Markdown syntax while keeping the active theme authoritative.
 - Give long Reading and Source cards ownership of wheel gestures under the pointer, without displaying a permanent nested-panel scrollbar track.
 - Restore a saved graph camera before the first paint and skip automatic overview fitting when reopening an existing workspace.
 - Keep a newly opened reader card at its graph coordinate, cancel delayed automatic overview fitting after a card interaction, and preserve the same card footprint when switching between Reading and Source.

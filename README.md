@@ -88,6 +88,15 @@ Context Graph is an intentional workspace, not a visualisation of every note or 
 | `context_tree_links` | Optional typed links between any two opted-in notes. |
 | `> [!summary] 카드 요약` | Optional visible Markdown summary used below the card title. |
 
+Reading cards pass the preserved note body to Obsidian's native `MarkdownRenderer`
+inside the same Reading View class boundary used by a note pane. That keeps the
+active theme, registered Markdown post-processors, headings, callouts, task lists,
+wikilinks, embeds, math, code blocks, tables, footnotes, supported HTML, and other
+Obsidian-supported Markdown syntax authoritative instead of reimplementing a
+partial renderer in Context Graph. The first document heading and the optional
+`summary` callout remain represented once by the card title and summary; Source
+mode always exposes the complete original Markdown, including frontmatter.
+
 ```md
 ---
 context_tree: true

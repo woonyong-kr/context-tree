@@ -1,6 +1,6 @@
 {
 	"name": "context-graph",
-	"version": "0.4.3",
+	"version": "0.4.4",
 	"description": "An expandable, Markdown-native context graph for Obsidian.",
 	"main": "main.js",
 	"type": "module",
