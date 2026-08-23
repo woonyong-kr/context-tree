@@ -10,10 +10,11 @@ There is no drawing step, folder setup, graph database, account, semantic AI,
 or plugin-specific frontmatter required to begin. The graph grows only where
 you ask it to, and it becomes a saved artifact only when you choose to keep it.
 
-![Context Graph showing a Markdown note opened among its linked notes](docs/assets/context-graph-reading-map.png)
+![A Context Graph overview derived from one Markdown note](docs/assets/context-graph-01-overview.png)
 
-The map above was opened from one Markdown note. The centre card is the actual
-note rendered by Obsidian; the surrounding cards are its inspectable links.
+The map above was opened from one Markdown note. It is a quiet, temporary index:
+the centre is the starting note and every surrounding title comes from an
+inspectable authored link.
 
 ## When Context Graph is useful
 
@@ -66,6 +67,40 @@ question, evidence trail, or document neighbourhood you are following.
 The first view is temporary. Closing it creates no graph file. Saving creates a
 small `.context-graph` definition, while every card continues to read from its
 Markdown source.
+
+## The complete reading loop
+
+These captures come from the real Obsidian desktop plugin using public-safe
+sample notes. Context Graph does not replace the editor with a separate visual
+database; each step stays on the same Markdown and the same graph coordinates.
+
+### 1. Begin with the neighbourhood, not a blank canvas
+
+![A low-chrome overview of one note and its direct Markdown links](docs/assets/context-graph-01-overview.png)
+
+Run one command from the note you are already reading. The first view shows the
+resolved one-hop neighbourhood without asking for a workspace, layout, schema,
+or drawing step. Compact cards are deliberately quiet so relationship lines and
+titles describe the map instead of decorated containers.
+
+### 2. Read the actual note in place
+
+![Obsidian Markdown rendered in a document-like card without leaving the graph](docs/assets/context-graph-02-reading.png)
+
+Select a title and that same card becomes a document surface. Headings, lists,
+links, callouts, embeds, code, tables, math, and post-processed Markdown are
+rendered by Obsidian. The card and camera stay where the reader put them; long
+documents scroll inside the card while neighbouring notes remain visible.
+
+### 3. Inspect or edit the complete Markdown source
+
+![The complete Markdown source shown inside the same Context Graph card](docs/assets/context-graph-03-source.png)
+
+The pencil swaps Reading for the complete source, including frontmatter and the
+Markdown syntax projected into the compact title and summary. Returning to
+Reading updates the same card element and footprint. For properties UI, editor
+commands, or more room, the adjacent panel action opens the same file in one
+reused right-hand Obsidian editor without changing graph scope or layout.
 
 ## What appears in a graph
 

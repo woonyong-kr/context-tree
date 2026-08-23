@@ -6,6 +6,7 @@ import { canvasPointerAction } from "./domain/canvas-pointer-action";
 import { isCanvasControlTarget } from "./domain/canvas-pointer-target";
 import { cardOpenEffects, type CardOpenIntent } from "./domain/card-open-action";
 import { hasCardDragExceededClickThreshold } from "./domain/card-pointer-action";
+import { type PositionLock, syncContentProjectionLayout } from "./domain/content-projection-layout";
 import { canDisconnectAtDrop } from "./domain/disconnect-drop-action";
 import { connectionDropAction } from "./domain/connection-drop-action";
 import { normalizePinnedCardIds, openCardAlongsidePins, retainPinnedCards } from "./domain/card-pin-state";
@@ -64,16 +65,17 @@ type PointerCaptureTarget = HTMLElement | SVGPathElement;
 
 /**
  * An interactive ego graph. Topic cards contain Markdown directly; the graph
- * is physical rather than a tree layout. Expanded cards retain their graph
- * position while surrounding compact cards make space for their details.
+ * is physical rather than a tree layout. Once a card becomes a reader, the
+ * current map is an authored spatial context: opening, editing, and closing
+ * content never asks the force layout to rearrange it.
  */
 export class ContextTreeView extends FileView {
 	private readonly openDetails = new Set<string>();
 	/** Open-card pins are per graph view and intentionally never enter Markdown. */
 	private readonly pinnedOpenNodeIds = new Set<string>();
-	/** Temporary D3 pins keep expanded readers stationary without persisting them
-	 * as manually positioned cards. The saved coordinates are restored on close. */
-	private readonly openCardPositionLocks = new Map<string, Pick<SimNode, "fx" | "fy">>();
+	/** Temporary D3 pins preserve the whole map while any reader is open without
+	 * turning those coordinates into manually pinned positions. */
+	private readonly openCardPositionLocks = new Map<string, PositionLock>();
 	/** Existing cards stay where they are while newly revealed neighbours settle. */
 	private readonly neighbourhoodLayoutLocks = new Map<string, Pick<SimNode, "fx" | "fy">>();
 	private readonly nodeElements = new Map<string, HTMLElement>();
@@ -98,7 +100,6 @@ export class ContextTreeView extends FileView {
 	private pendingEditorPath?: string;
 	private pan = { x: 0, y: 0 };
 	private zoom = 1;
-	private viewportBeforeDetails?: { pan: { x: number; y: number }; zoom: number };
 	private viewport?: HTMLElement;
 	private scene?: HTMLElement;
 	private edges?: SVGSVGElement;
@@ -108,6 +109,9 @@ export class ContextTreeView extends FileView {
 	private resizeTimer?: number;
 	private viewportObserver?: ResizeObserver;
 	private fitWhenMeasured = false;
+	/** A freshly rebuilt topology may use one measured-card restart. Later card
+	 * presentation changes update geometry without waking the layout. */
+	private layoutMeasurementRestartPending = false;
 	private hasRenderedGraph = false;
 	private renderedGraphId?: string;
 	private refreshGeneration = 0;
@@ -355,6 +359,7 @@ export class ContextTreeView extends FileView {
 		this.pinnedOpenNodeIds.clear();
 		this.openCardPositionLocks.clear();
 		this.neighbourhoodLayoutLocks.clear();
+		this.layoutMeasurementRestartPending = false;
 		this.nodeElements.clear();
 		this.edgeElements.clear();
 		this.cards.reset();
@@ -367,7 +372,6 @@ export class ContextTreeView extends FileView {
 		this.draftEdges = undefined;
 		this.draftEdge = undefined;
 		this.dragConnection = undefined;
-		this.viewportBeforeDetails = undefined;
 		this.hasRenderedGraph = false;
 		this.renderedGraphId = undefined;
 		const { contentEl } = this;
@@ -651,6 +655,7 @@ export class ContextTreeView extends FileView {
 		}
 		this.syncCards();
 		this.createSimulation();
+		this.layoutMeasurementRestartPending = true;
 		if (!preserveViewport && !savedView) this.focusNode(focusId);
 		this.openPendingEditor();
 		this.paintGraph();
@@ -1075,11 +1080,7 @@ export class ContextTreeView extends FileView {
 
 	/** Opening beneath the pointer preserves the camera; relationship navigation does not. */
 	private openNode(nodeId: string, intent: CardOpenIntent = "open-in-place"): void {
-		const hadOpenCard = this.openDetails.size > 0;
 		this.replaceOpenDetails(openCardAlongsidePins(this.pinnedOpenNodeIds, nodeId));
-		if (!hadOpenCard) {
-			this.viewportBeforeDetails = { pan: { ...this.pan }, zoom: this.zoom };
-		}
 		this.syncCards();
 		const effects = cardOpenEffects(intent);
 		if (effects.cancelsPendingOverviewFit) this.fitWhenMeasured = false;
@@ -1167,26 +1168,14 @@ export class ContextTreeView extends FileView {
 	}
 
 	/**
-	 * Expanding changes a card's collision radius. Keep the reader at its exact
-	 * current graph coordinate while that measurement settles; only surrounding
-	 * compact cards may respond to the new footprint.
+	 * Reading and Source are projections over the current map, not layout events.
+	 * Temporarily pin every existing node while a reader is open, then restore
+	 * the previous pin semantics on close. A deliberate drag updates its saved
+	 * lock through retainTemporaryLockManualPosition().
 	 */
 	private syncOpenCardPositionLocks(): void {
-		const nodesById = new Map(this.simNodes.map((node) => [node.id, node]));
-		for (const [nodeId, position] of this.openCardPositionLocks) {
-			const node = nodesById.get(nodeId);
-			if (!node || this.openDetails.has(nodeId)) continue;
-			node.fx = position.fx;
-			node.fy = position.fy;
-			this.openCardPositionLocks.delete(nodeId);
-		}
-		for (const node of this.simNodes) {
-			if (!this.openDetails.has(node.id)) continue;
-			if (!this.openCardPositionLocks.has(node.id)) {
-				this.openCardPositionLocks.set(node.id, { fx: node.fx, fy: node.fy });
-			}
-			node.fx = node.x ?? node.fx ?? 0;
-			node.fy = node.y ?? node.fy ?? 0;
+		if (syncContentProjectionLayout(this.simNodes, this.openCardPositionLocks, this.openDetails.size > 0)) {
+			this.simulation?.stop();
 		}
 	}
 
@@ -1226,6 +1215,10 @@ export class ContextTreeView extends FileView {
 		this.clearSelectedEdge();
 		const simNode = this.simNodes.find((candidate) => candidate.id === node.id);
 		if (!simNode) return;
+		// Direct manipulation owns the current layout immediately. Waiting until a
+		// delayed pointermove lets an active force tick nudge neighbouring cards
+		// before the drag threshold is crossed.
+		this.simulation?.stop();
 		const captureTarget = event.currentTarget instanceof HTMLElement ? event.currentTarget : undefined;
 		this.dragNode = {
 			nodeId: node.id,
@@ -1310,7 +1303,6 @@ export class ContextTreeView extends FileView {
 		this.hoveredAnchor = undefined;
 		this.syncCards();
 		this.paintGraph();
-		this.simulation?.alpha(Math.max(this.simulation.alpha(), 0.28)).restart();
 	}
 
 	private finishNodeDrag(event: PointerEvent, cancelled = false): void {
@@ -1673,6 +1665,8 @@ export class ContextTreeView extends FileView {
 		if (this.resizeTimer !== undefined) window.clearTimeout(this.resizeTimer);
 		this.resizeTimer = window.setTimeout(() => {
 			this.resizeTimer = undefined;
+			const mayRestartLayout = this.layoutMeasurementRestartPending;
+			this.layoutMeasurementRestartPending = false;
 			let changed = false;
 			for (const node of this.simNodes) {
 				const card = this.nodeElements.get(node.id)?.querySelector<HTMLElement>(".context-tree-card");
@@ -1685,6 +1679,11 @@ export class ContextTreeView extends FileView {
 			if (!changed || !this.simulation) return;
 			this.collideForce?.radius((node) => cardRadius(node) + 30);
 			this.linkForce?.distance((link) => linkDistance(link, this.graph.physics.linkGap));
+			if (!mayRestartLayout || this.openDetails.size) {
+				this.simulation.stop();
+				this.paintGraph();
+				return;
+			}
 			this.simulation.alpha(0.86).restart();
 		}, 90);
 	}
@@ -1724,7 +1723,6 @@ export class ContextTreeView extends FileView {
 		// Overview is an explicit graph-wide reset, unlike a background click.
 		// It intentionally clears local reading pins as well.
 		this.pinnedOpenNodeIds.clear();
-		this.viewportBeforeDetails = undefined;
 		this.syncCards();
 		this.scheduleMeasure();
 		this.fitOverview();
@@ -1771,7 +1769,6 @@ export class ContextTreeView extends FileView {
 	private closeDetailsForCanvas(): void {
 		if (!this.openDetails.size) return;
 		this.replaceOpenDetails(retainPinnedCards(this.openDetails, this.pinnedOpenNodeIds));
-		if (!this.openDetails.size) this.restoreViewportBeforeDetails();
 		this.syncCards();
 		this.scheduleMeasure();
 	}
@@ -1830,17 +1827,6 @@ export class ContextTreeView extends FileView {
 			const rect = viewport.getBoundingClientRect();
 			this.zoomAt(viewport, rect.left + rect.width / 2, rect.top + rect.height / 2, this.clampZoom(this.zoom * (event.key === "-" ? 0.89 : 1.12)));
 		});
-	}
-
-	/** Restore the map context that existed before a card became a reader view. */
-	private restoreViewportBeforeDetails(): void {
-		const previous = this.viewportBeforeDetails;
-		this.viewportBeforeDetails = undefined;
-		if (!previous) return;
-		this.pan = previous.pan;
-		this.zoom = previous.zoom;
-		this.updateZoomLabel();
-		this.applyTransform();
 	}
 
 	private clampZoom(value: number): number {
@@ -1906,14 +1892,6 @@ export class ContextTreeView extends FileView {
 		// becoming larger than the compact card that owns them.
 		const cardControlScale = Math.min(2.4, Math.max(1, 0.72 / this.zoom));
 		this.viewport.style.setProperty("--ct-card-control-scale", String(cardControlScale));
-		// The graph scene is a transformed viewport-sized element. Keeping the
-		// grid inside it exposed that finite rectangle after panning or zooming.
-		// A tiled viewport background has no visible edge while still following
-		// the graph's origin and scale.
-		const gridStep = 18 * this.zoom;
-		this.viewport.style.setProperty("--ct-grid-step", `${gridStep}px`);
-		this.viewport.style.setProperty("--ct-grid-x", `${this.pan.x}px`);
-		this.viewport.style.setProperty("--ct-grid-y", `${this.pan.y}px`);
 	}
 
 	private openInternalLink(event: MouseEvent, sourcePath: string): void {

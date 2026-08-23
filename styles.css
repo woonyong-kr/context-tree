@@ -2,12 +2,23 @@
 	/* Keep the graph readable at the same 1.2× scale in Reading and Source
 	   modes. Explicit rem-based text below uses this variable as well. */
 	--ct-font-scale: 1.2;
-	--ct-card: color-mix(in srgb, var(--background-secondary) 84%, var(--background-primary));
-	--ct-card-hover: color-mix(in srgb, var(--background-secondary) 70%, var(--background-primary));
-	--ct-border: color-mix(in srgb, var(--background-modifier-border) 82%, transparent);
-	--ct-edge: color-mix(in srgb, var(--text-faint) 30%, transparent);
-	--ct-dot: color-mix(in srgb, var(--text-faint) 23%, transparent);
+	/* A quiet document surface: content carries the hierarchy, while chrome is
+	   neutral and only becomes visible on hover, focus, or an explicit state. */
+	--ct-canvas: var(--background-primary);
+	--ct-card: var(--background-primary);
+	--ct-card-hover: var(--background-primary);
+	--ct-control: color-mix(in srgb, var(--background-primary) 96%, var(--background-secondary));
+	--ct-control-hover: var(--background-modifier-hover);
+	/* Neutral alpha greys prevent a theme's tinted text tokens from turning
+	   ordinary card boundaries into an unintended accent state. */
+	--ct-border: rgb(128 128 128 / 24%);
+	--ct-border-strong: rgb(128 128 128 / 46%);
+	--ct-edge: rgb(128 128 128 / 18%);
 	--ct-muted: var(--text-muted);
+	--ct-card-radius: 6px;
+	--ct-card-shadow: none;
+	--ct-card-shadow-hover: 0 2px 8px rgb(0 0 0 / 8%);
+	--ct-popover-shadow: 0 8px 24px rgb(0 0 0 / 14%);
 	display: flex;
 	height: 100%;
 	min-height: 0;
@@ -17,9 +28,9 @@
 
 .context-tree-action,
 .context-tree-zoom-button {
-	border: 1px solid var(--ct-border);
-	border-radius: 7px;
-	background: color-mix(in srgb, var(--background-primary) 88%, transparent);
+	border: 1px solid transparent;
+	border-radius: 6px;
+	background: transparent;
 	color: var(--text-muted);
 	font-size: calc(0.76rem * var(--ct-font-scale));
 	cursor: pointer;
@@ -29,9 +40,9 @@
 
 .context-tree-action:hover,
 .context-tree-zoom-button:hover {
-	border-color: var(--text-muted);
+	border-color: transparent;
 	color: var(--text-normal);
-	background: var(--background-modifier-hover);
+	background: var(--ct-control-hover);
 }
 
 .context-tree-viewport {
@@ -41,10 +52,8 @@
 	flex: 1;
 	overflow: hidden;
 	cursor: grab;
-	background-color: var(--background-primary);
-	background-image: radial-gradient(circle at 1px 1px, var(--ct-dot) 1px, transparent 1.2px);
-	background-position: var(--ct-grid-x, 0px) var(--ct-grid-y, 0px);
-	background-size: var(--ct-grid-step, 18px) var(--ct-grid-step, 18px);
+	background-color: var(--ct-canvas);
+	background-image: none;
 	outline: none;
 }
 
@@ -185,20 +194,22 @@
 .context-tree-node.is-search-context .context-tree-card { opacity: 0.5; }
 .context-tree-node.is-search-match .context-tree-card {
 	border-color: var(--interactive-accent);
-	box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 20%, transparent), 0 14px 34px rgba(0, 0, 0, 0.15);
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 14%, transparent), var(--ct-card-shadow-hover);
 }
 .context-tree-node.is-hover-origin .context-tree-card {
-	border-color: var(--text-normal);
-	box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-normal) 18%, transparent), 0 14px 34px rgba(0, 0, 0, 0.16);
+	border-color: var(--ct-border-strong);
+	box-shadow: var(--ct-card-shadow-hover);
 }
 .context-tree-node.is-hover-neighbour .context-tree-card {
-	border-color: color-mix(in srgb, var(--text-muted) 72%, var(--ct-border));
+	/* Neighbourhood is already explained by the highlighted edge. Repainting
+	   every adjacent card as selected creates a noisy ring around the reader. */
+	border-color: transparent;
 }
 .context-tree-node.is-hover-muted .context-tree-card { opacity: 0.24; }
 
 .context-tree-node.is-node-dragging .context-tree-card {
 	cursor: grabbing;
-	box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24), 0 0 0 2px color-mix(in srgb, var(--text-normal) 18%, transparent);
+	box-shadow: 0 12px 32px rgb(0 0 0 / 18%), 0 0 0 1px var(--ct-border-strong);
 }
 
 .context-tree-view .context-tree-card {
@@ -206,14 +217,15 @@
 	box-sizing: border-box;
 	/* 100vw is the whole Obsidian window. Cards must fit their own graph pane. */
 	width: min(var(--ct-card-width, 276px), max(160px, calc(var(--ct-viewport-width, 100vw) - 32px)));
-	min-height: 92px;
-	padding: 15px 16px;
-	border: 1px solid var(--ct-border);
-	border-radius: 14px;
+	min-height: 82px;
+	padding: 14px 16px 15px;
+	border: 1px solid transparent;
+	border-radius: var(--ct-card-radius);
 	cursor: grab;
-	background: var(--ct-card);
+	background: color-mix(in srgb, var(--ct-card) 96%, var(--background-secondary));
 	background-image: none;
-	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16), inset 0 1px color-mix(in srgb, var(--text-on-accent) 7%, transparent);
+	box-shadow: var(--ct-card-shadow);
+	font-family: var(--font-interface);
 	transition:
 		width 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
 		box-shadow 170ms ease,
@@ -225,11 +237,16 @@
 
 .context-tree-card-quick-actions {
 	position: absolute;
-	top: 8px;
+	top: 7px;
 	right: 40px;
 	z-index: 2;
 	display: flex;
-	gap: 3px;
+	gap: 1px;
+	padding: 2px;
+	border: 1px solid var(--ct-border);
+	border-radius: 7px;
+	background: var(--ct-control);
+	box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
 	opacity: 0;
 	visibility: hidden;
 	transform: translateY(-2px) scale(var(--ct-card-control-scale, 1));
@@ -249,20 +266,19 @@
 }
 
 .context-tree-card-pin[aria-pressed="true"] {
-	border-color: var(--interactive-accent);
-	background: color-mix(in srgb, var(--interactive-accent) 18%, var(--background-primary));
-	color: var(--interactive-accent);
+	background: var(--ct-control-hover);
+	color: var(--text-normal);
 }
 
 .context-tree-card-expand[aria-pressed="true"] {
-	border-color: var(--interactive-accent);
-	color: var(--interactive-accent);
+	background: var(--ct-control-hover);
+	color: var(--text-normal);
 }
 
 .context-tree-card-more {
 	position: absolute;
-	top: 8px;
-	right: 8px;
+	top: 7px;
+	right: 7px;
 	z-index: 3;
 	opacity: 0;
 	visibility: hidden;
@@ -281,9 +297,9 @@
 	min-width: 132px;
 	padding: 4px;
 	border: 1px solid var(--ct-border);
-	border-radius: 9px;
-	background: var(--ct-card);
-	box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+	border-radius: 8px;
+	background: var(--ct-control);
+	box-shadow: var(--ct-popover-shadow);
 	opacity: 0;
 	pointer-events: none;
 	transform: translateY(-4px) scale(0.98);
@@ -336,7 +352,7 @@
 .context-tree-graph-list-item {
 	padding: 8px 10px;
 	border: 1px solid var(--background-modifier-border);
-	border-radius: 7px;
+	border-radius: 6px;
 	background: var(--background-primary);
 	color: var(--text-normal);
 	text-align: left;
@@ -345,7 +361,7 @@
 
 .context-tree-graph-list-item:hover,
 .context-tree-graph-list-item.is-active {
-	border-color: var(--interactive-accent);
+	border-color: var(--ct-border-strong);
 	background: var(--background-modifier-hover);
 }
 
@@ -374,12 +390,12 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 25px;
-	height: 25px;
+	width: 26px;
+	height: 26px;
 	padding: 0;
-	border: 1px solid var(--ct-border);
-	border-radius: 7px;
-	background: var(--background-primary);
+	border: 0;
+	border-radius: 5px;
+	background: transparent;
 	color: var(--text-muted);
 	cursor: pointer;
 }
@@ -448,9 +464,8 @@
 
 .context-tree-card-quick-action:hover,
 .context-tree-card-quick-action:focus-visible {
-	border-color: var(--text-normal);
 	color: var(--text-normal);
-	background: var(--background-modifier-hover);
+	background: var(--ct-control-hover);
 	outline: none;
 }
 
@@ -497,33 +512,37 @@
 }
 
 .context-tree-view .context-tree-card:hover {
-	border-color: color-mix(in srgb, var(--text-muted) 78%, var(--ct-border));
+	border-color: var(--ct-border-strong);
 	background: var(--ct-card-hover);
-	box-shadow: 0 16px 36px rgba(0, 0, 0, 0.15);
+	box-shadow: var(--ct-card-shadow-hover);
 }
 
 .context-tree-node.is-focused .context-tree-card {
-	border-color: color-mix(in srgb, var(--text-muted) 86%, var(--ct-border));
-	box-shadow: 0 14px 34px rgba(0, 0, 0, 0.15);
+	border-color: var(--ct-border-strong);
+	box-shadow: var(--ct-card-shadow-hover);
 }
 
 .context-tree-node.is-drag-connection-source .context-tree-card {
-	border-color: var(--text-normal);
-	box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-normal) 18%, transparent), 0 14px 34px rgba(0, 0, 0, 0.15);
+	border-color: var(--ct-border-strong);
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-normal) 10%, transparent), var(--ct-card-shadow-hover);
 }
 
 .context-tree-view .context-tree-node.is-drag-connection-target .context-tree-card {
 	border-color: var(--text-normal);
 	background: var(--ct-card-hover);
-	box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-normal) 11%, transparent), 0 14px 34px rgba(0, 0, 0, 0.15);
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-normal) 10%, transparent), var(--ct-card-shadow-hover);
 }
 
 .context-tree-card.is-detail-open {
 	display: flex;
 	flex-direction: column;
-	width: min(620px, max(180px, calc(var(--ct-viewport-width, 100vw) - 40px)));
+	width: min(680px, max(180px, calc(var(--ct-viewport-width, 100vw) - 40px)));
 	max-height: max(180px, calc(var(--ct-viewport-height, 760px) - 72px));
-	padding: 18px 20px;
+	padding: 30px 34px 32px;
+	border-color: rgb(128 128 128 / 24%);
+	border-radius: 4px;
+	background: var(--ct-card);
+	box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
 	cursor: grab;
 }
 
@@ -568,10 +587,10 @@
 }
 
 .context-tree-card.is-editing:focus-within {
-	border-color: var(--interactive-accent);
+	border-color: var(--ct-border-strong);
 	box-shadow:
-		0 0 0 2px color-mix(in srgb, var(--interactive-accent) 18%, transparent),
-		0 14px 34px rgba(0, 0, 0, 0.15);
+		0 0 0 2px color-mix(in srgb, var(--interactive-accent) 12%, transparent),
+		var(--ct-card-shadow-hover);
 }
 
 .context-tree-view .context-tree-card.is-editing .context-tree-card-trigger {
@@ -598,7 +617,7 @@
 	resize: none;
 	/* Match Obsidian Source mode: no nested input chrome, only the enclosing
 	   note card owns the border and background. */
-	padding: 0 20px 18px;
+	padding: 0 34px 32px;
 	border: 0;
 	border-radius: 0;
 	background: transparent;
@@ -613,7 +632,7 @@
 /* The toolbar spacer is outside the scrollport, so source text can never
    travel underneath the card's fixed pin, edit, and overflow controls. */
 .context-tree-editor-toolbar-spacer {
-	flex: 0 0 48px;
+	flex: 0 0 62px;
 }
 
 .context-tree-markdown-editor-scroll {
@@ -691,14 +710,22 @@
 .context-tree-view .context-tree-title {
 	margin: 0;
 	color: var(--text-normal);
-	font-size: calc(1rem * var(--ct-font-scale));
-	font-weight: 700;
+	font-size: calc(0.94rem * var(--ct-font-scale));
+	font-weight: 600;
 	line-height: 1.38;
-	letter-spacing: -0.015em;
+	letter-spacing: -0.012em;
+}
+
+.context-tree-view .context-tree-card.is-detail-open .context-tree-title {
+	font-family: var(--font-text);
+	font-size: calc(1.34rem * var(--ct-font-scale));
+	font-weight: 700;
+	line-height: 1.22;
+	letter-spacing: -0.024em;
 }
 
 .context-tree-view .context-tree-summary {
-	margin: 8px 0 0;
+	margin: 6px 0 0;
 	color: var(--ct-muted);
 	font-size: calc(0.81rem * var(--ct-font-scale));
 	line-height: 1.52;
@@ -725,7 +752,7 @@
 .context-tree-card.is-detail-open .context-tree-detail-wrap {
 	/* The renderer records the actual Markdown height in --ct-detail-height. */
 	max-height: var(--ct-detail-height, 2400px);
-	margin-top: 16px;
+	margin-top: 24px;
 	opacity: 1;
 	transform: translateY(0);
 	pointer-events: auto;
@@ -786,12 +813,29 @@
 
 .context-tree-detail {
 	max-width: 100%;
-	padding-top: 15px;
-	border-top: 1px solid var(--ct-border);
-	font-size: calc(0.88rem * var(--ct-font-scale));
-	line-height: 1.66;
+	padding-top: 0;
+	border-top: 0;
+	font-size: calc(0.92rem * var(--ct-font-scale));
+	line-height: 1.72;
 	overflow-wrap: anywhere;
 	cursor: text;
+	font-family: var(--font-text);
+}
+
+/* Keep the document surface quiet. Links remain discoverable through a
+   restrained underline and use the accent only on direct interaction. */
+.context-tree-detail a {
+	color: inherit;
+	text-decoration-line: underline;
+	text-decoration-color: color-mix(in srgb, currentColor 32%, transparent);
+	text-decoration-thickness: 1px;
+	text-underline-offset: 0.16em;
+}
+
+.context-tree-detail a:hover,
+.context-tree-detail a:focus-visible {
+	color: var(--text-accent);
+	text-decoration-color: currentColor;
 }
 
 /* Mirror Obsidian's Reading View class boundary so the active theme, snippets,
@@ -837,7 +881,7 @@
 	gap: 4px;
 	margin-top: 14px;
 	padding-top: 13px;
-	border-top: 1px solid var(--ct-border);
+	border-top: 1px solid color-mix(in srgb, var(--ct-border) 72%, transparent);
 }
 
 .context-tree-connection {
@@ -850,9 +894,9 @@
 
 .context-tree-connection-jump {
 	padding: 4px 7px;
-	border: 1px solid var(--ct-border);
-	border-radius: 999px;
-	background: color-mix(in srgb, var(--background-primary) 72%, transparent);
+	border: 1px solid transparent;
+	border-radius: 6px;
+	background: color-mix(in srgb, var(--background-secondary) 72%, transparent);
 	color: var(--text-muted);
 	font-size: calc(0.76rem * var(--ct-font-scale));
 	text-align: left;
@@ -869,9 +913,9 @@
 	left: 16px;
 	z-index: 4;
 	max-width: min(420px, calc(100% - 32px));
-	padding: 6px 9px;
-	border-radius: 7px;
-	background: color-mix(in srgb, var(--background-primary) 82%, transparent);
+	padding: 6px 4px;
+	border-radius: 0;
+	background: transparent;
 	color: var(--text-muted);
 	font-size: calc(0.78rem * var(--ct-font-scale));
 	line-height: 1.4;
@@ -886,12 +930,12 @@
 	z-index: 4;
 	display: flex;
 	align-items: center;
-	gap: 3px;
-	padding: 4px;
+	gap: 1px;
+	padding: 3px;
 	border: 1px solid var(--ct-border);
-	border-radius: 9px;
-	background: color-mix(in srgb, var(--background-primary) 90%, transparent);
-	box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08);
+	border-radius: 6px;
+	background: var(--ct-control);
+	box-shadow: 0 1px 4px rgb(0 0 0 / 8%);
 }
 
 .context-tree-save-graph-input {
@@ -902,7 +946,7 @@
 	height: 30px;
 	border: 1px solid var(--ct-border);
 	border-radius: 6px;
-	background: color-mix(in srgb, var(--background-primary) 92%, transparent);
+	background: var(--ct-control);
 	color: var(--text-normal);
 	font: inherit;
 	width: min(180px, max(112px, calc(var(--ct-viewport-width, 100vw) - 32px)));
@@ -919,9 +963,9 @@
 	width: min(304px, calc(100% - 32px));
 	padding: 10px;
 	border: 1px solid var(--ct-border);
-	border-radius: 10px;
-	background: color-mix(in srgb, var(--background-primary) 94%, transparent);
-	box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+	border-radius: 8px;
+	background: var(--ct-control);
+	box-shadow: var(--ct-popover-shadow);
 }
 
 .context-tree-search-panel.is-open { display: block; }
@@ -933,7 +977,7 @@
 	padding: 5px 8px;
 	border: 1px solid var(--ct-border);
 	border-radius: 7px;
-	background: var(--background-primary);
+	background: color-mix(in srgb, var(--background-primary) 98%, var(--background-secondary));
 	color: var(--text-normal);
 	font: inherit;
 	font-size: calc(0.8rem * var(--ct-font-scale));
@@ -994,7 +1038,7 @@
 .context-tree-zoom-label {
 	min-width: 43px;
 	padding: 0 3px;
-	color: var(--text-faint);
+	color: var(--text-muted);
 	font-size: calc(0.7rem * var(--ct-font-scale));
 	text-align: center;
 	font-variant-numeric: tabular-nums;
@@ -1004,11 +1048,11 @@
 	align-self: flex-start;
 	width: min(480px, calc(100% - 64px));
 	margin: clamp(64px, 14vh, 144px) auto 0;
-	padding: 28px 30px;
+	padding: 30px 32px;
 	border: 1px solid var(--ct-border);
-	border-radius: 14px;
-	background: var(--background-primary-alt);
-	box-shadow: 0 18px 46px rgb(0 0 0 / 12%);
+	border-radius: var(--ct-card-radius);
+	background: var(--ct-card);
+	box-shadow: var(--ct-card-shadow);
 	color: var(--text-muted);
 }
 
@@ -1036,6 +1080,25 @@
 .context-tree-empty-next { margin: 7px 0 0; color: var(--text-faint); font-size: calc(0.82rem * var(--ct-font-scale)); line-height: 1.5; }
 .context-tree-empty-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
 .context-tree-empty-actions .context-tree-action:first-child { background: var(--background-modifier-hover); }
+
+/* Theme CSS is loaded beside plugin CSS and may style a generic card class
+   after this file. Keep Context Graph's neutral document boundary scoped and
+   specific without resorting to global overrides or priority flags. */
+.context-tree-view .context-tree-node .context-tree-card {
+	border-color: transparent;
+	box-shadow: none;
+}
+
+.context-tree-view .context-tree-node .context-tree-card.is-detail-open {
+	border-color: rgb(128 128 128 / 24%);
+	box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
+}
+
+.context-tree-view .context-tree-node:is(.is-focused, .is-hover-origin) .context-tree-card,
+.context-tree-view .context-tree-node .context-tree-card:hover {
+	border-color: var(--ct-border-strong);
+	box-shadow: var(--ct-card-shadow-hover);
+}
 
 @media (max-width: 700px) {
 	.context-tree-card { width: min(258px, max(160px, calc(var(--ct-viewport-width, 100vw) - 32px))); }

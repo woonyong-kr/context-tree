@@ -10,6 +10,8 @@ must begin from a clean working tree and a reviewed commit on `main`.
   are committed at the repository root.
 - `package.json.version` and `manifest.json.version` are identical semantic
   versions in `x.y.z` form.
+- `docs/release-media.json` names that exact version and records the current
+  README overview, Reading, and Source captures.
 - The release version has not been used as a Git tag or GitHub release.
 - Node.js 20 or later is installed.
 
@@ -28,6 +30,26 @@ git status --short
 The audit must report no production dependency vulnerabilities, and the final
 two commands must produce no output. Review the generated `main.js` locally;
 it is intentionally ignored and must never be committed.
+
+### Refresh the README evidence
+
+Every release candidate must be shown in the README as it actually renders in
+Obsidian. Use one small set of synthetic, public-safe Markdown notes and capture:
+
+1. the compact one-hop overview;
+2. the same card opened in Reading; and
+3. the same card in Source.
+
+Replace the three files under `docs/assets/context-graph-0*.png`, then update
+their exact SHA-256 values, dimensions, Obsidian version, capture date, and
+release version in `docs/release-media.json`. Do not use a mockup, an older
+release, private Vault content, or an image with unrelated panes and notices.
+
+`npm run build` executes `npm run check:media`. It fails when the media record
+does not match `package.json` and `manifest.json`, a required capture is absent,
+the README does not embed it, its PNG dimensions are too small, or its recorded
+hash is stale. This makes README evidence part of every local and CI release
+build instead of an optional documentation step.
 
 Complete the [Desktop release regression procedure](ux-contract.md#desktop-릴리스-회귀-절차)
 in a local Obsidian vault and retain its results with the release record. The

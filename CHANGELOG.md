@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.5.5
+
+- Replace the high-contrast graph chrome with a quiet, document-first visual
+  system: neutral card surfaces, subtle boundaries, restrained elevation, and
+  low-contrast spatial guides that follow the active Obsidian theme.
+- Group card actions into one hover surface instead of presenting every icon as
+  a separate decorated button, while preserving keyboard focus and touch access.
+- Apply the same radius, surface, and elevation tokens to cards, graph controls,
+  search, menus, and empty states without changing graph geometry or interaction
+  ownership.
+- Remove the decorative dot grid and ordinary card outlines so the linked-note
+  neighbourhood reads as a quiet index; reserve a paper-like boundary, larger
+  title, and generous spacing for the document currently being read or edited.
+- Keep a user's explicit canvas pan and zoom after Reading or Source closes
+  instead of restoring a camera snapshot captured before the card opened.
+- Treat Reading and Source as projections over the current map: measuring,
+  editing, or closing a document no longer restarts the force layout or moves
+  surrounding cards.
+- Freeze the settled neighbourhood during manual card placement so dragging
+  one compact, Reading, or Source card no longer nudges surrounding cards.
+- Add real Obsidian overview, Reading, and Source captures to the README and
+  make their version, dimensions, references, and hashes a required build gate.
+
 ## 0.5.4
 
 - Position Context Graph as a linked-note reading map: read the original

@@ -1,0 +1,48 @@
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
+
+const repository = new URL("../", import.meta.url);
+const requiredAssets = [
+	"docs/assets/context-graph-01-overview.png",
+	"docs/assets/context-graph-02-reading.png",
+	"docs/assets/context-graph-03-source.png",
+];
+
+const readJson = async (path) => JSON.parse(await readFile(new URL(path, repository), "utf8"));
+const [packageJson, manifest, media, readme] = await Promise.all([
+	readJson("package.json"),
+	readJson("manifest.json"),
+	readJson("docs/release-media.json"),
+	readFile(new URL("README.md", repository), "utf8"),
+]);
+
+const fail = (message) => {
+	throw new Error(`release media contract: ${message}`);
+};
+
+if (packageJson.version !== manifest.version) fail("package and manifest versions differ");
+if (media.version !== packageJson.version) fail("capture record does not match the build version");
+if (typeof media.capturedWith !== "string" || !media.capturedWith.startsWith("Obsidian ")) {
+	fail("capturedWith must name the tested Obsidian version");
+}
+if (!/^\d{4}-\d{2}-\d{2}$/.test(media.capturedAt)) fail("capturedAt must be an ISO date");
+if (media.publicSafeSample !== true) fail("captures must be attested as public-safe sample content");
+
+const records = new Map(media.assets.map((asset) => [asset.path, asset]));
+if (records.size !== requiredAssets.length) fail("capture record must contain exactly the required assets");
+
+for (const path of requiredAssets) {
+	const record = records.get(path);
+	if (!record) fail(`missing record for ${path}`);
+	if (!readme.includes(`](${path})`)) fail(`README does not embed ${path}`);
+
+	const bytes = await readFile(new URL(path, repository));
+	const pngSignature = "89504e470d0a1a0a";
+	if (bytes.subarray(0, 8).toString("hex") !== pngSignature) fail(`${path} is not a PNG`);
+	const width = bytes.readUInt32BE(16);
+	const height = bytes.readUInt32BE(20);
+	if (width < 900 || height < 600) fail(`${path} is too small for README inspection`);
+	if (record.width !== width || record.height !== height) fail(`${path} dimensions are stale`);
+	const sha256 = createHash("sha256").update(bytes).digest("hex");
+	if (record.sha256 !== sha256) fail(`${path} SHA-256 is stale`);
+}

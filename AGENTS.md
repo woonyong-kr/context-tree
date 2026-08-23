@@ -40,6 +40,9 @@ the new release assets.
 - Keep `package.json`, `manifest.json`, and `versions.json` versions aligned.
 - Tag releases with the exact version, without a `v` prefix.
 - Release `main.js`, `manifest.json`, and `styles.css` as individual assets.
+- Refresh the three actual Obsidian README captures and
+  `docs/release-media.json` for every release version; `npm run build` enforces
+  their version, dimensions, references, and hashes.
 - Do not commit generated `main.js`; CI builds and attests release artifacts.
 - Follow `docs/release-process.md` for the full local, GitHub, and Community
   directory verification sequence.
