@@ -2,6 +2,21 @@
 
 이 문서는 Context Graph 상호작용의 단일 제품 계약이다. 구현·테스트·UI 검수는 이 문서와 충돌해서는 안 된다.
 
+## 제품 모델
+
+1. 기본 진입점은 **현재 노트 주변 보기**다. 활성 Markdown 노트를 중심으로 직접 연결된 노트를 즉시 보여 주며, 사전 설정이나 전용 frontmatter를 요구하지 않는다.
+2. 현재 노트에서 시작한 탐색은 임시 상태다. 사용자가 **이 그래프로 저장**을 선택했을 때만 이름·확장 범위·카메라·카드 위치를 가진 **저장된 그래프**가 된다.
+3. Markdown 노트가 내용의 유일한 정본이다. 일반 wikilink와 backlink는 기본 연결이며, `context_tree_links`의 관계 유형은 선택적 확장 계약이다. 플러그인은 별도 카드 데이터베이스를 만들지 않는다.
+4. `Focus Graph`, `Workspace`, `Relation Profile`, `Graph Manager`는 사용자 용어가 아니다. 화면에는 각각 **현재 노트 주변 보기**, **저장된 그래프**, **관계 표시 설정**, **저장된 그래프 목록**만 사용한다.
+5. 저장된 그래프 파일은 탐색 구성을, plugin settings는 장치별 카메라와 카드 배치를 소유한다. 동일한 그래프 정의를 두 저장소에 중복 정본으로 두지 않는다.
+
+## 상호작용 깊이
+
+1. 현재 노트 주변 보기, 카드 읽기, 인접 노트 펼치기, 원문 열기, 검색과 필터는 한 번의 직접 동작으로 끝난다.
+2. 기존 노트 연결, 새 노트 연결, 현재 탐색 저장은 최대 두 단계로 끝난다. 일상 동작에서 modal 위에 modal을 열지 않는다.
+3. 그래프에서 카드 제거는 두 단계 이내로 끝나되 Markdown 원문을 변경하지 않는다. 원본 노트를 휴지통으로 보내는 작업만 명시적 경고와 확인을 포함한 세 단계까지 허용한다.
+4. 첫 실행은 설정 wizard 대신 현재 노트 주변 그래프와 한 줄 도움말을 보여 준다. 빈 상태의 주 동작은 하나만 제공한다.
+
 ## 공간과 카드
 
 1. 일반 카드 클릭은 **제자리에서** Reading 카드를 열거나 닫는다. 클릭은 카메라를 이동시키지 않으며, 막 열린 카드의 그래프 좌표는 고정한다. 카드 크기가 바뀐 뒤에는 주변 카드만 충돌 여유 공간을 갱신할 수 있다.
@@ -21,13 +36,16 @@
 
 1. 연결점 드래그는 카드 위에서 놓았을 때만 관계를 생성한다.
 2. 관계 삭제는 선택된 단일 관계 끝점을 충분히 끌어 **현재 그래프의 빈 캔버스 안**에 놓았을 때만 수행한다. 카드·도구·사이드바·다른 Obsidian 영역에서 놓으면 취소한다.
+3. **그래프에서 제거**는 현재 저장된 그래프의 포함 범위만 바꾸며 Markdown 파일과 다른 저장된 그래프에는 영향을 주지 않는다.
+4. **원본 노트를 휴지통으로 이동**은 모든 그래프에 영향을 주는 별도 파괴 작업이다. 메뉴 문구와 확인 화면은 그래프 제거와 원본 삭제를 구분한다.
+5. 편집 중 view가 닫히거나 plugin이 unload될 때 저장 가능한 draft는 먼저 원문에 반영한다. 충돌이나 I/O 실패로 저장할 수 없는 draft는 local plugin data에 복구 가능하게 보존하며 성공한 저장 뒤 제거한다. 원문에 이미 같은 내용이 저장된 장부는 충돌로 취급하지 않는다.
 
 ## 도구와 가독성
 
 1. 새 카드는 전역 그래프 도구 모음에서만 만든다. 카드 내부에는 중복 `+`를 두지 않는다.
 2. 그래프 도구 모음은 뷰포트 우하단에 고정한다.
-3. 다중 그래프 관리는 명령 팔레트의 `지식 그래프 관리`로 진입한다. 도구 모음에는 사용 빈도가 낮고 의미가 모호한 레이어 버튼을 두지 않는다.
-4. 본문 텍스트는 1.2배로 읽기 쉽게 하되, 아이콘과 버튼의 물리적 크기·위치는 바꾸지 않는다.
+3. 좌상단에는 현재 루트 또는 저장된 그래프 이름을 표시하고 선택하면 **저장된 그래프 목록**을 연다. 임시 탐색에는 **이 그래프로 저장**을 바로 제공한다. 도구 모음에는 레이어·새로고침·관리 버튼을 두지 않는다.
+4. 본문 텍스트는 1.2배로 읽기 쉽게 하되, 아이콘과 버튼의 물리적 크기·위치는 바꾸지 않는다. 핀은 위치 고정이 아니라 **카드 열어두기**이며 고정 여부와 무관하게 카드 프레임을 끌어 이동할 수 있다.
 5. Reading 본문은 Obsidian의 native Reading View DOM 경계 안에서 `MarkdownRenderer`와 등록된 Markdown post-processor가 직접 렌더링한다. 제목·목록·task·callout·wikilink·embed·수식·코드·표·각주·지원 HTML 등 Obsidian이 지원하는 Markdown 문법을 플러그인이 부분 재구현하거나 평탄화하지 않는다. 문서의 첫 H1과 `[!summary]`는 카드 제목·요약으로 한 번만 표현하고, frontmatter를 포함한 불변 원문 전체는 Source에서 제공한다. 긴 카드의 내부 스크롤은 유지하되, 스크롤바는 hover 또는 focus 중에만 드러내 중첩 패널처럼 보이지 않게 한다.
 
 ## 검증 원칙
@@ -46,6 +64,10 @@
 | 휠 소유권과 중앙 기준 줌 | `canvas-wheel-target.ts`, `canvas-wheel-action.ts`, `ContextTreeView.zoomAt()` | `canvas-wheel-target.test.ts`, `canvas-wheel-action.test.ts` |
 | Markdown Reading 의미 | `TopicCardRenderer.ensureDetails()`, `createReadingMarkdownFrame()`, `topicDisplayContent()`, `styles.css` | `reading-markdown-frame.test.ts`, `topic-display.test.ts`, Desktop UI 검증 |
 | 관계 삭제 드롭 안전성 | `disconnect-drop-action.ts` | `disconnect-drop-action.test.ts` |
+| 현재 노트와 1-hop 탐색 | `graph-workspace.ts`, `parser.ts`, `ContextTreePlugin.activateCurrentNote()` | `graph-workspace.test.ts`, `parser-rooted.test.ts` |
+| 편집 draft 복구 | `inline-editor-draft.ts`, `ContextTreeView` lifecycle, plugin settings | `inline-editor-draft.test.ts`, lifecycle regression |
+| 그래프 제거와 원문 휴지통 구분 | `graph-workspace.ts`, card menu callbacks | `graph-workspace.test.ts`, copy regression, Desktop UI 검증 |
+| 저장된 그래프 단일 정본 | graph definition adapter, plugin settings migration | graph definition integration regression |
 
 새 상호작용을 추가하거나 기존 항목을 바꿀 때는 이 표의 계약 문장, 구현 경계, 자동 검증을 함께 갱신한다. 테스트만 또는 구현만 별도로 바꾸는 것은 계약 변경으로 인정하지 않는다.
 
@@ -57,7 +79,7 @@ Obsidian에서 플러그인을 다시 활성화한다. 짧은 카드와 화면�
 검토 기록에 남긴다.
 
 1. **도구와 열기:** 그래프 명령으로 열었을 때 도구 모음은 우하단에 있고 카드 내부에는
-   `+`가 없으며 레이어 아이콘도 없다. 명령 팔레트의 `지식 그래프 관리`는 정상적으로 관리 화면을 연다.
+   `+`가 없으며 레이어 아이콘도 없다. 좌상단 그래프 이름과 명령 팔레트의 **저장된 그래프 목록**은 같은 단순 목록을 연다.
    카드를 열어도 카메라와 막 열린 카드의 좌표는 바뀌지 않는다.
 2. **Reading·Source 이동:** 카드 제목·요약을 클릭하면 카드를 열고 닫고, 5px 이상 끌면
    고정 여부와 무관하게 그 카드만 이동한다. Reading 본문은 텍스트
@@ -69,7 +91,7 @@ Obsidian에서 플러그인을 다시 활성화한다. 짧은 카드와 화면�
    배경 위로 각각 옮겨 휠을 사용한다. 카드 위에서는 해당 카드만 스크롤하고 배경에서는
    포커스와 무관하게 뷰포트 중앙 기준으로 그래프만 확대·축소한다. 배경 줌 전후 화면 중심의
    그래프 좌표는 같아야 한다. 검색 패널 위 휠은 검색 결과의 고유 스크롤을 유지한다.
-5. **고정과 종료:** 고정하지 않은 Source 카드는 배경 클릭으로 Reading으로 돌아가고,
+5. **열어두기와 종료:** 열어두지 않은 Source 카드는 배경 클릭으로 Reading으로 돌아가고,
    배경 드래그는 편집을 즉시 닫지 않고 캔버스를 이동한다. 고정한 Source 카드는 배경
    동작으로 닫히거나 포커스를 빼앗기지 않는다.
 6. **관계 안전:** 연결점은 다른 카드 위에 놓을 때만 관계를 만든다. 선택된 단일 직접

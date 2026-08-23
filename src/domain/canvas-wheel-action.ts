@@ -41,3 +41,10 @@ export function canvasWheelZoomPoint(
 		y: viewport.top + viewport.height / 2,
 	};
 }
+
+/** Normalises mouse-wheel, trackpad, line, and page deltas into one smooth zoom gesture. */
+export function canvasWheelZoomFactor(deltaY: number, deltaMode: number): number {
+	if (!Number.isFinite(deltaY) || deltaY === 0) return 1;
+	const pixels = deltaY * (deltaMode === 1 ? 16 : deltaMode === 2 ? 240 : 1);
+	return Math.min(1.5, Math.max(0.5, Math.exp(-pixels * 0.0015)));
+}

@@ -12,7 +12,7 @@ export function decideInlineEditorSave(
 	lastPersistedContent: string,
 	pendingEditorContent: string,
 ): InlineEditorSaveDecision {
-	if (pendingEditorContent === lastPersistedContent) return { kind: "noop" };
+	if (pendingEditorContent === lastPersistedContent || pendingEditorContent === currentVaultContent) return { kind: "noop" };
 	if (currentVaultContent !== lastPersistedContent) return { kind: "conflict" };
 	return { kind: "write" };
 }

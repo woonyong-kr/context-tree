@@ -17,20 +17,8 @@ export const RELATION_TYPES = [
 
 export const DIRECT_RELATION: ContextRelationType = "related";
 
-const RELATION_LABELS: Record<ContextRelationType, string> = {
-	"related": "관련",
-	"prerequisite": "선수 지식",
-	"supports": "근거",
-	"contrasts": "비교·반례",
-	"follow-up": "후속 질문",
-};
-
 export function isContextRelationType(value: unknown): value is ContextRelationType {
 	return typeof value === "string" && (RELATION_TYPES as readonly string[]).includes(value);
-}
-
-export function contextRelationLabel(type: ContextRelationType): string {
-	return RELATION_LABELS[type];
 }
 
 /**

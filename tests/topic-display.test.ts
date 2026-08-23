@@ -45,3 +45,39 @@ test("preserves authored Markdown structures for the Reading projection", () => 
 
 	assert.equal(display.body, body);
 });
+
+test("does not extract or remove a summary-like callout inside fenced code", () => {
+	const source = [
+		"# Parser example",
+		"",
+		"```md",
+		"> [!summary] not card metadata",
+		"> keep this literal",
+		"```",
+		"",
+		"Body",
+	].join("\n");
+
+	const display = topicDisplayContent(source, { title: "fallback", summary: "" });
+	assert.equal(display.summary, "Body");
+	assert.match(display.body, /> \[!summary\] not card metadata/);
+});
+
+test("does not close a four-backtick fence with a shorter marker", () => {
+	const source = [
+		"# Fence example",
+		"",
+		"````md",
+		"```",
+		"````ts",
+		"> [!summary] still code",
+		"> keep this literal",
+		"````",
+		"",
+		"Visible body",
+	].join("\n");
+
+	const display = topicDisplayContent(source, { title: "fallback", summary: "" });
+	assert.equal(display.summary, "Visible body");
+	assert.match(display.body, /> \[!summary\] still code/);
+});

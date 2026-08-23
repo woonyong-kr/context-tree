@@ -1,16 +1,19 @@
 # Changelog
 
-## Unreleased
+## 0.5.0
 
-- Keep wheel zoom centred on the graph viewport so zooming never doubles as an implicit pan gesture.
-- Render Reading cards through Obsidian's native Reading View boundary and registered Markdown post-processors, preserving all Obsidian-supported Markdown syntax while keeping the active theme authoritative.
-- Give long Reading and Source cards ownership of wheel gestures under the pointer, without displaying a permanent nested-panel scrollbar track.
-- Restore a saved graph camera before the first paint and skip automatic overview fitting when reopening an existing workspace.
-- Keep a newly opened reader card at its graph coordinate, cancel delayed automatic overview fitting after a card interaction, and preserve the same card footprint when switching between Reading and Source.
-- Make wheel ownership follow the pointer, so the Source editor under the pointer scrolls even when focus remains in that editor after the pointer leaves its card.
-- Validate persisted graph IDs, graph definitions, physics, scopes, and view state before they become Vault paths, object keys, or graph transforms.
-- Label searchable physics controls with their graph name so identically named controls remain unambiguous in current Obsidian settings UI.
-- Align README interaction guidance with the UX contract and replace direct Vault modification/adapter probing with Obsidian-recommended Vault APIs.
+- Open an immediate one-hop graph from any current Markdown note, using ordinary wikilinks and backlinks without requiring plugin frontmatter.
+- Let a current-note exploration expand one card at a time and become durable only through **Save this graph**; saved definitions are now the single graph canon instead of being duplicated in plugin settings.
+- Replace the old graph-creation form with a shallow saved-graph list and remove redundant card and toolbar controls.
+- Render Reading cards through Obsidian's native Reading View boundary and registered Markdown post-processors, preserving Obsidian-supported Markdown syntax and the active theme.
+- Keep Reading and Source at the same bounded card footprint, scroll the card under the pointer, preserve recoverable edit drafts, and stop before overwriting concurrent source changes.
+- Keep cards draggable in compact, Reading, Source, and keep-open states; opening or editing a card preserves its graph coordinate and camera.
+- Smooth mouse-wheel and trackpad zoom around the graph pane centre so zooming does not become an implicit pan gesture.
+- Separate graph-only removal from the explicitly confirmed source-note trash action, and cancel connection authoring on pointer cancellation.
+- Preserve graph scope, deliberate card positions, and authored IDs across Markdown renames while disambiguating duplicate IDs across the whole vault.
+- Add Korean and English interface copy selected from Obsidian's document language.
+- Validate persisted graph IDs, definitions, physics, scopes, view state, and settings ownership before they become Vault paths, object keys, or graph transforms.
+- Rewrite the README around the current-note workflow, local data boundary, compatibility layer, and Community plugin release process.
 
 ## 0.4.0
 

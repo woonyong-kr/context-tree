@@ -7,7 +7,7 @@ import {
 	parseGraphDefinition,
 	serializeGraphDefinition,
 } from "../src/domain/graph-definition";
-import { createGraphWorkspace } from "../src/domain/graph-workspace";
+import { createCurrentNoteGraph, createGraphWorkspace } from "../src/domain/graph-workspace";
 
 test("a graph definition round-trips its portable scope and physics", () => {
 	const graph = createGraphWorkspace("인터뷰 준비", [], {
@@ -42,5 +42,15 @@ test("same display names receive separate graph definition files", () => {
 
 test("a malformed graph definition is ignored instead of widening scope", () => {
 	assert.equal(parseGraphDefinition('{"schemaVersion":1,"graph":{"id":"unsafe"}}'), undefined);
+	assert.equal(parseGraphDefinition('{"schemaVersion":1,"graph":{"id":"root","name":"Root","scope":{"kind":"rooted","rootPath":""},"physics":{}}}'), undefined);
 	assert.equal(parseGraphDefinition("not JSON"), undefined);
+});
+
+test("a saved current-note exploration preserves its root and expansions", () => {
+	const graph = createCurrentNoteGraph("notes/Root.md", "Root");
+	graph.id = "root-study";
+	graph.name = "Root study";
+	graph.scope.expandedPaths.push("notes/Next.md");
+
+	assert.deepEqual(parseGraphDefinition(serializeGraphDefinition(graph)), graph);
 });

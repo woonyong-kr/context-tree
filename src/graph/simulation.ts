@@ -171,7 +171,7 @@ export function curvedEdgePath(
  * Projects a ray from a card's centre to the exact point where it meets the
  * rectangle. This is the one geometric rule for persistent edge endpoints.
  */
-export function cardBoundaryPoint(
+function cardBoundaryPoint(
 	center: { x: number; y: number },
 	size: CardSize,
 	toward: { x: number; y: number },

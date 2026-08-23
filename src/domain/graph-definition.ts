@@ -21,7 +21,7 @@ export function graphDefinitionFileName(graph: Pick<GraphWorkspace, "id" | "name
 		.replace(/\s+/g, " ")
 		.replace(/^\.+|\.+$/g, "")
 		.trim();
-	return `${stem || graphWorkspaceId(graph.id) || "지식 그래프"}.${GRAPH_DEFINITION_EXTENSION}`;
+	return `${stem || graphWorkspaceId(graph.id) || "context-graph"}.${GRAPH_DEFINITION_EXTENSION}`;
 }
 
 export function graphDefinitionPath(graph: Pick<GraphWorkspace, "id" | "name">): string {
@@ -70,6 +70,9 @@ export function parseGraphDefinition(source: string): GraphWorkspace | undefined
 			|| !graph.scope || typeof graph.scope !== "object"
 			|| !graph.physics || typeof graph.physics !== "object"
 		) return undefined;
+		if (graph.scope.kind === "rooted" && (typeof graph.scope.rootPath !== "string" || !graph.scope.rootPath.trim())) {
+			return undefined;
+		}
 		return migrateGraphWorkspaces([document.graph], undefined, undefined)[0];
 	} catch {
 		return undefined;

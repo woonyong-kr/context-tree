@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildContextGraph, isDetachableGraphEdge } from "../src/graph/model";
+import { buildContextGraph, graphStructureSignature, isDetachableGraphEdge } from "../src/graph/model";
 import { buildContextTree } from "../src/tree";
-import { ContextTreeLink, ParsedTopic } from "../src/types";
+import { ContextTreeLink, ContextTreeNode, ParsedTopic } from "../src/types";
 
 function topic(path: string, title: string, parentPath?: string, links: ContextTreeLink[] = []): ParsedTopic {
 	return { id: path, path, title, parentPath, summary: "summary", body: "body", links };
@@ -132,4 +132,51 @@ test("does not expose an ambiguous visual line as a destructive gesture", () => 
 		],
 	}), false);
 	assert.equal(isDetachableGraphEdge({ types: ["derived"], storedLinks: [] }), false);
+});
+
+test("projects ordinary Markdown references as non-destructive graph context", () => {
+	const root: ContextTreeNode = {
+		id: "root",
+		path: "Root.md",
+		title: "Root",
+		summary: "",
+		body: "[[Neighbour]]",
+		links: [],
+		referencePaths: ["Neighbour.md"],
+		children: [],
+	};
+	const neighbour: ContextTreeNode = {
+		id: "neighbour",
+		path: "Neighbour.md",
+		title: "Neighbour",
+		summary: "",
+		body: "",
+		links: [],
+		referencePaths: [],
+		children: [],
+	};
+
+	const graph = buildContextGraph([root, neighbour]);
+	assert.equal(graph.edges.length, 1);
+	assert.deepEqual(graph.edges[0]?.types, ["derived"]);
+	assert.deepEqual(graph.edges[0]?.storedLinks, []);
+	assert.equal(isDetachableGraphEdge(graph.edges[0]!), false);
+});
+
+test("distinguishes content-only refreshes from graph structure changes", () => {
+	const first = buildContextGraph(buildContextTree([
+		topic("A.md", "A", undefined, [{ targetPath: "B.md", type: "related" }]),
+		topic("B.md", "B"),
+	]));
+	const contentOnly = buildContextGraph(buildContextTree([
+		{ ...topic("A.md", "Changed title", undefined, [{ targetPath: "B.md", type: "related" }]), body: "Changed body" },
+		topic("B.md", "B"),
+	]));
+	const changedEdge = buildContextGraph(buildContextTree([
+		topic("A.md", "A"),
+		topic("B.md", "B"),
+	]));
+
+	assert.equal(graphStructureSignature(first), graphStructureSignature(contentOnly));
+	assert.notEqual(graphStructureSignature(first), graphStructureSignature(changedEdge));
 });

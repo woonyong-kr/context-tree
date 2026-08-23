@@ -8,7 +8,10 @@ export type GraphScope =
 	| { kind: "all"; folders: string[]; includePaths: string[]; excludePaths: string[] }
 	| { kind: "folders"; folders: string[]; includePaths: string[]; excludePaths: string[] }
 	| { kind: "curated"; folders: string[]; includePaths: string[]; excludePaths: string[] }
-	| { kind: "hybrid"; folders: string[]; includePaths: string[]; excludePaths: string[] };
+	| { kind: "hybrid"; folders: string[]; includePaths: string[]; excludePaths: string[] }
+	| { kind: "rooted"; rootPath: string; expandedPaths: string[]; folders: string[]; includePaths: string[]; excludePaths: string[] };
+
+export type RootedGraphScope = Extract<GraphScope, { kind: "rooted" }>;
 
 export interface GraphWorkspace {
 	id: string;
@@ -27,7 +30,14 @@ export interface GraphViewState {
 	positions: Record<string, { x: number; y: number; pinned: boolean }>;
 }
 
-export type GraphScopeInput = Partial<GraphScope> & Pick<GraphScope, "kind">;
+export type GraphScopeInput = {
+	kind: GraphScope["kind"];
+	folders?: string[];
+	includePaths?: string[];
+	excludePaths?: string[];
+	rootPath?: string;
+	expandedPaths?: string[];
+};
 
 function recordFrom(value: unknown): Record<string, unknown> | undefined {
 	return value && typeof value === "object" && !Array.isArray(value)
@@ -39,8 +49,8 @@ function finiteNumber(value: unknown): number | undefined {
 	return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
-function normalizedPath(path: string): string {
-	return path.trim().replace(/^\/+|\/+$/g, "");
+function normalizedPath(path: unknown): string {
+	return typeof path === "string" ? path.trim().replace(/^\/+|\/+$/g, "") : "";
 }
 
 function uniquePaths(paths: unknown): string[] {
@@ -52,11 +62,25 @@ function uniquePaths(paths: unknown): string[] {
 }
 
 function scopeFrom(input: GraphScopeInput): GraphScope {
-	return {
+	const common = {
 		kind: input.kind,
 		folders: uniquePaths(input.folders ?? []),
 		includePaths: uniquePaths(input.includePaths ?? []),
 		excludePaths: uniquePaths(input.excludePaths ?? []),
+	};
+	if (input.kind === "rooted") {
+		return {
+			...common,
+			kind: "rooted",
+			rootPath: normalizedPath(input.rootPath ?? ""),
+			expandedPaths: uniquePaths(input.expandedPaths ?? []),
+		};
+	}
+	return {
+		kind: input.kind,
+		folders: common.folders,
+		includePaths: common.includePaths,
+		excludePaths: common.excludePaths,
 	};
 }
 
@@ -111,7 +135,7 @@ export function createGraphWorkspace(
 	scope: GraphScopeInput = { kind: "curated" },
 	physics: GraphPhysics = DEFAULT_GRAPH_PHYSICS,
 ): GraphWorkspace {
-	const normalizedName = name.trim() || "새 지식 그래프";
+	const normalizedName = name.trim() || "Context Graph";
 	const id = nextId(normalizedName, existingIds);
 	const normalizedScope = scopeFrom(scope);
 	// The graph picker defaults to folder scope. Giving that workspace a stable
@@ -126,6 +150,38 @@ export function createGraphWorkspace(
 		scope: normalizedScope,
 		physics: graphPhysicsFrom(physics),
 	};
+}
+
+/** Creates an in-memory current-note lens. It becomes durable only after Save. */
+export function createCurrentNoteGraph(
+	path: string,
+	title: string,
+	displayName = title.trim() || "Context Graph",
+): GraphWorkspace & { scope: RootedGraphScope } {
+	const rootPath = normalizedPath(path);
+	return {
+		id: currentNoteGraphId(rootPath),
+		name: displayName.trim() || title.trim() || "Context Graph",
+		scope: {
+			kind: "rooted",
+			rootPath,
+			expandedPaths: [],
+			folders: [],
+			includePaths: [],
+			excludePaths: [],
+		},
+		physics: { ...DEFAULT_GRAPH_PHYSICS },
+	};
+}
+
+export function currentNoteGraphId(path: string): string {
+	return `current-note:${normalizedPath(path)}`;
+}
+
+export function currentNoteGraphPath(id: string): string | undefined {
+	if (!id.startsWith("current-note:")) return undefined;
+	const path = normalizedPath(id.slice("current-note:".length));
+	return path || undefined;
 }
 
 /**
@@ -192,6 +248,7 @@ export function graphScopeIncludesPath(scope: GraphScope, path: string): boolean
 		case "folders": return inFolder;
 		case "curated": return explicitlyIncluded;
 		case "hybrid": return inFolder || explicitlyIncluded;
+		case "rooted": return normalized === scope.rootPath || scope.expandedPaths.includes(normalized);
 	}
 }
 
@@ -202,6 +259,13 @@ export function graphScopeIncludesPath(scope: GraphScope, path: string): boolean
 export function includePathInScope(scope: GraphScope, path: string): GraphScope {
 	const normalized = normalizedPath(path);
 	if (!normalized || graphScopeIncludesPath(scope, normalized)) return scope;
+	if (scope.kind === "rooted") {
+		return {
+			...scope,
+			expandedPaths: uniquePaths([...scope.expandedPaths, normalized]),
+			excludePaths: scope.excludePaths.filter((item) => item !== normalized),
+		};
+	}
 	return {
 		kind: scope.kind === "folders" ? "hybrid" : scope.kind,
 		folders: scope.folders,
@@ -210,12 +274,107 @@ export function includePathInScope(scope: GraphScope, path: string): GraphScope 
 	};
 }
 
+/** Hides one note from this graph without changing the Markdown source. */
+export function excludePathFromScope(scope: GraphScope, path: string): GraphScope {
+	const normalized = normalizedPath(path);
+	if (!normalized || (scope.kind === "rooted" && normalized === scope.rootPath)) return scope;
+	if (scope.kind === "rooted") {
+		return {
+			...scope,
+			expandedPaths: scope.expandedPaths.filter((item) => item !== normalized),
+			includePaths: scope.includePaths.filter((item) => item !== normalized),
+			excludePaths: uniquePaths([...scope.excludePaths, normalized]),
+		};
+	}
+	return {
+		...scope,
+		includePaths: scope.includePaths.filter((item) => item !== normalized),
+		excludePaths: uniquePaths([...scope.excludePaths, normalized]),
+	};
+}
+
+/** Computes a root plus one-hop neighbourhood for every deliberately expanded note. */
+export function rootedGraphPaths(
+	rootPath: string,
+	expandedPaths: readonly string[],
+	outgoingByPath: Readonly<Record<string, readonly string[]>>,
+	excludePaths: readonly string[] = [],
+): string[] {
+	const excluded = new Set(excludePaths.map(normalizedPath).filter(Boolean));
+	const normalizedRoot = normalizedPath(rootPath);
+	// A rooted graph cannot remove its own root. Callers also hide this action,
+	// but the domain rule keeps a malformed definition usable.
+	excluded.delete(normalizedRoot);
+	const seeds = new Set([normalizedRoot, ...expandedPaths.map(normalizedPath)]
+		.filter((path) => path && !excluded.has(path)));
+	const visible = new Set(seeds);
+	const incomingByTarget = new Map<string, string[]>();
+	for (const [source, targets] of Object.entries(outgoingByPath)) {
+		for (const target of targets) {
+			const normalizedTarget = normalizedPath(target);
+			if (!normalizedTarget) continue;
+			const sources = incomingByTarget.get(normalizedTarget) ?? [];
+			sources.push(source);
+			incomingByTarget.set(normalizedTarget, sources);
+		}
+	}
+	for (const seed of seeds) {
+		for (const target of outgoingByPath[seed] ?? []) {
+			const normalized = normalizedPath(target);
+			if (normalized && !excluded.has(normalized)) visible.add(normalized);
+		}
+		for (const source of incomingByTarget.get(seed) ?? []) {
+			const normalized = normalizedPath(source);
+			if (normalized && !excluded.has(normalized)) visible.add(normalized);
+		}
+	}
+	return [...visible].sort((left, right) => left.localeCompare(right));
+}
+
+export function renamePathInScope(scope: GraphScope, previousPath: string, nextPath: string): GraphScope {
+	const previous = normalizedPath(previousPath);
+	const next = normalizedPath(nextPath);
+	if (!previous || !next || previous === next) return scope;
+	const rename = (path: string): string => path === previous ? next : path;
+	const common = {
+		...scope,
+		includePaths: uniquePaths(scope.includePaths.map(rename)),
+		excludePaths: uniquePaths(scope.excludePaths.map(rename)),
+	};
+	return scope.kind === "rooted"
+		? {
+			...common,
+			kind: "rooted",
+			rootPath: rename(scope.rootPath),
+			expandedPaths: uniquePaths(scope.expandedPaths.map(rename)),
+		}
+		: common;
+}
+
+export function renamePathInViewState(
+	state: GraphViewState,
+	previousPath: string,
+	nextPath: string,
+): GraphViewState {
+	const renameId = (id: string): string => {
+		if (!id.startsWith(`${previousPath}::`)) return id;
+		const suffix = id.slice(previousPath.length + 2);
+		return `${nextPath}::${suffix === previousPath ? nextPath : suffix}`;
+	};
+	return {
+		...state,
+		focusedNodeId: state.focusedNodeId ? renameId(state.focusedNodeId) : undefined,
+		pinnedOpenNodeIds: state.pinnedOpenNodeIds?.map(renameId),
+		positions: Object.fromEntries(Object.entries(state.positions).map(([id, position]) => [renameId(id), position])),
+	};
+}
+
 function isGraphWorkspace(value: unknown): value is GraphWorkspace {
 	if (!value || typeof value !== "object") return false;
 	const candidate = value as Partial<GraphWorkspace>;
 	return typeof candidate.id === "string" && typeof candidate.name === "string"
 		&& !!candidate.scope && typeof candidate.scope === "object"
-		&& ["all", "folders", "curated", "hybrid"].includes((candidate.scope as Partial<GraphScope>).kind ?? "")
+		&& ["all", "folders", "curated", "hybrid", "rooted"].includes((candidate.scope as Partial<GraphScope>).kind ?? "")
 		&& !!candidate.physics && typeof candidate.physics === "object";
 }
 
@@ -235,7 +394,7 @@ export function migrateGraphWorkspaces(
 			ids.push(id);
 			return {
 				id,
-				name: graph.name.trim() || "지식 그래프",
+				name: graph.name.trim() || "Context Graph",
 				scope: scopeFrom(graph.scope),
 				physics: graphPhysicsFrom(graph.physics),
 			};
@@ -243,7 +402,7 @@ export function migrateGraphWorkspaces(
 	}
 	const folder = normalizedPath(legacySourceFolder ?? "");
 	return [createGraphWorkspace(
-		"지식 그래프",
+		"Context Graph",
 		[],
 		folder ? { kind: "folders", folders: [folder] } : { kind: "all" },
 		legacyPhysics,

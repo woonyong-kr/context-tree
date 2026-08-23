@@ -2,12 +2,19 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
 	createGraphWorkspace,
+	createCurrentNoteGraph,
+	currentNoteGraphId,
+	currentNoteGraphPath,
 	graphNoteFolder,
 	graphScopeIncludesPath,
 	graphWorkspaceId,
 	includePathInScope,
+	excludePathFromScope,
 	migrateGraphViewStates,
 	migrateGraphWorkspaces,
+	rootedGraphPaths,
+	renamePathInScope,
+	renamePathInViewState,
 } from "../src/domain/graph-workspace";
 
 test("a curated graph includes only explicitly added Markdown notes", () => {
@@ -60,6 +67,121 @@ test("a hybrid graph combines folder scope and manually included notes while hon
 	assert.equal(graphScopeIncludesPath(graph.scope, "portfolio/Kyro.md"), true);
 	assert.equal(graphScopeIncludesPath(graph.scope, "maps/learning/archive/old.md"), false);
 	assert.equal(graphScopeIncludesPath(graph.scope, "portfolio/MiniDB.md"), false);
+});
+
+test("removing a card changes only this graph scope", () => {
+	const graph = createGraphWorkspace("Research", [], {
+		kind: "folders",
+		folders: ["research"],
+	});
+	const next = excludePathFromScope(graph.scope, "research/private.md");
+
+	assert.equal(graphScopeIncludesPath(next, "research/private.md"), false);
+	assert.equal(graphScopeIncludesPath(graph.scope, "research/private.md"), true);
+	assert.deepEqual(next.excludePaths, ["research/private.md"]);
+});
+
+test("a current-note graph includes the root and one-hop links in both directions", () => {
+	assert.deepEqual(rootedGraphPaths(
+		"notes/root.md",
+		["notes/expanded.md"],
+		{
+			"notes/root.md": ["notes/outgoing.md"],
+			"notes/incoming.md": ["notes/root.md"],
+			"notes/expanded.md": ["notes/second-hop.md"],
+		},
+	), [
+		"notes/expanded.md",
+		"notes/incoming.md",
+		"notes/outgoing.md",
+		"notes/root.md",
+		"notes/second-hop.md",
+	]);
+});
+
+test("a current-note graph is transient, rooted, and requires no opt-in metadata", () => {
+	const graph = createCurrentNoteGraph("notes/Root.md", "Root");
+
+	assert.equal(graph.id, "current-note:notes/Root.md");
+	assert.equal(graph.name, "Root");
+	assert.deepEqual(graph.scope, {
+		kind: "rooted",
+		rootPath: "notes/Root.md",
+		expandedPaths: [],
+		folders: [],
+		includePaths: [],
+		excludePaths: [],
+	});
+	assert.equal(graphScopeIncludesPath(graph.scope, "notes/Root.md"), true);
+	assert.equal(graphScopeIncludesPath(graph.scope, "notes/Other.md"), false);
+});
+
+test("a current-note graph id round-trips its root path for session restore", () => {
+	assert.equal(currentNoteGraphId("notes/Root.md"), "current-note:notes/Root.md");
+	assert.equal(currentNoteGraphPath("current-note:notes/Root.md"), "notes/Root.md");
+	assert.equal(currentNoteGraphPath("saved-graph"), undefined);
+});
+
+test("adding a note to a rooted graph expands its one-hop neighbourhood", () => {
+	const graph = createCurrentNoteGraph("notes/Root.md", "Root");
+	const next = includePathInScope(graph.scope, "notes/Other.md");
+
+	assert.equal(next.kind, "rooted");
+	if (next.kind !== "rooted") throw new Error("expected rooted scope");
+	assert.deepEqual(next.expandedPaths, ["notes/Other.md"]);
+	assert.equal(graphScopeIncludesPath(next, "notes/Other.md"), true);
+});
+
+test("removing a derived neighbour also removes it from rooted path expansion", () => {
+	const graph = createCurrentNoteGraph("notes/Root.md", "Root");
+	const removed = excludePathFromScope(graph.scope, "notes/Other.md");
+	assert.equal(removed.kind, "rooted");
+	if (removed.kind !== "rooted") throw new Error("expected rooted scope");
+	assert.deepEqual(rootedGraphPaths(
+		removed.rootPath,
+		removed.expandedPaths,
+		{ "notes/Root.md": ["notes/Other.md"] },
+		removed.excludePaths,
+	), ["notes/Root.md"]);
+});
+
+test("a rooted graph cannot exclude its own root", () => {
+	const graph = createCurrentNoteGraph("notes/Root.md", "Root");
+	assert.equal(excludePathFromScope(graph.scope, "notes/Root.md"), graph.scope);
+});
+
+test("expanding a previously removed rooted note clears its exclusion", () => {
+	const graph = createCurrentNoteGraph("notes/Root.md", "Root");
+	const expanded = includePathInScope(graph.scope, "notes/Other.md");
+	const removed = excludePathFromScope(expanded, "notes/Other.md");
+	assert.equal(removed.kind, "rooted");
+	if (removed.kind !== "rooted") throw new Error("expected rooted scope");
+	assert.deepEqual(removed.expandedPaths, []);
+	const restored = includePathInScope(removed, "notes/Other.md");
+	assert.equal(restored.kind, "rooted");
+	if (restored.kind !== "rooted") throw new Error("expected rooted scope");
+	assert.deepEqual(restored.expandedPaths, ["notes/Other.md"]);
+	assert.deepEqual(restored.excludePaths, []);
+});
+
+test("renaming a Markdown note preserves rooted scope and deliberate card placement", () => {
+	const graph = createCurrentNoteGraph("notes/Root.md", "Root");
+	graph.scope.expandedPaths.push("notes/Other.md");
+	const scope = renamePathInScope(graph.scope, "notes/Root.md", "notes/Renamed.md");
+	const view = renamePathInViewState({
+		pan: { x: 1, y: 2 },
+		zoom: 0.8,
+		focusedNodeId: "notes/Root.md::notes/Root.md",
+		pinnedOpenNodeIds: ["notes/Root.md::notes/Root.md"],
+		positions: { "notes/Root.md::notes/Root.md": { x: 12, y: 34, pinned: true } },
+	}, "notes/Root.md", "notes/Renamed.md");
+
+	assert.equal(scope.kind, "rooted");
+	if (scope.kind !== "rooted") throw new Error("expected rooted scope");
+	assert.equal(scope.rootPath, "notes/Renamed.md");
+	assert.equal(view.focusedNodeId, "notes/Renamed.md::notes/Renamed.md");
+	assert.deepEqual(view.pinnedOpenNodeIds, ["notes/Renamed.md::notes/Renamed.md"]);
+	assert.deepEqual(view.positions["notes/Renamed.md::notes/Renamed.md"], { x: 12, y: 34, pinned: true });
 });
 
 test("legacy single-folder settings migrate to one named workspace without widening its range", () => {

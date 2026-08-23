@@ -1,18 +1,29 @@
-import { Plugin, TAbstractFile, TFile, WorkspaceLeaf } from "obsidian";
+import { Notice, Plugin, TAbstractFile, TFile, WorkspaceLeaf } from "obsidian";
+import { GRAPH_DEFINITION_EXTENSION } from "./domain/graph-definition";
 import {
-	GRAPH_DEFINITION_EXTENSION,
-	GRAPH_DEFINITION_FOLDER,
-	availableGraphDefinitionPath,
-	graphDefinitionPath,
-	parseGraphDefinition,
-	serializeGraphDefinition,
-} from "./domain/graph-definition";
-import { createGraphWorkspace, GraphScopeInput, GraphViewState, GraphWorkspace, graphScopeIncludesPath, includePathInScope, migrateGraphViewStates, migrateGraphWorkspaces } from "./domain/graph-workspace";
+	createCurrentNoteGraph,
+	createGraphWorkspace,
+	currentNoteGraphId,
+	currentNoteGraphPath,
+	excludePathFromScope,
+	GraphScopeInput,
+	GraphViewState,
+	GraphWorkspace,
+	graphScopeIncludesPath,
+	includePathInScope,
+	migrateGraphViewStates,
+	migrateGraphWorkspaces,
+	renamePathInScope,
+	renamePathInViewState,
+} from "./domain/graph-workspace";
 import { GraphPhysics } from "./graph/simulation";
+import { GraphDefinitionStore } from "./graph-definition-store";
 import { ContextTreeSettingTab, ContextTreeSettings, DEFAULT_SETTINGS } from "./settings";
-import { GraphWorkspaceModal } from "./topic-modals";
+import { SavedGraphsModal } from "./topic-modals";
 import { COPY } from "./ui/copy";
 import { ContextTreeView, VIEW_TYPE_CONTEXT_TREE } from "./view";
+import type { InlineEditorDraft } from "./domain/inline-editor-draft";
+import { migrateInlineDrafts, persistedSettings } from "./domain/settings-storage";
 
 export default class ContextTreePlugin extends Plugin {
 	settings!: ContextTreeSettings;
@@ -20,11 +31,14 @@ export default class ContextTreePlugin extends Plugin {
 	private viewStateTimer?: number;
 	private definitionRefreshTimer?: number;
 	private physicsSaveTimer?: number;
+	private draftSaveTimer?: number;
 	private readonly pendingPhysicsGraphIds = new Set<string>();
 	private settingsSaveQueue: Promise<void> = Promise.resolve();
-	private readonly definitionPaths = new Map<string, string>();
+	private definitionStore!: GraphDefinitionStore;
+	private readonly transientGraphs = new Map<string, GraphWorkspace>();
 
 	async onload(): Promise<void> {
+		this.definitionStore = new GraphDefinitionStore(this.app);
 		await this.loadSettings();
 
 		this.registerView(
@@ -44,7 +58,7 @@ export default class ContextTreePlugin extends Plugin {
 		this.addCommand({
 			id: "open-tree",
 			name: COPY.view.openCommand,
-			callback: () => void this.activateView(),
+			callback: () => void this.activateCurrentNote(),
 		});
 		this.addCommand({
 			id: "manage-graphs",
@@ -71,14 +85,23 @@ export default class ContextTreePlugin extends Plugin {
 			sourceFolder?: string;
 			graphPhysics?: GraphPhysics;
 		}) | null;
-		const graphs = migrateGraphWorkspaces(stored?.graphs, stored?.sourceFolder, stored?.graphPhysics);
+		const graphs = stored && stored.definitionsMigrated !== true
+			? migrateGraphWorkspaces(stored.graphs, stored.sourceFolder, stored.graphPhysics)
+			: [];
 		this.settings = {
 			...DEFAULT_SETTINGS,
 			graphs,
 			defaultGraphId: graphs.some((graph) => graph.id === stored?.defaultGraphId)
 				? stored!.defaultGraphId!
-				: graphs[0]!.id,
-			viewStates: migrateGraphViewStates(stored?.viewStates, graphs.map((graph) => graph.id)),
+				: graphs[0]?.id ?? "",
+			viewStates: migrateGraphViewStates(
+				stored?.viewStates,
+				stored?.definitionsMigrated === true
+					? Object.keys(stored.viewStates ?? {})
+					: graphs.map((graph) => graph.id),
+			),
+			inlineDrafts: migrateInlineDrafts(stored?.inlineDrafts),
+			definitionsMigrated: stored?.definitionsMigrated === true,
 		};
 	}
 
@@ -89,37 +112,155 @@ export default class ContextTreePlugin extends Plugin {
 	/** Exact lookup only. Falling back here would let a stale file/tab mutate the
 	 * default graph while still claiming to represent the missing graph id. */
 	getGraph(id: string | undefined): GraphWorkspace | undefined {
-		return this.settings.graphs.find((graph) => graph.id === id);
+		const graphId = id ?? "";
+		const existing = this.transientGraphs.get(graphId) ?? this.settings.graphs.find((graph) => graph.id === graphId);
+		if (existing) return existing;
+		const path = currentNoteGraphPath(graphId);
+		if (!path) return undefined;
+		const file = this.app.vault.getAbstractFileByPath(path);
+		if (!(file instanceof TFile) || file.extension !== "md") return undefined;
+		const transient = createCurrentNoteGraph(path, file.basename, COPY.labels.currentNoteGraphName(file.basename));
+		this.transientGraphs.set(transient.id, transient);
+		return transient;
 	}
 
-	async createGraph(name: string, scope: GraphScopeInput = { kind: "curated" }): Promise<GraphWorkspace> {
+	isTransientGraph(id: string): boolean {
+		return this.transientGraphs.has(id);
+	}
+
+	releaseTransientGraph(graphId: string): void {
+		if (!this.transientGraphs.has(graphId)) return;
+		window.setTimeout(() => {
+			const stillOpen = this.app.workspace.getLeavesOfType(VIEW_TYPE_CONTEXT_TREE).some((leaf) =>
+				leaf.view instanceof ContextTreeView && leaf.view.getGraphId() === graphId,
+			);
+			if (!stillOpen) this.transientGraphs.delete(graphId);
+		}, 0);
+	}
+
+	async activateCurrentNote(): Promise<void> {
+		const file = this.app.workspace.getActiveFile();
+		if (!(file instanceof TFile) || file.extension !== "md") {
+			const fallback = this.defaultGraph();
+			if (fallback) await this.activateView(fallback.id);
+			else new Notice(COPY.notice.openMarkdownFirst);
+			return;
+		}
+		const existing = [...this.transientGraphs.entries()].find(([, graph]) =>
+			graph.scope.kind === "rooted" && graph.scope.rootPath === file.path,
+		);
+		const id = existing?.[0] ?? currentNoteGraphId(file.path);
+		if (!this.transientGraphs.has(id)) {
+			this.transientGraphs.set(id, createCurrentNoteGraph(
+				file.path,
+				file.basename,
+				COPY.labels.currentNoteGraphName(file.basename),
+			));
+		}
+		await this.activateView(id);
+	}
+
+	async createGraph(
+		name: string,
+		scope: GraphScopeInput = { kind: "curated" },
+		initialViewState?: GraphViewState,
+	): Promise<GraphWorkspace> {
 		const graph = createGraphWorkspace(name, this.settings.graphs.map((item) => item.id), scope);
-		this.settings.graphs.push(graph);
 		await this.writeGraphDefinition(graph);
+		this.settings.graphs.push(graph);
+		if (initialViewState) this.settings.viewStates[graph.id] = initialViewState;
+		if (!this.settings.defaultGraphId) this.settings.defaultGraphId = graph.id;
 		await this.persistSettings();
 		this.refreshOpenViews();
 		return graph;
 	}
 
-	/** Opens the workspace library; individual graphs still render in independent tabs. */
+	/** Opens the saved graph list; creating a graph starts from the current note. */
 	openGraphPicker(): void {
-		new GraphWorkspaceModal(this.app, this.settings.graphs, this.settings.defaultGraphId, {
-			onOpenGraph: (graphId) => void this.activateView(graphId),
-			onCreateGraph: (name, scope) => {
-				void this.createGraph(name, scope)
-					.then((graph) => this.activateView(graph.id))
-					.catch((error: unknown) => console.error("Context Graph: failed to create graph workspace", error));
-			},
-		}).open();
+		new SavedGraphsModal(
+			this.app,
+			this.settings.graphs,
+			this.settings.defaultGraphId,
+			(graphId) => void this.activateView(graphId),
+		).open();
 	}
 
 	async includePathInGraph(graphId: string, path: string): Promise<void> {
 		const graph = this.getGraph(graphId);
 		if (!graph || graphScopeIncludesPath(graph.scope, path)) return;
+		const previousScope = graph.scope;
 		graph.scope = includePathInScope(graph.scope, path);
-		await this.writeGraphDefinition(graph);
-		await this.persistSettings();
+		if (!this.isTransientGraph(graphId)) {
+			try {
+				await this.writeGraphDefinition(graph);
+			} catch (error) {
+				graph.scope = previousScope;
+				throw error;
+			}
+			await this.persistSettings();
+		}
 		this.refreshOpenViews();
+	}
+
+	async removePathFromGraph(graphId: string, path: string): Promise<void> {
+		const graph = this.getGraph(graphId);
+		if (!graph || (graph.scope.kind === "rooted" && graph.scope.rootPath === path)) return;
+		const previousScope = graph.scope;
+		graph.scope = excludePathFromScope(graph.scope, path);
+		if (!this.isTransientGraph(graphId)) {
+			try {
+				await this.writeGraphDefinition(graph);
+			} catch (error) {
+				graph.scope = previousScope;
+				throw error;
+			}
+			await this.persistSettings();
+		}
+		this.refreshOpenViews();
+	}
+
+	async saveTransientGraph(
+		graphId: string,
+		name: string,
+		viewState: GraphViewState,
+	): Promise<GraphWorkspace> {
+		const transient = this.transientGraphs.get(graphId);
+		if (!transient) throw new Error("Only a current-note graph can be saved here.");
+		return this.createGraph(name, transient.scope, viewState);
+	}
+
+	inlineDraft(path: string): InlineEditorDraft | undefined {
+		return this.settings.inlineDrafts[path];
+	}
+
+	stageInlineDraft(path: string, draft: InlineEditorDraft): void {
+		this.settings.inlineDrafts[path] = draft;
+		if (this.draftSaveTimer !== undefined) window.clearTimeout(this.draftSaveTimer);
+		this.draftSaveTimer = window.setTimeout(() => {
+			this.draftSaveTimer = undefined;
+			void this.persistSettings().catch((error: unknown) => {
+				console.error("Context Graph: failed to persist inline draft", error);
+			});
+		}, 600);
+	}
+
+	async saveInlineDraft(path: string, draft: InlineEditorDraft): Promise<void> {
+		this.settings.inlineDrafts[path] = draft;
+		if (this.draftSaveTimer !== undefined) {
+			window.clearTimeout(this.draftSaveTimer);
+			this.draftSaveTimer = undefined;
+		}
+		await this.persistSettings();
+	}
+
+	async clearInlineDraft(path: string): Promise<void> {
+		if (!(path in this.settings.inlineDrafts)) return;
+		delete this.settings.inlineDrafts[path];
+		if (this.draftSaveTimer !== undefined) {
+			window.clearTimeout(this.draftSaveTimer);
+			this.draftSaveTimer = undefined;
+		}
+		await this.persistSettings();
 	}
 
 	graphViewState(graphId: string): GraphViewState | undefined {
@@ -127,6 +268,7 @@ export default class ContextTreePlugin extends Plugin {
 	}
 
 	scheduleGraphViewStateSave(graphId: string, state: GraphViewState): void {
+		if (this.isTransientGraph(graphId)) return;
 		this.settings.viewStates[graphId] = state;
 		if (this.viewStateTimer !== undefined) window.clearTimeout(this.viewStateTimer);
 		this.viewStateTimer = window.setTimeout(() => {
@@ -136,6 +278,7 @@ export default class ContextTreePlugin extends Plugin {
 	}
 
 	async saveGraphViewState(graphId: string, state: GraphViewState): Promise<void> {
+		if (this.isTransientGraph(graphId)) return;
 		this.settings.viewStates[graphId] = state;
 		if (this.viewStateTimer !== undefined) {
 			window.clearTimeout(this.viewStateTimer);
@@ -152,6 +295,7 @@ export default class ContextTreePlugin extends Plugin {
 			this.physicsSaveTimer = undefined;
 			void this.flushGraphPhysicsSaves().catch((error: unknown) => {
 				console.error("Context Graph: failed to save graph physics", error);
+				this.scheduleDefinitionRefresh();
 			});
 		}, 240);
 	}
@@ -169,7 +313,7 @@ export default class ContextTreePlugin extends Plugin {
 	}
 
 	private persistSettings(): Promise<void> {
-		const save = this.settingsSaveQueue.then(() => this.saveData(this.settings));
+		const save = this.settingsSaveQueue.then(() => this.saveData(persistedSettings(this.settings)));
 		this.settingsSaveQueue = save.catch((error: unknown) => {
 			console.error("Context Graph: failed to persist plugin settings", error);
 		});
@@ -184,6 +328,11 @@ export default class ContextTreePlugin extends Plugin {
 		}
 		if (this.definitionRefreshTimer !== undefined) window.clearTimeout(this.definitionRefreshTimer);
 		if (this.physicsSaveTimer !== undefined) window.clearTimeout(this.physicsSaveTimer);
+		if (this.draftSaveTimer !== undefined) {
+			window.clearTimeout(this.draftSaveTimer);
+			this.draftSaveTimer = undefined;
+			void this.persistSettings();
+		}
 		if (this.pendingPhysicsGraphIds.size) {
 			void this.flushGraphPhysicsSaves().catch((error: unknown) => {
 				console.error("Context Graph: failed to flush graph physics", error);
@@ -193,19 +342,16 @@ export default class ContextTreePlugin extends Plugin {
 
 	/** Returns the Vault file backing a graph, when this graph has been migrated. */
 	graphDefinitionFile(graphId: string): TFile | undefined {
-		const path = this.definitionPaths.get(graphId);
-		const file = path ? this.app.vault.getAbstractFileByPath(path) : undefined;
-		return file instanceof TFile ? file : undefined;
+		return this.definitionStore.file(graphId);
 	}
 
 	/** FileView calls this after a user opens a `.context-graph` file in Explorer. */
 	async graphForDefinitionFile(file: TFile): Promise<GraphWorkspace | undefined> {
-		const graph = parseGraphDefinition(await this.app.vault.cachedRead(file));
+		const graph = await this.definitionStore.readFile(file);
 		if (!graph) return undefined;
 		const index = this.settings.graphs.findIndex((item) => item.id === graph.id);
 		if (index >= 0) this.settings.graphs[index] = graph;
 		else this.settings.graphs.push(graph);
-		this.definitionPaths.set(graph.id, file.path);
 		return graph;
 	}
 
@@ -220,11 +366,58 @@ export default class ContextTreePlugin extends Plugin {
 	}
 
 	private handleVaultChange(file?: TAbstractFile, previousPath?: string): void {
-		if (this.isGraphDefinitionPath(file?.path ?? "") || this.isGraphDefinitionPath(previousPath ?? "")) {
+		if (this.definitionStore.isDefinitionPath(file?.path ?? "") || this.definitionStore.isDefinitionPath(previousPath ?? "")) {
 			this.scheduleDefinitionRefresh();
 			return;
 		}
+		if (file instanceof TFile && file.extension === "md" && previousPath?.endsWith(".md") && previousPath !== file.path) {
+			void this.handleMarkdownRename(previousPath, file.path).catch((error: unknown) => {
+				console.error("Context Graph: failed to preserve graph state after a note rename", error);
+			});
+			return;
+		}
 		this.scheduleGraphRefresh(file, previousPath);
+	}
+
+	private async handleMarkdownRename(previousPath: string, nextPath: string): Promise<void> {
+		const transientIds = new Map([...this.transientGraphs.entries()].map(([id, graph]) => [graph, id]));
+		for (const graph of [...this.settings.graphs, ...this.transientGraphs.values()]) {
+			const previousScope = graph.scope;
+			const nextScope = renamePathInScope(previousScope, previousPath, nextPath);
+			if (JSON.stringify(nextScope) === JSON.stringify(previousScope)) continue;
+			graph.scope = nextScope;
+			const transientId = transientIds.get(graph);
+			if (transientId) {
+				if (previousScope.kind === "rooted" && previousScope.rootPath === previousPath) {
+					const basename = nextPath.split("/").pop()?.replace(/\.md$/i, "") ?? COPY.view.title;
+					const nextId = currentNoteGraphId(nextPath);
+					graph.id = nextId;
+					graph.name = COPY.labels.currentNoteGraphName(basename);
+					this.transientGraphs.delete(transientId);
+					this.transientGraphs.set(nextId, graph);
+					for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_CONTEXT_TREE)) {
+						if (leaf.view instanceof ContextTreeView) leaf.view.replaceGraphId(transientId, nextId);
+					}
+				}
+				continue;
+			}
+			try {
+				await this.writeGraphDefinition(graph);
+			} catch (error) {
+				graph.scope = previousScope;
+				console.error(`Context Graph: did not overwrite externally changed graph ${graph.id}`, error);
+			}
+		}
+		for (const [graphId, state] of Object.entries(this.settings.viewStates)) {
+			this.settings.viewStates[graphId] = renamePathInViewState(state, previousPath, nextPath);
+		}
+		const draft = this.settings.inlineDrafts[previousPath];
+		if (draft) {
+			this.settings.inlineDrafts[nextPath] = draft;
+			delete this.settings.inlineDrafts[previousPath];
+		}
+		await this.persistSettings();
+		this.scheduleGraphRefresh(undefined, previousPath);
 	}
 
 	private scheduleDefinitionRefresh(): void {
@@ -239,7 +432,8 @@ export default class ContextTreePlugin extends Plugin {
 
 	private isEligiblePath(path: string): boolean {
 		if (!path.endsWith(".md")) return false;
-		return this.settings.graphs.some((graph) => graphScopeIncludesPath(graph.scope, path));
+		return [...this.settings.graphs, ...this.transientGraphs.values()]
+			.some((graph) => graph.scope.kind === "rooted" || graphScopeIncludesPath(graph.scope, path));
 	}
 
 	async activateView(graphId = this.settings.defaultGraphId): Promise<void> {
@@ -257,15 +451,19 @@ export default class ContextTreePlugin extends Plugin {
 	}
 
 	private async initialiseGraphDefinitions(): Promise<void> {
-		const discovered = await this.readGraphDefinitions();
-		const known = new Set(discovered.map((graph) => graph.id));
-		for (const graph of this.settings.graphs) {
-			if (known.has(graph.id)) continue;
-			await this.writeGraphDefinition(graph);
-			discovered.push(graph);
-			known.add(graph.id);
+		const discovered = await this.definitionStore.readAll();
+		if (!this.settings.definitionsMigrated) {
+			const known = new Set(discovered.map((graph) => graph.id));
+			for (const graph of this.settings.graphs) {
+				if (known.has(graph.id)) continue;
+				await this.writeGraphDefinition(graph);
+				discovered.push(graph);
+				known.add(graph.id);
+			}
+			this.settings.definitionsMigrated = true;
 		}
 		this.settings.graphs = discovered;
+		this.settings.viewStates = migrateGraphViewStates(this.settings.viewStates, discovered.map((graph) => graph.id));
 		if (!this.settings.graphs.some((graph) => graph.id === this.settings.defaultGraphId)) {
 			this.settings.defaultGraphId = this.settings.graphs[0]?.id ?? "";
 		}
@@ -273,98 +471,21 @@ export default class ContextTreePlugin extends Plugin {
 	}
 
 	private async reloadGraphDefinitions(): Promise<void> {
-		const graphs = await this.readGraphDefinitions();
-		if (!graphs.length) return;
+		const graphs = await this.definitionStore.readAll();
 		this.settings.graphs = graphs;
+		this.settings.viewStates = migrateGraphViewStates(
+			this.settings.viewStates,
+			graphs.map((graph) => graph.id),
+		);
 		if (!this.settings.graphs.some((graph) => graph.id === this.settings.defaultGraphId)) {
-			this.settings.defaultGraphId = this.settings.graphs[0]!.id;
+			this.settings.defaultGraphId = this.settings.graphs[0]?.id ?? "";
 		}
 		await this.persistSettings();
 		this.refreshOpenViews();
 	}
 
-	private async readGraphDefinitions(): Promise<GraphWorkspace[]> {
-		this.definitionPaths.clear();
-		const seen = new Set<string>();
-		const graphs: GraphWorkspace[] = [];
-		for (const file of this.app.vault.getFiles()) {
-			if (!this.isGraphDefinitionPath(file.path)) continue;
-			const graph = parseGraphDefinition(await this.app.vault.cachedRead(file));
-			if (!graph || seen.has(graph.id)) continue;
-			seen.add(graph.id);
-			graphs.push(graph);
-			this.definitionPaths.set(graph.id, file.path);
-		}
-		return graphs;
-	}
-
 	private async writeGraphDefinition(graph: GraphWorkspace): Promise<void> {
-		const existing = this.graphDefinitionFile(graph.id);
-		if (existing) {
-			await this.app.vault.process(existing, () => serializeGraphDefinition(graph));
-			return;
-		}
-		await this.ensureFolder(GRAPH_DEFINITION_FOLDER);
-		const preferredPath = graphDefinitionPath(graph);
-		const file = this.app.vault.getAbstractFileByPath(preferredPath);
-		if (file instanceof TFile) {
-			const existingGraph = parseGraphDefinition(await this.app.vault.cachedRead(file));
-			if (existingGraph?.id === graph.id) {
-				await this.app.vault.process(file, () => serializeGraphDefinition(graph));
-				this.definitionPaths.set(graph.id, file.path);
-				return;
-			}
-		}
-		const targetPath = availableGraphDefinitionPath(graph, this.app.vault.getFiles().map((item) => item.path));
-		let resolved: TFile | undefined;
-		try {
-			resolved = await this.app.vault.create(targetPath, serializeGraphDefinition(graph));
-		} catch (error) {
-			// The adapter can know about an existing file a few turns before the
-			// Vault index does. Re-read that file instead of treating the race as a
-			// second graph or failing plugin startup.
-			resolved = await this.waitForIndexedFile(targetPath);
-			if (!resolved) throw error;
-		}
-		if (!resolved) throw new Error(`Unable to create graph definition: ${targetPath}`);
-		const resolvedGraph = parseGraphDefinition(await this.app.vault.cachedRead(resolved));
-		if (resolvedGraph?.id !== graph.id) {
-			throw new Error(`Graph definition path is already used: ${targetPath}`);
-		}
-		this.definitionPaths.set(graph.id, resolved.path);
-	}
-
-	/** Wait briefly for the Vault index after an adapter-level create collision. */
-	private async waitForIndexedFile(path: string): Promise<TFile | undefined> {
-		let candidate = this.app.vault.getAbstractFileByPath(path);
-		if (candidate instanceof TFile) return candidate;
-		for (const delay of [20, 40, 80, 160]) {
-			await new Promise<void>((resolve) => window.setTimeout(resolve, delay));
-			candidate = this.app.vault.getAbstractFileByPath(path);
-			if (candidate instanceof TFile) return candidate;
-		}
-		return undefined;
-	}
-
-	private async ensureFolder(path: string): Promise<void> {
-		const parts = path.split("/").filter(Boolean);
-		let current = "";
-		for (const part of parts) {
-			current = current ? `${current}/${part}` : part;
-			if (this.app.vault.getAbstractFileByPath(current)) continue;
-			try {
-				await this.app.vault.createFolder(current);
-			} catch (error) {
-				// Vault startup can race its folder index. Treat the specific benign
-				// "already exists" outcome as success, but surface any other error.
-				if (this.app.vault.getAbstractFileByPath(current) || (error instanceof Error && /already exists/i.test(error.message))) continue;
-				throw error;
-			}
-		}
-	}
-
-	private isGraphDefinitionPath(path: string): boolean {
-		return path.endsWith(`.${GRAPH_DEFINITION_EXTENSION}`);
+		await this.definitionStore.write(graph);
 	}
 
 	refreshOpenViews(): void {

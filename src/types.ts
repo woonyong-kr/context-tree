@@ -13,6 +13,8 @@ export interface ContextTreeNode {
 	body: string;
 	parentPath?: string;
 	links: ContextTreeLink[];
+	/** Ordinary Markdown links projected as read-only graph context. */
+	referencePaths?: string[];
 	children: ContextTreeNode[];
 }
 
@@ -24,4 +26,5 @@ export interface ParsedTopic {
 	summary: string;
 	body: string;
 	links: ContextTreeLink[];
+	referencePaths?: string[];
 }

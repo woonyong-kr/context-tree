@@ -1,7 +1,8 @@
 # Contributing to Context Graph
 
 Context Graph is a local-first Obsidian plugin. Every product change must keep
-Markdown in the vault as the only durable source of truth.
+each note's Markdown as the only durable source of its content and relations.
+Saved graph files may store exploration scope, but never a copy of note content.
 
 ## Before opening a pull request
 

@@ -21,6 +21,20 @@ export interface ContextGraph {
 	edges: GraphEdge[];
 }
 
+/** Content is deliberately absent: equal signatures can reuse the live layout. */
+export function graphStructureSignature(graph: ContextGraph): string {
+	return JSON.stringify({
+		nodes: graph.nodes.map((node) => node.id).sort(),
+		edges: graph.edges.map((edge) => ({
+			id: edge.id,
+			types: [...edge.types].sort(),
+			storedLinks: edge.storedLinks
+				.map((link) => `${link.sourcePath}\u0000${link.targetPath}\u0000${link.type}`)
+				.sort(),
+		})).sort((left, right) => left.id.localeCompare(right.id)),
+	});
+}
+
 /**
  * A single visual line can represent several frontmatter records. Direct
  * manipulation may remove an edge only when that mapping is unambiguous.
@@ -63,6 +77,10 @@ export function buildContextGraph(roots: ContextTreeNode[]): ContextGraph {
 		// resolvable provenance relation, including the edge that closed a cycle.
 		const parent = node.parentPath ? nodesByPath.get(node.parentPath) : undefined;
 		if (parent && nodeIds.has(parent.id)) addEdge(node, parent, "derived");
+		for (const referencePath of node.referencePaths ?? []) {
+			const target = nodesByPath.get(referencePath);
+			if (target) addEdge(node, target, "derived");
+		}
 		for (const link of node.links) {
 			const target = nodesByPath.get(link.targetPath);
 			if (!target) continue;

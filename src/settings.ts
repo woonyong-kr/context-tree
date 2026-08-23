@@ -3,14 +3,23 @@ import { GRAPH_PHYSICS_LIMITS, GraphPhysics } from "./graph/simulation";
 import { GraphViewState, GraphWorkspace } from "./domain/graph-workspace";
 import ContextTreePlugin from "./main";
 import { COPY, graphPhysicsSettingName } from "./ui/copy";
+import type { InlineEditorDraft } from "./domain/inline-editor-draft";
 
 export interface ContextTreeSettings {
 	graphs: GraphWorkspace[];
 	defaultGraphId: string;
 	viewStates: Record<string, GraphViewState>;
+	inlineDrafts: Record<string, InlineEditorDraft>;
+	definitionsMigrated: boolean;
 }
 
-export const DEFAULT_SETTINGS: ContextTreeSettings = { graphs: [], defaultGraphId: "", viewStates: {} };
+export const DEFAULT_SETTINGS: ContextTreeSettings = {
+	graphs: [],
+	defaultGraphId: "",
+	viewStates: {},
+	inlineDrafts: {},
+	definitionsMigrated: false,
+};
 
 export class ContextTreeSettingTab extends PluginSettingTab {
 	constructor(app: App, private readonly plugin: ContextTreePlugin) {

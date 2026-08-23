@@ -12,6 +12,7 @@ export default defineConfig(
 		'main.js',
 		'package.json',
 		'package-lock.json',
+		'scripts/*.mjs',
 		'tests',
 		'tsconfig.json',
 	]),

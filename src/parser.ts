@@ -1,8 +1,8 @@
 import { App } from "obsidian";
-import { GraphWorkspace, graphScopeIncludesPath } from "./domain/graph-workspace";
+import { GraphWorkspace, graphScopeIncludesPath, rootedGraphPaths } from "./domain/graph-workspace";
 import { noteLinkTarget } from "./domain/note-link";
 import { DIRECT_RELATION, isContextRelationType, relationItems } from "./domain/relations";
-import { markdownSummary, removeMarkdownSummary } from "./topic-content";
+import { markdownSummary, markdownWithoutFencedCode, removeMarkdownSummary } from "./topic-content";
 import { ContextTreeLink, ContextTreeNode, ParsedTopic } from "./types";
 import { buildContextTree } from "./tree";
 
@@ -47,7 +47,7 @@ function documentTitle(content: string): string {
 }
 
 function firstParagraph(content: string): string {
-	return removeFrontmatter(content)
+	return markdownWithoutFencedCode(removeFrontmatter(content))
 		.replace(/^#\s+.*$/m, "")
 		.split(/\n\s*\n/)
 		.map((paragraph) => paragraph.replace(/[#*_`]/g, " ").replace(/\s+/g, " ").trim())
@@ -85,7 +85,8 @@ function extractLinks(app: App, rawValue: unknown, sourcePath: string): ContextT
 		const targetPath = app.metadataCache.getFirstLinkpathDest(noteLinkTarget(rawTarget), sourcePath)?.path;
 		if (!targetPath) continue;
 		const rawType = item && typeof item === "object" ? (item as Record<string, unknown>).type : undefined;
-		const type = isContextRelationType(rawType) ? rawType : DIRECT_RELATION;
+		if (rawType !== undefined && !isContextRelationType(rawType)) continue;
+		const type = rawType === undefined ? DIRECT_RELATION : rawType;
 		const key = `${targetPath}\u0000${type}`;
 		if (seen.has(key)) continue;
 		seen.add(key);
@@ -94,39 +95,74 @@ function extractLinks(app: App, rawValue: unknown, sourcePath: string): ContextT
 	return links;
 }
 
+/** Makes the requested note the initial card without discarding its parent edge. */
+function promoteRoot(roots: ContextTreeNode[], rootPath: string): void {
+	const detach = (nodes: ContextTreeNode[]): ContextTreeNode | undefined => {
+		const index = nodes.findIndex((node) => node.path === rootPath);
+		if (index >= 0) return nodes.splice(index, 1)[0];
+		for (const node of nodes) {
+			const match = detach(node.children);
+			if (match) return match;
+		}
+		return undefined;
+	};
+	const root = detach(roots);
+	if (root) roots.unshift(root);
+}
+
 export async function loadContextTree(
 	app: App,
 	graph: GraphWorkspace,
 ): Promise<ContextTreeNode[]> {
-	const files = app.vault.getMarkdownFiles().filter((file) => graphScopeIncludesPath(graph.scope, file.path));
+	const rootedScope = graph.scope.kind === "rooted" ? graph.scope : undefined;
+	const outgoingByPath = Object.fromEntries(Object.entries(app.metadataCache.resolvedLinks)
+		.map(([sourcePath, targets]) => [sourcePath, Object.keys(targets)]));
+	const rootedPaths = rootedScope
+		? new Set(rootedGraphPaths(rootedScope.rootPath, rootedScope.expandedPaths, outgoingByPath, rootedScope.excludePaths))
+		: undefined;
+	const files = app.vault.getMarkdownFiles().filter((file) => rootedPaths?.has(file.path) ?? graphScopeIncludesPath(graph.scope, file.path));
+	const declaredIdCounts = new Map<string, number>();
+	for (const file of app.vault.getMarkdownFiles()) {
+		const declaredId = text(app.metadataCache.getFileCache(file)?.frontmatter?.context_tree_id);
+		if (declaredId) declaredIdCounts.set(declaredId, (declaredIdCounts.get(declaredId) ?? 0) + 1);
+	}
 	const topics: ParsedTopic[] = [];
 
 	for (const file of files) {
 		const frontmatter = app.metadataCache.getFileCache(file)?.frontmatter;
-		if (frontmatter?.context_tree !== true) continue;
+		if (!rootedPaths && frontmatter?.context_tree !== true) continue;
 
 		const content = await app.vault.cachedRead(file);
-		const parentLink = text(frontmatter.context_tree_parent);
+		const parentLink = text(frontmatter?.context_tree_parent);
 		const resolvedParent = parentLink
 			? app.metadataCache.getFirstLinkpathDest(noteLinkTarget(parentLink), file.path)?.path
 			: undefined;
 
 		const display = topicDisplayContent(content, {
-			title: text(frontmatter.title) || file.basename,
-			summary: text(frontmatter.context_tree_summary),
+			title: text(frontmatter?.title) || file.basename,
+			summary: text(frontmatter?.context_tree_summary),
 		});
+		const declaredId = text(frontmatter?.context_tree_id);
 		topics.push({
 			// A frontmatter id is useful to people, but the view state must stay
 			// unambiguous even when two notes accidentally reuse one.
-			id: `${file.path}::${text(frontmatter.context_tree_id) || file.path}`,
+			id: declaredId && declaredIdCounts.get(declaredId) === 1
+				? `context:${declaredId}`
+				: `${file.path}::${declaredId || file.path}`,
 			path: file.path,
 			parentPath: resolvedParent,
 			title: display.title,
 			summary: display.summary,
 			body: display.body,
-			links: extractLinks(app, frontmatter.context_tree_links, file.path),
+			links: extractLinks(app, frontmatter?.context_tree_links, file.path),
+			referencePaths: rootedPaths
+				? (outgoingByPath[file.path] ?? []).filter((path) => rootedPaths.has(path))
+				: [],
 		});
 	}
 
-	return buildContextTree(topics);
+	const roots = buildContextTree(topics);
+	if (!rootedScope) return roots;
+	promoteRoot(roots, rootedScope.rootPath);
+	return roots;
 }

@@ -4,7 +4,7 @@ import {
 	inlineEditorCardHeight,
 	retainsInlineEditorFootprint,
 } from "../domain/inline-editor-layout";
-import { settledReadingCardHeight } from "../domain/reading-card-layout";
+import { readingCardMaximumHeight, settledReadingCardHeight } from "../domain/reading-card-layout";
 import { CardAnchor, cardAnchorAtPoint } from "../graph/simulation";
 import { ContextTreeNode } from "../types";
 import { COPY, cardToggleLabel } from "./copy";
@@ -24,6 +24,10 @@ export interface TopicCardRendererCallbacks {
 	onPin: (node: ContextTreeNode) => void;
 	onEdit: (node: ContextTreeNode) => void;
 	onOpenSource: (node: ContextTreeNode) => void;
+	onExpand: (node: ContextTreeNode) => void;
+	onRemoveFromGraph: (node: ContextTreeNode) => void;
+	canExpand: (node: ContextTreeNode) => boolean;
+	canRemoveFromGraph: (node: ContextTreeNode) => boolean;
 	onMoveToTrash: (node: ContextTreeNode) => void;
 	onOpenInternalLink: (event: MouseEvent, sourcePath: string) => void;
 	onNavigateConnection: (nodeId: string) => void;
@@ -67,6 +71,7 @@ export class TopicCardRenderer {
 	private readonly renderedDetails = new Set<string>();
 	private readonly detailReady = new Set<string>();
 	private readonly detailRenderings = new Map<string, Promise<void>>();
+	private readonly nodeReferences = new WeakMap<HTMLElement, { current: ContextTreeNode }>();
 	private activeMenu?: { wrap: HTMLElement; trigger: HTMLButtonElement; menu: HTMLElement };
 
 	constructor(
@@ -86,6 +91,8 @@ export class TopicCardRenderer {
 
 	create(parent: HTMLElement, node: ContextTreeNode): HTMLElement {
 		const element = parent.createDiv({ cls: "context-tree-node" });
+		const nodeReference = { current: node };
+		this.nodeReferences.set(element, nodeReference);
 		element.dataset.nodeId = node.id;
 		const card = element.createDiv({ cls: "context-tree-card" });
 		const trigger = card.createEl("button", {
@@ -96,13 +103,13 @@ export class TopicCardRenderer {
 		// their own card-like surface, which breaks the visual card boundary.
 		trigger.createSpan({ cls: "context-tree-title", text: node.title });
 		if (node.summary) trigger.createSpan({ cls: "context-tree-summary", text: node.summary });
-		trigger.addEventListener("click", () => this.callbacks.onToggle(node.id));
+		trigger.addEventListener("click", () => this.callbacks.onToggle(nodeReference.current.id));
 		// Two click events precede `dblclick`. Make the final gesture idempotently
 		// open the card so a double click cannot leave it closed after toggling twice.
 		trigger.addEventListener("dblclick", (event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			this.callbacks.onOpen(node.id);
+			this.callbacks.onOpen(nodeReference.current.id);
 		});
 		card.addEventListener("pointerdown", (event) => {
 			const target = event.target;
@@ -116,12 +123,12 @@ export class TopicCardRenderer {
 				// frame remains the explicit graph-drag surface.
 				isTextSelectionTarget: !!target.closest(".context-tree-detail"),
 			});
-			if (action === "move-node") this.callbacks.onCardDragStart(event, node);
+			if (action === "move-node") this.callbacks.onCardDragStart(event, nodeReference.current);
 		});
-		card.addEventListener("pointerenter", () => this.callbacks.onHover(node.id));
+		card.addEventListener("pointerenter", () => this.callbacks.onHover(nodeReference.current.id));
 		card.addEventListener("pointermove", (event) => {
 			const bounds = card.getBoundingClientRect();
-			this.callbacks.onConnectionCandidate(node.id, cardAnchorAtPoint(
+			this.callbacks.onConnectionCandidate(nodeReference.current.id, cardAnchorAtPoint(
 				{ width: bounds.width, height: bounds.height },
 				{ x: event.clientX - bounds.left, y: event.clientY - bounds.top },
 			));
@@ -132,30 +139,39 @@ export class TopicCardRenderer {
 		});
 
 		const quickActions = card.createDiv({ cls: "context-tree-card-quick-actions" });
+		this.createIconAction(
+			quickActions,
+			"network",
+			COPY.actions.expandNeighbours,
+			"context-tree-card-quick-action context-tree-card-expand",
+			() => this.callbacks.onExpand(nodeReference.current),
+		);
 		this.createIconAction(quickActions, "pin", COPY.actions.pinCard, "context-tree-card-quick-action context-tree-card-pin", () => {
-			this.callbacks.onPin(node);
+			this.callbacks.onPin(nodeReference.current);
 		});
 		const connectionPort = this.createIconAction(
 			card,
 			"",
 			COPY.actions.dragToConnect,
 			"context-tree-connect-port",
-			(event) => this.callbacks.onConnectionStart(event as PointerEvent, node, this.connectionAnchor(connectionPort)),
+			(event) => this.callbacks.onConnectionStart(event as PointerEvent, nodeReference.current, this.connectionAnchor(connectionPort)),
 			"pointerdown",
 		);
 		// The port is a pointer gesture. Adding it as a tab stop for every card
 		// would turn keyboard reading into a long sequence of decorative controls.
 		connectionPort.tabIndex = -1;
 		this.createIconAction(quickActions, "pencil", COPY.actions.editCard, "context-tree-card-quick-action context-tree-card-detail-action", () => {
-			this.callbacks.onEdit(node);
+			this.callbacks.onEdit(nodeReference.current);
 		});
-		this.createMoreMenu(card, node);
+		this.createMoreMenu(card, () => nodeReference.current);
 		return element;
 	}
 
 	sync(element: HTMLElement, node: ContextTreeNode, state: TopicCardState): void {
 		const card = element.querySelector<HTMLElement>(".context-tree-card");
 		if (!card) return;
+		const reference = this.nodeReferences.get(element);
+		if (reference) reference.current = node;
 		// A Vault change can reuse this element during graph refresh. Update the
 		// visible heading before measuring it so the card tracks the Markdown title.
 		this.updateHeader(card, node);
@@ -163,6 +179,9 @@ export class TopicCardRenderer {
 		card.toggleClass("is-detail-open", state.isOpen);
 		card.toggleClass("is-editing", state.isEditing);
 		card.toggleClass("is-pinned", state.isPinned);
+		const canExpand = this.callbacks.canExpand(node);
+		card.toggleClass("has-expand-action", canExpand);
+		card.querySelector<HTMLElement>(".context-tree-card-expand")?.toggleClass("is-hidden", !canExpand);
 		if (!retainsInlineEditorFootprint(state.isOpen, card.hasClass("has-fixed-open-footprint"))) {
 			card.style.removeProperty("--ct-open-card-height");
 			card.style.removeProperty("--ct-source-card-height");
@@ -231,11 +250,13 @@ export class TopicCardRenderer {
 		const card = element.querySelector<HTMLElement>(".context-tree-card");
 		if (!card) return 0;
 		const wrapper = card.querySelector<HTMLElement>(".context-tree-detail-wrap");
+		const viewportHeight = card.closest<HTMLElement>(".context-tree-viewport")?.clientHeight ?? 0;
 		return settledReadingCardHeight({
 			cardHeight: card.getBoundingClientRect().height,
 			detailHeight: wrapper?.getBoundingClientRect().height ?? 0,
 			detailContentHeight: wrapper?.scrollHeight ?? 0,
 			isDetailReady: this.detailReady.has(nodeId),
+			maximumHeight: readingCardMaximumHeight(viewportHeight),
 		}) ?? card.getBoundingClientRect().height;
 	}
 
@@ -357,7 +378,7 @@ export class TopicCardRenderer {
 		const title = card.querySelector<HTMLElement>(".context-tree-title");
 		if (!title) return;
 		card.removeClass("has-wrapped-title");
-		const quickActionSpace = 44; // Reserved width for the fixed overflow menu rail.
+		const quickActionSpace = card.hasClass("has-expand-action") ? 74 : 44;
 		const desired = Math.max(276, this.measureTitleWidth(title, titleText) + 32 + quickActionSpace);
 		const viewportWidth = card.closest<HTMLElement>(".context-tree-viewport")?.clientWidth ?? 500;
 		const maximum = Math.min(500, Math.max(160, viewportWidth - 32));
@@ -448,9 +469,7 @@ export class TopicCardRenderer {
 		const list = wrapper.createDiv({ cls: "context-tree-connections" });
 		for (const connection of connections) {
 			const item = list.createDiv({ cls: "context-tree-connection" });
-			const connectionText = connection.label === "연결"
-				? connection.target.title
-				: `${connection.label} · ${connection.target.title}`;
+			const connectionText = `${connection.label} · ${connection.target.title}`;
 			const jump = item.createEl("button", {
 				cls: "context-tree-connection-jump",
 				text: connectionText,
@@ -467,7 +486,7 @@ export class TopicCardRenderer {
 		this.detailRenderings.delete(nodeId);
 	}
 
-	private createMoreMenu(parent: HTMLElement, node: ContextTreeNode): void {
+	private createMoreMenu(parent: HTMLElement, currentNode: () => ContextTreeNode): void {
 		const menuWrap = parent.createDiv({ cls: "context-tree-card-more" });
 		const trigger = menuWrap.createEl("button", {
 			cls: "context-tree-card-quick-action",
@@ -485,6 +504,13 @@ export class TopicCardRenderer {
 			text: COPY.actions.openSourceBesideGraph,
 			attr: { role: "menuitem" },
 		});
+		const removeItem = this.callbacks.canRemoveFromGraph(currentNode())
+			? menu.createEl("button", {
+				cls: "context-tree-card-menu-item",
+				text: COPY.actions.removeFromGraph,
+				attr: { role: "menuitem" },
+			})
+			: undefined;
 		const deleteItem = menu.createEl("button", {
 			cls: "context-tree-card-menu-item is-destructive",
 			text: COPY.actions.moveToTrash,
@@ -498,12 +524,17 @@ export class TopicCardRenderer {
 		openSourceItem.addEventListener("click", (event) => {
 			event.stopPropagation();
 			this.closeActiveMenu();
-			this.callbacks.onOpenSource(node);
+			this.callbacks.onOpenSource(currentNode());
+		});
+		removeItem?.addEventListener("click", (event) => {
+			event.stopPropagation();
+			this.closeActiveMenu();
+			this.callbacks.onRemoveFromGraph(currentNode());
 		});
 		deleteItem.addEventListener("click", (event) => {
 			event.stopPropagation();
 			this.closeActiveMenu();
-			this.callbacks.onMoveToTrash(node);
+			this.callbacks.onMoveToTrash(currentNode());
 		});
 	}
 
@@ -519,6 +550,9 @@ export class TopicCardRenderer {
 	private closeActiveMenu(): void {
 		const active = this.activeMenu;
 		if (!active) return;
+		// Move focus out before hiding the menu. Otherwise browsers reject
+		// aria-hidden while a focused menu item remains inside that subtree.
+		active.trigger.focus({ preventScroll: true });
 		active.wrap.removeClass("is-open");
 		active.trigger.setAttribute("aria-expanded", "false");
 		active.menu.hidden = true;

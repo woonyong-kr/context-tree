@@ -1,19 +1,22 @@
 import { FileView, Notice, setIcon, TFile, ViewStateResult, WorkspaceLeaf } from "obsidian";
 import { GRAPH_DEFINITION_EXTENSION } from "./domain/graph-definition";
-import { canvasWheelAction, canvasWheelZoomPoint } from "./domain/canvas-wheel-action";
+import { canvasWheelAction, canvasWheelZoomFactor, canvasWheelZoomPoint } from "./domain/canvas-wheel-action";
 import { canvasWheelSurface } from "./domain/canvas-wheel-target";
 import { canvasPointerAction } from "./domain/canvas-pointer-action";
+import { isCanvasControlTarget } from "./domain/canvas-pointer-target";
 import { cardOpenEffects, type CardOpenIntent } from "./domain/card-open-action";
 import { hasCardDragExceededClickThreshold } from "./domain/card-pointer-action";
 import { canDisconnectAtDrop } from "./domain/disconnect-drop-action";
+import { connectionDropAction } from "./domain/connection-drop-action";
 import { normalizePinnedCardIds, openCardAlongsidePins, retainPinnedCards } from "./domain/card-pin-state";
 import ContextTreePlugin from "./main";
 import { graphHoverNodeIds, graphSearchVisibility, isGraphEdgeVisible } from "./domain/graph-filter";
 import type { GraphSearchVisibility } from "./domain/graph-filter";
-import { graphNoteFolder, GraphWorkspace } from "./domain/graph-workspace";
+import { graphNoteFolder, GraphViewState, GraphWorkspace } from "./domain/graph-workspace";
 import { shouldFitInitialOverview } from "./domain/initial-viewport";
 import { decideInlineEditorSave } from "./domain/inline-editor-save";
-import { DIRECT_RELATION, contextRelationLabel, isSymmetricRelation, RELATION_TYPES } from "./domain/relations";
+import { recoverInlineDraft } from "./domain/inline-editor-draft";
+import { DIRECT_RELATION, isSymmetricRelation, RELATION_TYPES } from "./domain/relations";
 import {
 	cardRadius,
 	CardAnchor,
@@ -33,14 +36,15 @@ import {
 	simulationLinkFor,
 } from "./graph/simulation";
 import { loadContextTree, topicDisplayContent, topicGraphMetadataSignature } from "./parser";
-import { buildContextGraph, GraphRelationType, isDetachableGraphEdge } from "./graph/model";
+import { buildContextGraph, graphStructureSignature, GraphRelationType, isDetachableGraphEdge } from "./graph/model";
 import { ContextTreeLink, ContextTreeNode } from "./types";
 import { addRelation, createTopic, moveTopicToTrash, removeRelation } from "./topic-store";
 import { markdownSummary } from "./topic-content";
-import { AddGraphNoteModal, DeleteTopicModal, GraphWorkspaceModal, ReloadInlineSourceModal } from "./topic-modals";
+import { DeleteTopicModal, ReloadInlineSourceModal, SavedGraphsModal } from "./topic-modals";
 import { CardConnection, TopicCardRenderer } from "./ui/topic-card-renderer";
 import type { TopicCardState } from "./ui/topic-card-renderer";
 import { COPY, movedToTrashNotice } from "./ui/copy";
+import { contextRelationLabel, contextRelationNavigationLabel } from "./ui/relation-labels";
 
 export const VIEW_TYPE_CONTEXT_TREE = "context-tree-view";
 
@@ -95,7 +99,6 @@ export class ContextTreeView extends FileView {
 	private collideForce?: ReturnType<typeof createGraphSimulation>["collideForce"];
 	private resizeTimer?: number;
 	private viewportObserver?: ResizeObserver;
-	private viewportSize?: { width: number; height: number };
 	private fitWhenMeasured = false;
 	private hasRenderedGraph = false;
 	private renderedGraphId?: string;
@@ -113,10 +116,12 @@ export class ContextTreeView extends FileView {
 	private sourceLeaf?: WorkspaceLeaf;
 	private readonly relationFilter = new Set<GraphRelationType>(["derived", ...RELATION_TYPES]);
 	private searchPanel?: HTMLElement;
+	private refreshPending = false;
+	private isOpen = false;
 
 	constructor(leaf: WorkspaceLeaf, private readonly plugin: ContextTreePlugin) {
-		 super(leaf);
-		 this.cards = new TopicCardRenderer(this.app, this, {
+		super(leaf);
+		this.cards = new TopicCardRenderer(this.app, this, {
 			onToggle: (nodeId) => void this.toggleNodeFromCard(nodeId),
 			onOpen: (nodeId) => void this.openNodeFromCard(nodeId),
 			onCardDragStart: (event, node) => this.startNodeDrag(event, node),
@@ -125,6 +130,12 @@ export class ContextTreeView extends FileView {
 			onPin: (node) => void this.toggleCardPin(node),
 			onEdit: (node) => void this.toggleInlineMarkdownEditor(node),
 			onOpenSource: (node) => void this.openNodeSourceBesideGraph(node),
+			onExpand: (node) => void this.expandNode(node),
+			onRemoveFromGraph: (node) => void this.removeNodeFromGraph(node),
+			canExpand: (node) => this.graph.scope.kind === "rooted"
+				&& node.path !== this.graph.scope.rootPath
+				&& !this.graph.scope.expandedPaths.includes(node.path),
+			canRemoveFromGraph: (node) => this.graph.scope.kind !== "rooted" || this.graph.scope.rootPath !== node.path,
 			onMoveToTrash: (node) => void this.deleteFromCard(node),
 			onOpenInternalLink: (event, sourcePath) => this.openInternalLink(event, sourcePath),
 			onNavigateConnection: (nodeId) => void this.navigateToNode(nodeId),
@@ -150,14 +161,27 @@ export class ContextTreeView extends FileView {
 		return this.graphId ?? this.plugin.defaultGraph()?.id ?? "";
 	}
 
+	replaceGraphId(previousId: string, nextId: string): void {
+		if (this.graphId === previousId) this.graphId = nextId;
+	}
+
 	getState(): Record<string, unknown> {
 		return { ...super.getState(), graphId: this.getGraphId() };
 	}
 
 	async setState(state: unknown, result: ViewStateResult): Promise<void> {
-		const candidate = state && typeof state === "object" ? (state as Record<string, unknown>).graphId : undefined;
+		const record = state && typeof state === "object" ? state as Record<string, unknown> : undefined;
+		const candidate = record?.graphId;
 		this.graphId = typeof candidate === "string" && this.plugin.getGraph(candidate) ? candidate : undefined;
-		await super.setState(state, result);
+		// FileView's state handler requires a backing file. Calling it for a
+		// transient current-note graph makes Obsidian replace this view with an
+		// empty file tab. Definition-backed states still follow the native file
+		// lifecycle and finish rendering in onLoadFile().
+		if (typeof record?.file === "string") await super.setState(state, result);
+		// Obsidian may apply command-created view state after onOpen(). File-backed
+		// views render from onLoadFile(), while transient current-note views need
+		// this state transition to start their first render.
+		if (this.isOpen && this.graphId !== undefined) await this.refresh();
 	}
 
 	canAcceptExtension(extension: string): boolean {
@@ -182,6 +206,7 @@ export class ContextTreeView extends FileView {
 	}
 
 	async onOpen(): Promise<void> {
+		this.isOpen = true;
 		this.registerDomEvent(window, "resize", () => this.scheduleMeasure());
 		this.registerDomEvent(window, "pointermove", (event) => {
 			this.updateCanvasPan(event);
@@ -197,7 +222,7 @@ export class ContextTreeView extends FileView {
 		this.registerDomEvent(window, "pointercancel", (event) => {
 			this.finishCanvasPan(event);
 			this.finishNodeDrag(event);
-			this.finishDragConnection(event);
+			this.finishDragConnection(event, true);
 			this.finishDisconnectDrag(event, true);
 		});
 		// A FileView receives onOpen() before onLoadFile(). Its graph id does not
@@ -208,6 +233,16 @@ export class ContextTreeView extends FileView {
 	}
 
 	async onClose(): Promise<void> {
+		this.isOpen = false;
+		const closingGraphId = this.getGraphId();
+		await this.finishInlineMarkdownEditor();
+		if (this.inlineEdit) {
+			await this.plugin.saveInlineDraft(this.inlineEdit.file.path, {
+				content: this.inlineEdit.content,
+				lastPersisted: this.inlineEdit.lastPersisted,
+				updatedAt: Date.now(),
+			});
+		}
 		await this.persistGraphViewState();
 		this.refreshGeneration += 1;
 		this.simulation?.stop();
@@ -217,21 +252,24 @@ export class ContextTreeView extends FileView {
 		if (this.inlineEdit?.timer !== undefined) window.clearTimeout(this.inlineEdit.timer);
 		for (const timer of this.delayedTimers) window.clearTimeout(timer);
 		this.delayedTimers.clear();
+		this.plugin.releaseTransientGraph(closingGraphId);
 	}
 
 	async refresh(): Promise<void> {
 		const generation = ++this.refreshGeneration;
 		// Autosaving a raw Markdown edit triggers Vault modify events. Preserve
 		// the focused textarea until the reader explicitly leaves edit mode.
-		if (this.inlineEdit) return;
+		if (this.inlineEdit) {
+			this.refreshPending = true;
+			return;
+		}
 		const roots = await loadContextTree(this.app, this.graph);
 		// Vault events can arrive faster than cachedRead() completes. Only the
 		// newest snapshot may update the view; otherwise a stale read can repaint
 		// a card after its source note was already changed or removed.
 		if (generation !== this.refreshGeneration) return;
-		this.rootNodes = roots;
-		this.focusedNodeId ??= roots[0]?.id;
 		if (!roots.length) {
+			this.rootNodes = roots;
 			this.renderEmpty();
 			return;
 		}
@@ -239,6 +277,22 @@ export class ContextTreeView extends FileView {
 			&& this.renderedGraphId === this.getGraphId()
 			&& !!this.viewport
 			&& !!this.scene;
+		if (preserveViewport) {
+			const previousGraph = buildContextGraph(this.rootNodes);
+			const nextGraph = buildContextGraph(roots);
+			if (graphStructureSignature(previousGraph) === graphStructureSignature(nextGraph)) {
+				this.rootNodes = roots;
+				const nodesById = new Map(nextGraph.nodes.map((node) => [node.id, node]));
+				for (const simNode of this.simNodes) simNode.node = nodesById.get(simNode.id) ?? simNode.node;
+				this.searchVisibilityCache = undefined;
+				this.cards.invalidateDetails();
+				this.syncCards();
+				this.scheduleMeasure();
+				return;
+			}
+		}
+		this.rootNodes = roots;
+		this.focusedNodeId ??= roots[0]?.id;
 		if (preserveViewport) this.cards.invalidateDetails();
 		else this.renderShell();
 		this.createGraph(preserveViewport);
@@ -260,25 +314,19 @@ export class ContextTreeView extends FileView {
 		this.edges = this.scene.createSvg("svg", { cls: "context-tree-edges" });
 		this.draftEdges = this.viewport.createSvg("svg", { cls: "context-tree-draft-edges" });
 		this.createGraphControls(this.viewport);
+		this.createGraphHeader(this.viewport);
 		this.applyTransform();
 		this.bindCanvasControls(this.viewport);
 		this.viewportObserver?.disconnect();
 		this.viewportObserver = new ResizeObserver(() => {
-			const previous = this.viewportSize;
 			const width = this.viewport?.clientWidth ?? 0;
 			const height = this.viewport?.clientHeight ?? 0;
-			this.viewportSize = { width, height };
-			this.updateViewportCardWidth(width);
+			this.updateViewportSize(width, height);
 			this.scheduleMeasure();
-			// Preserve intentional pan/zoom during normal resizing, but prevent a
-			// substantial split-pane contraction from stranding most cards offscreen.
-			if (previous && (width < previous.width * 0.72 || height < previous.height * 0.72)) {
-				this.fitWhenMeasured = true;
-			}
 			this.finishOverviewFit();
 		});
 		this.viewportObserver.observe(this.viewport);
-		this.updateViewportCardWidth(this.viewport.clientWidth);
+		this.updateViewportSize(this.viewport.clientWidth, this.viewport.clientHeight);
 	}
 
 	private renderEmpty(): void {
@@ -309,12 +357,12 @@ export class ContextTreeView extends FileView {
 		contentEl.empty();
 		contentEl.addClass("context-tree-view");
 		const empty = contentEl.createDiv({ cls: "context-tree-empty" });
-		empty.createEl("p", { cls: "context-tree-empty-eyebrow", text: this.graph.name });
+		const picker = empty.createEl("button", { cls: "context-tree-empty-eyebrow", text: this.graph.name });
+		picker.addEventListener("click", () => this.openGraphWorkspaceModal());
 		empty.createEl("h2", { text: COPY.labels.emptyTitle });
 		empty.createEl("p", { cls: "context-tree-empty-status", text: this.emptyScopeStatus() });
 		empty.createEl("p", { cls: "context-tree-empty-next", text: COPY.labels.emptyNextStep });
 		const actions = empty.createDiv({ cls: "context-tree-empty-actions" });
-		this.createAction(actions, COPY.actions.manageGraphs, () => this.openGraphWorkspaceModal());
 		this.createAction(actions, COPY.actions.createCard, () => this.createInlineTopic());
 	}
 
@@ -337,7 +385,6 @@ export class ContextTreeView extends FileView {
 		this.createIconControl(controls, "search", COPY.actions.searchGraph, () => this.toggleSearchPanel("search"));
 		this.createIconControl(controls, "sliders-horizontal", COPY.actions.filterRelations, () => this.toggleSearchPanel("filter"));
 		this.createIconControl(controls, "file-plus-2", COPY.actions.newCard, () => this.createInlineTopic());
-		this.createIconControl(controls, "refresh-cw", COPY.actions.refresh, () => void this.refresh());
 		controls.createDiv({ cls: "context-tree-control-divider" });
 		this.createZoomButton(controls, "minus", COPY.actions.zoomOut, 0.86);
 		const label = controls.createDiv({ cls: "context-tree-zoom-label", text: "100%" });
@@ -352,12 +399,66 @@ export class ContextTreeView extends FileView {
 		this.createSearchPanel(parent);
 	}
 
+	private createGraphHeader(parent: HTMLElement): void {
+		const header = parent.createDiv({ cls: "context-tree-graph-header" });
+		const picker = header.createEl("button", { cls: "context-tree-graph-picker", text: this.graph.name });
+		picker.addEventListener("click", (event) => {
+			event.stopPropagation();
+			this.openGraphWorkspaceModal();
+		});
+		if (!this.plugin.isTransientGraph(this.getGraphId())) return;
+		const save = header.createEl("button", { cls: "context-tree-save-graph", text: COPY.actions.saveGraph });
+		save.addEventListener("click", (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			save.addClass("is-hidden");
+			const input = header.createEl("input", {
+				type: "text",
+				cls: "context-tree-save-graph-input",
+				attr: { "aria-label": COPY.labels.graphName, placeholder: COPY.labels.graphName },
+			});
+			const cancelSave = (): void => {
+				if (!input.isConnected || input.disabled) return;
+				input.remove();
+				save.removeClass("is-hidden");
+			};
+			input.addEventListener("blur", cancelSave);
+			input.addEventListener("keydown", (keyEvent) => {
+				if (keyEvent.key === "Escape") {
+					cancelSave();
+					return;
+				}
+				if (keyEvent.key !== "Enter" || !input.value.trim()) return;
+				input.disabled = true;
+				const transientGraphId = this.getGraphId();
+				void this.plugin.saveTransientGraph(
+					transientGraphId,
+					input.value.trim(),
+					this.graphViewState(),
+				)
+					.then((graph) => {
+						new Notice(COPY.notice.graphSaved);
+						this.replaceGraphId(transientGraphId, graph.id);
+						this.plugin.releaseTransientGraph(transientGraphId);
+						return this.refresh();
+					})
+					.catch((error: unknown) => {
+						console.error("Context Graph: failed to save current-note graph", error);
+						input.disabled = false;
+						new Notice(COPY.notice.graphSaveFailed);
+					});
+			});
+			input.focus();
+		});
+	}
+
 	private toggleSearchPanel(mode: "search" | "filter"): void {
 		const panel = this.searchPanel;
 		if (!panel) return;
 		const wasOpen = panel.hasClass("is-open");
-		panel.toggleClass("is-open", !wasOpen);
-		if (mode === "search") panel.querySelector<HTMLInputElement>("input")?.focus();
+		const isOpen = !wasOpen;
+		panel.toggleClass("is-open", isOpen);
+		if (mode === "search" && isOpen) panel.querySelector<HTMLInputElement>("input")?.focus();
 	}
 
 	private createSearchPanel(parent: HTMLElement): void {
@@ -395,7 +496,7 @@ export class ContextTreeView extends FileView {
 				else this.relationFilter.delete(type);
 				this.applySearchAndFilter();
 			});
-			label.createSpan({ text: type === "derived" ? "맥락" : contextRelationLabel(type) });
+			label.createSpan({ text: type === "derived" ? COPY.relations.derived : contextRelationLabel(type) });
 		}
 		const empty = panel.createDiv({ cls: "context-tree-search-empty", text: COPY.labels.searchNoResults });
 		empty.toggleClass("is-visible", false);
@@ -427,18 +528,12 @@ export class ContextTreeView extends FileView {
 	}
 
 	private openGraphWorkspaceModal(): void {
-		new GraphWorkspaceModal(this.app, this.plugin.settings.graphs, this.getGraphId(), {
-			onOpenGraph: (graphId) => void this.plugin.activateView(graphId),
-			onCreateGraph: (name, scope) => {
-				void this.plugin.createGraph(name, scope)
-					.then((graph) => this.plugin.activateView(graph.id))
-					.catch((error: unknown) => console.error("Context Graph: failed to create graph workspace", error));
-			},
-			onAddExistingNote: () => new AddGraphNoteModal(this.app, (file) => {
-				void this.plugin.includePathInGraph(this.getGraphId(), file.path)
-					.catch((error: unknown) => console.error("Context Graph: failed to add an existing note", error));
-			}).open(),
-		}).open();
+		new SavedGraphsModal(
+			this.app,
+			this.plugin.settings.graphs,
+			this.getGraphId(),
+			(graphId) => void this.plugin.activateView(graphId),
+		).open();
 	}
 
 	private createIconControl(parent: HTMLElement, icon: string, label: string, callback: () => void): HTMLButtonElement {
@@ -506,6 +601,7 @@ export class ContextTreeView extends FileView {
 				fy: saved?.fy ?? (persisted?.pinned ? persisted.y : undefined),
 			};
 		});
+		this.searchVisibilityCache = undefined;
 		this.syncOpenCardPositionLocks();
 		this.simLinks = graph.edges.map(simulationLinkFor);
 		if (!this.simNodes.some((node) => node.id === this.hoveredNodeId)) this.hoveredNodeId = undefined;
@@ -627,7 +723,7 @@ export class ContextTreeView extends FileView {
 			const target = this.simNodes.find((candidate) => candidate.id === targetId)?.node;
 			if (!target) return [];
 			const derived = edge.types.includes("derived")
-				? [{ label: "맥락", target }]
+				? [{ label: COPY.relations.derived, target }]
 				: [];
 			const stored = edge.storedLinks
 				.filter((link) => link.sourcePath === node.path)
@@ -638,10 +734,9 @@ export class ContextTreeView extends FileView {
 			const incoming = edge.storedLinks
 				.filter((link) => link.targetPath === node.path && !(isSymmetricRelation(link.type) && storedTypes.has(link.type)))
 				.map((link) => ({
-					// A card chip is a navigation affordance, not a provenance viewer.
-					// The relation type already explains the semantic role; arrows made
-					// ordinary reading look like a data-flow diagram.
-					label: contextRelationLabel(link.type),
+					// Directional types retain their authored meaning. Symmetric types
+					// stay arrow-free in the shared label helper.
+					label: contextRelationNavigationLabel(link.type, "incoming"),
 					target,
 				}));
 			return [...derived, ...stored, ...incoming];
@@ -650,7 +745,7 @@ export class ContextTreeView extends FileView {
 
 	private storedConnection(link: ContextTreeLink & { sourcePath?: string }, target: ContextTreeNode): CardConnection {
 		return {
-			label: contextRelationLabel(link.type),
+			label: contextRelationNavigationLabel(link.type, "outgoing"),
 			target,
 		};
 	}
@@ -668,6 +763,8 @@ export class ContextTreeView extends FileView {
 		}
 		try {
 			const source = await this.app.vault.read(file);
+			const recovery = recoverInlineDraft(source, this.plugin.inlineDraft(file.path));
+			const editorSource = recovery.kind === "none" ? source : recovery.content;
 			this.clearSelectedEdge();
 			this.replaceOpenDetails(openCardAlongsidePins(this.pinnedOpenNodeIds, node.id));
 			// Let Markdown settle before deriving the Source footprint. A height read
@@ -680,20 +777,26 @@ export class ContextTreeView extends FileView {
 			this.inlineEdit = {
 				nodeId: node.id,
 				file,
-				content: source,
+				content: editorSource,
 				lastPersisted: source,
 				graphMetadataSignature: topicGraphMetadataSignature(source),
-				summaryFallback: markdownSummary(source) ? "" : node.summary,
+				summaryFallback: markdownSummary(editorSource) ? "" : node.summary,
+				hasConflict: recovery.kind === "conflict",
 			};
 			this.syncCards();
 			const element = this.nodeElements.get(node.id);
-			if (!element) return;
-			this.cards.startInlineMarkdownEditing(element, source, readingCardHeight, {
+			if (!element) {
+				this.inlineEdit = undefined;
+				return;
+			}
+			this.cards.startInlineMarkdownEditing(element, editorSource, readingCardHeight, {
 				onInput: (content) => this.queueInlineMarkdownSave(content),
 				onCopyDraft: () => void this.copyInlineMarkdownDraft(),
 				onReloadSource: () => void this.reloadInlineMarkdownSource(),
 				onOpenSource: () => void this.openInlineMarkdownSource(),
 			});
+			if (recovery.kind === "restore") void this.flushInlineMarkdownSave();
+			if (recovery.kind === "conflict") this.showInlineMarkdownConflict(this.inlineEdit);
 			this.scheduleMeasure();
 		} catch (error) {
 			console.error("Context Graph: failed to open inline Markdown editor", error);
@@ -706,6 +809,11 @@ export class ContextTreeView extends FileView {
 		const edit = this.inlineEdit;
 		if (!edit) return;
 		edit.content = content;
+		this.plugin.stageInlineDraft(edit.file.path, {
+			content,
+			lastPersisted: edit.lastPersisted,
+			updatedAt: Date.now(),
+		});
 		edit.saveFailed = false;
 		if (edit.hasConflict) return;
 		if (edit.timer !== undefined) window.clearTimeout(edit.timer);
@@ -735,6 +843,14 @@ export class ContextTreeView extends FileView {
 					return;
 				}
 				edit.lastPersisted = content;
+				// Keep the recovery base aligned with the Vault write. If the plugin
+				// stops before Source mode closes, a saved edit must not reopen as a
+				// false conflict; newer keystrokes still remain recoverable.
+				this.plugin.stageInlineDraft(edit.file.path, {
+					content: edit.content,
+					lastPersisted: content,
+					updatedAt: Date.now(),
+				});
 			})
 			.catch((error: unknown) => {
 				edit.saveFailed = true;
@@ -761,6 +877,7 @@ export class ContextTreeView extends FileView {
 		}
 		if (edit.hasConflict || edit.saveFailed) return;
 		this.inlineEdit = undefined;
+		await this.plugin.clearInlineDraft(edit.file.path);
 		const node = this.simNodes.find((candidate) => candidate.id === edit.nodeId);
 		const element = this.nodeElements.get(edit.nodeId);
 		if (!node || !element) return;
@@ -770,7 +887,10 @@ export class ContextTreeView extends FileView {
 		}));
 		this.cards.finishInlineMarkdownEditing(element, edit.nodeId);
 		this.syncCards();
-		if (edit.graphMetadataSignature !== topicGraphMetadataSignature(edit.content)) {
+		const graphMetadataChanged = edit.graphMetadataSignature !== topicGraphMetadataSignature(edit.content);
+		const refreshPending = this.refreshPending;
+		this.refreshPending = false;
+		if (graphMetadataChanged || refreshPending) {
 			// Vault content is committed before this point, while Obsidian's metadata
 			// cache updates on the ensuing event turn. Keep the outer card DOM and its
 			// coordinates, then rebuild only the graph model from that fresh cache.
@@ -817,6 +937,7 @@ export class ContextTreeView extends FileView {
 			const node = this.simNodes.find((candidate) => candidate.id === edit.nodeId);
 			edit.summaryFallback = markdownSummary(source) ? "" : node?.node.summary ?? "";
 			edit.hasConflict = false;
+			await this.plugin.clearInlineDraft(edit.file.path);
 			const element = this.nodeElements.get(edit.nodeId);
 			if (element) this.cards.replaceInlineMarkdownSource(element, source);
 		} catch (error) {
@@ -934,6 +1055,24 @@ export class ContextTreeView extends FileView {
 		this.showDeleteTopic(node);
 	}
 
+	private async expandNode(node: ContextTreeNode): Promise<void> {
+		try {
+			await this.plugin.includePathInGraph(this.getGraphId(), node.path);
+		} catch (error) {
+			console.error("Context Graph: failed to expand a rooted graph", error);
+		}
+	}
+
+	private async removeNodeFromGraph(node: ContextTreeNode): Promise<void> {
+		try {
+			await this.plugin.removePathFromGraph(this.getGraphId(), node.path);
+			new Notice(COPY.notice.removedFromGraph);
+		} catch (error) {
+			console.error("Context Graph: failed to remove a card from this graph", error);
+			new Notice(COPY.notice.removeFromGraphFailed);
+		}
+	}
+
 	private async toggleCardPin(node: ContextTreeNode): Promise<void> {
 		// Pinning a different card is a structural action. Finish a regular
 		// Source edit first, but keep a pinned editor available as reference
@@ -1003,9 +1142,9 @@ export class ContextTreeView extends FileView {
 				this.setViewTimeout(() => this.plugin.refreshOpenViews(), 180);
 			})
 			.catch((error: unknown) => {
-			console.error("Context Graph: failed to create inline topic", error);
+				console.error("Context Graph: failed to create inline topic", error);
 				new Notice(COPY.notice.createFailed);
-		});
+			});
 	}
 
 	private startNodeDrag(event: PointerEvent, node: ContextTreeNode): void {
@@ -1192,13 +1331,15 @@ export class ContextTreeView extends FileView {
 		this.paintDraftConnection();
 	}
 
-	private finishDragConnection(event: PointerEvent): void {
+	private finishDragConnection(event: PointerEvent, cancelled = false): void {
 		const drag = this.dragConnection;
 		if (!drag || event.pointerId !== drag.pointerId) return;
 		const source = this.simNodes.find((candidate) => candidate.id === drag.sourceId)?.node;
 		const target = drag.targetId ? this.simNodes.find((candidate) => candidate.id === drag.targetId)?.node : undefined;
 		this.clearDragConnection();
-		if (source && target) void this.createDirectRelation(source, target);
+		if (connectionDropAction({ cancelled, hasSource: !!source, hasTarget: !!target }) === "connect" && source && target) {
+			void this.createDirectRelation(source, target);
+		}
 	}
 
 	private clearDragConnection(): void {
@@ -1226,8 +1367,6 @@ export class ContextTreeView extends FileView {
 		const node = target?.closest<HTMLElement>(".context-tree-node");
 		return node?.dataset.nodeId;
 	}
-
-
 	private anchorForPointer(targetId: string, clientX: number, clientY: number): CardAnchor | undefined {
 		const card = this.nodeElements.get(targetId)?.querySelector<HTMLElement>(".context-tree-card");
 		if (!card) return undefined;
@@ -1552,8 +1691,9 @@ export class ContextTreeView extends FileView {
 	 * graph pane width so an expanded card stays inside a split pane instead of
 	 * overflowing into neighbouring views.
 	 */
-	private updateViewportCardWidth(width: number): void {
+	private updateViewportSize(width: number, height: number): void {
 		this.viewport?.style.setProperty("--ct-viewport-width", `${Math.max(0, width)}px`);
+		this.viewport?.style.setProperty("--ct-viewport-height", `${Math.max(0, height)}px`);
 	}
 
 	private closeDetailsForCanvas(): void {
@@ -1568,7 +1708,7 @@ export class ContextTreeView extends FileView {
 		viewport.addEventListener("pointerdown", (event) => {
 			if (this.disconnectDrag) return;
 			const target = event.target;
-			if (target instanceof Element && target.closest(".context-tree-card, .context-tree-graph-controls, .context-tree-search-panel")) return;
+			if (isCanvasControlTarget(target instanceof Element ? target : null)) return;
 			this.cards.closeMenus();
 			this.clearSelectedEdge();
 			const action = canvasPointerAction({ hasUnpinnedEditor: !!this.inlineEdit && !this.isPinnedCard(this.inlineEdit.nodeId) });
@@ -1581,7 +1721,7 @@ export class ContextTreeView extends FileView {
 		});
 		viewport.addEventListener("dblclick", (event) => {
 			const target = event.target;
-			if (target instanceof Element && target.closest(".context-tree-card, .context-tree-graph-controls, .context-tree-search-panel")) return;
+			if (isCanvasControlTarget(target instanceof Element ? target : null)) return;
 			event.preventDefault();
 			this.createInlineTopic();
 		});
@@ -1603,7 +1743,7 @@ export class ContextTreeView extends FileView {
 				viewport.getBoundingClientRect(),
 				{ x: event.clientX, y: event.clientY },
 			);
-			this.zoomAt(viewport, zoomPoint.x, zoomPoint.y, this.clampZoom(this.zoom * (event.deltaY < 0 ? 1.12 : 0.89)));
+			this.zoomAt(viewport, zoomPoint.x, zoomPoint.y, this.clampZoom(this.zoom * canvasWheelZoomFactor(event.deltaY, event.deltaMode)));
 		}, { passive: false });
 		viewport.addEventListener("keydown", (event) => {
 			if (event.key === "Escape" && this.openDetails.size) {
@@ -1656,7 +1796,7 @@ export class ContextTreeView extends FileView {
 		this.scheduleGraphViewStateSave();
 	}
 
-	private graphViewState() {
+	private graphViewState(): GraphViewState {
 		return {
 			pan: { ...this.pan },
 			zoom: this.zoom,

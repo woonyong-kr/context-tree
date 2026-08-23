@@ -238,6 +238,7 @@
 }
 
 .context-tree-card-detail-action { display: none; }
+.context-tree-card-expand.is-hidden { display: none; }
 .context-tree-card.is-detail-open .context-tree-card-detail-action { display: inline-flex; }
 .context-tree-card-pin { display: none; }
 /* Themes frequently restyle generic button classes. Pin is a stateful control,
@@ -499,6 +500,7 @@
 	display: flex;
 	flex-direction: column;
 	width: min(620px, max(180px, calc(var(--ct-viewport-width, 100vw) - 40px)));
+	max-height: max(180px, calc(var(--ct-viewport-height, 760px) - 72px));
 	padding: 18px 20px;
 	cursor: grab;
 }
@@ -652,6 +654,7 @@
    prevents long titles or summaries from painting under controls that remain
    visible for a pinned working card. */
 .context-tree-card.is-detail-open .context-tree-card-trigger { padding-right: 96px; }
+.context-tree-card.is-detail-open.has-expand-action .context-tree-card-trigger { padding-right: 126px; }
 .context-tree-card.has-wrapped-title .context-tree-title { white-space: normal !important; }
 .context-tree-card:not(.is-detail-open):not(.has-wrapped-title) .context-tree-title { white-space: nowrap !important; }
 
@@ -671,6 +674,10 @@
 	line-height: 1.52;
 	text-align: left;
 }
+
+/* Reading renders the complete first paragraph, so the compact-card summary
+   must leave the header when details open instead of repeating that text. */
+.context-tree-card.is-detail-open .context-tree-summary { display: none; }
 
 .context-tree-detail-wrap {
 	max-height: 0;
@@ -692,6 +699,13 @@
 	opacity: 1;
 	transform: translateY(0);
 	pointer-events: auto;
+}
+
+.context-tree-card.is-detail-open:not(.is-editing) .context-tree-detail-wrap {
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	overscroll-behavior: contain;
 }
 
 .context-tree-card.is-editing .context-tree-detail-wrap {
@@ -834,6 +848,45 @@
 	box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08);
 }
 
+.context-tree-graph-header {
+	position: absolute;
+	top: 14px;
+	left: 14px;
+	z-index: 8;
+	display: flex;
+	box-sizing: border-box;
+	max-width: calc(100% - 28px);
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+}
+
+.context-tree-graph-picker,
+.context-tree-save-graph,
+.context-tree-save-graph-input {
+	box-sizing: border-box;
+	height: 32px;
+	border: 1px solid var(--ct-border);
+	border-radius: 8px;
+	background: color-mix(in srgb, var(--background-primary) 92%, transparent);
+	color: var(--text-normal);
+	font: inherit;
+}
+
+.context-tree-graph-picker,
+.context-tree-save-graph { padding: 0 10px; cursor: pointer; }
+.context-tree-graph-picker {
+	max-width: min(260px, 100%);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.context-tree-save-graph { color: var(--text-accent); }
+.context-tree-save-graph-input {
+	width: min(220px, max(120px, calc(var(--ct-viewport-width, 100vw) - 48px)));
+	padding: 0 9px;
+}
+
 .context-tree-search-panel {
 	position: absolute;
 	right: 16px;
@@ -938,12 +991,19 @@
 }
 
 .context-tree-empty-eyebrow {
+	display: block;
 	margin: 0 0 8px;
+	padding: 0;
+	border: 0;
+	background: transparent;
 	color: var(--text-faint);
 	font-size: calc(0.78rem * var(--ct-font-scale));
 	font-weight: 600;
 	letter-spacing: 0.02em;
+	text-align: left;
+	cursor: pointer;
 }
+.context-tree-empty-eyebrow:hover { color: var(--text-muted); }
 
 .context-tree-empty h2 {
 	margin: 0;

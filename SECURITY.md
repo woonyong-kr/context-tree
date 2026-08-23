@@ -5,8 +5,10 @@
 Context Graph is designed to operate locally inside an Obsidian vault. It has no
 network client, analytics service, remote-code loader, or external account
 integration. Its relevant security boundary is therefore vault-file integrity:
-the plugin reads opted-in Markdown notes and writes only when a reader creates,
-edits, connects, disconnects, or deletes a card.
+the plugin reads the current note and its linked Markdown neighbourhood. It
+writes only when a reader creates or edits a note, authors or removes a typed
+relationship, changes a saved graph definition, or explicitly moves a source
+note to trash.
 
 ## Reporting a vulnerability
 

@@ -13,3 +13,7 @@ test("does not write when another actor changed the Markdown after editing start
 test("does not process an unchanged editor value", () => {
 	assert.deepEqual(decideInlineEditorSave("before", "before", "before"), { kind: "noop" });
 });
+
+test("accepts an edit that another writer already stored byte-for-byte", () => {
+	assert.deepEqual(decideInlineEditorSave("after", "before", "after"), { kind: "noop" });
+});
