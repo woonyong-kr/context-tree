@@ -201,7 +201,7 @@
 	box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24), 0 0 0 2px color-mix(in srgb, var(--text-normal) 18%, transparent);
 }
 
-.context-tree-card {
+.context-tree-view .context-tree-card {
 	position: relative;
 	box-sizing: border-box;
 	/* 100vw is the whole Obsidian window. Cards must fit their own graph pane. */
@@ -211,8 +211,8 @@
 	border: 1px solid var(--ct-border);
 	border-radius: 14px;
 	cursor: grab;
-	background: var(--ct-card) !important;
-	background-image: none !important;
+	background: var(--ct-card);
+	background-image: none;
 	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16), inset 0 1px color-mix(in srgb, var(--text-on-accent) 7%, transparent);
 	transition:
 		width 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -244,8 +244,8 @@
 .context-tree-card-pin { display: none; }
 /* Themes frequently restyle generic button classes. Pin is a stateful control,
    so its expanded-card visibility must not depend on a theme's button rule. */
-.context-tree-card.is-detail-open .context-tree-card-quick-action.context-tree-card-pin {
-	display: inline-flex !important;
+.context-tree-view .context-tree-card.is-detail-open .context-tree-card-quick-action.context-tree-card-pin {
+	display: inline-flex;
 }
 
 .context-tree-card-pin[aria-pressed="true"] {
@@ -297,14 +297,14 @@
 	transform: translateY(0) scale(1);
 }
 
-.context-tree-card-menu-item {
+.context-tree-view .context-tree-card-menu-item {
 	display: block;
 	box-sizing: border-box;
 	width: 100%;
 	padding: 7px 8px;
-	border: 0 !important;
+	border: 0;
 	border-radius: 6px;
-	background: transparent !important;
+	background: transparent;
 	color: var(--text-muted);
 	font: inherit;
 	font-size: calc(0.76rem * var(--ct-font-scale));
@@ -314,9 +314,9 @@
 
 .context-tree-card-trigger:active { cursor: grabbing; }
 
-.context-tree-card-menu-item:hover,
-.context-tree-card-menu-item:focus-visible {
-	background: var(--background-modifier-hover) !important;
+.context-tree-view .context-tree-card-menu-item:hover,
+.context-tree-view .context-tree-card-menu-item:focus-visible {
+	background: var(--background-modifier-hover);
 	color: var(--text-normal);
 	outline: none;
 }
@@ -386,7 +386,7 @@
 
 /* A single magnetic perimeter anchor appears where the pointer is closest to
    a card edge. It is a generous hit target around one precise graph point. */
-.context-tree-connect-port {
+.context-tree-view button.context-tree-connect-port {
 	position: absolute;
 	z-index: 3;
 	top: var(--ct-port-y, 0%);
@@ -396,10 +396,10 @@
 	height: 28px;
 	margin: 0;
 	padding: 0;
-	border: 0 !important;
-	border-radius: 50% !important;
-	background: transparent !important;
-	box-shadow: none !important;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	box-shadow: none;
 	cursor: crosshair;
 	outline: none;
 	opacity: 0;
@@ -454,20 +454,20 @@
 	outline: none;
 }
 
-.context-tree-card-trigger {
-	display: block !important;
+.context-tree-view button.context-tree-card-trigger {
+	display: block;
 	box-sizing: border-box;
-	min-height: 0 !important;
-	height: auto !important;
+	min-height: 0;
+	height: auto;
 	min-width: 0;
 	width: 100%;
 	margin: 0;
 	padding: 0 74px 0 0;
-	border: 0 !important;
-	border-radius: 0 !important;
-	background: transparent !important;
-	background-image: none !important;
-	box-shadow: none !important;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	background-image: none;
+	box-shadow: none;
 	color: inherit;
 	font: inherit;
 	text-align: left;
@@ -475,17 +475,17 @@
 	cursor: grab;
 }
 
-.context-tree-card-trigger > * {
+.context-tree-view .context-tree-card-trigger > * {
 	display: block;
 	box-sizing: border-box;
 	width: 100%;
-	min-height: 0 !important;
-	padding: 0 !important;
-	border: 0 !important;
-	border-radius: 0 !important;
-	background: transparent !important;
-	background-image: none !important;
-	box-shadow: none !important;
+	min-height: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	background-image: none;
+	box-shadow: none;
 	white-space: normal;
 	overflow-wrap: anywhere;
 }
@@ -496,9 +496,9 @@
 	outline-offset: 4px;
 }
 
-.context-tree-card:hover {
+.context-tree-view .context-tree-card:hover {
 	border-color: color-mix(in srgb, var(--text-muted) 78%, var(--ct-border));
-	background: var(--ct-card-hover) !important;
+	background: var(--ct-card-hover);
 	box-shadow: 0 16px 36px rgba(0, 0, 0, 0.15);
 }
 
@@ -512,9 +512,9 @@
 	box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-normal) 18%, transparent), 0 14px 34px rgba(0, 0, 0, 0.15);
 }
 
-.context-tree-node.is-drag-connection-target .context-tree-card {
+.context-tree-view .context-tree-node.is-drag-connection-target .context-tree-card {
 	border-color: var(--text-normal);
-	background: var(--ct-card-hover) !important;
+	background: var(--ct-card-hover);
 	box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-normal) 11%, transparent), 0 14px 34px rgba(0, 0, 0, 0.15);
 }
 
@@ -574,10 +574,10 @@
 		0 14px 34px rgba(0, 0, 0, 0.15);
 }
 
-.context-tree-card.is-editing .context-tree-card-trigger {
+.context-tree-view .context-tree-card.is-editing .context-tree-card-trigger {
 	/* Do not leave a second, non-editable title and summary above Source mode.
 	   They are part of the Markdown source and must have one editing surface. */
-	display: none !important;
+	display: none;
 }
 
 /* Source mode keeps the card-level controls in the same place as Reading
@@ -685,11 +685,11 @@
 .context-tree-card.is-detail-open.has-expand-action .context-tree-card-trigger {
 	padding-right: 126px;
 }
-.context-tree-card.has-wrapped-title .context-tree-title { white-space: normal !important; }
-.context-tree-card:not(.is-detail-open):not(.has-wrapped-title) .context-tree-title { white-space: nowrap !important; }
+.context-tree-view .context-tree-card.has-wrapped-title .context-tree-title { white-space: normal; }
+.context-tree-view .context-tree-card:not(.is-detail-open):not(.has-wrapped-title) .context-tree-title { white-space: nowrap; }
 
-.context-tree-title {
-	margin: 0 !important;
+.context-tree-view .context-tree-title {
+	margin: 0;
 	color: var(--text-normal);
 	font-size: calc(1rem * var(--ct-font-scale));
 	font-weight: 700;
@@ -697,8 +697,8 @@
 	letter-spacing: -0.015em;
 }
 
-.context-tree-summary {
-	margin: 8px 0 0 !important;
+.context-tree-view .context-tree-summary {
+	margin: 8px 0 0;
 	color: var(--ct-muted);
 	font-size: calc(0.81rem * var(--ct-font-scale));
 	line-height: 1.52;
@@ -813,8 +813,8 @@
 	height: auto;
 	overflow: visible;
 }
-.context-tree-markdown-render-target > :first-child { margin-top: 0 !important; }
-.context-tree-markdown-render-target > :last-child { margin-bottom: 0 !important; }
+.context-tree-view .context-tree-markdown-render-target > :first-child { margin-top: 0; }
+.context-tree-view .context-tree-markdown-render-target > :last-child { margin-bottom: 0; }
 .context-tree-detail pre {
 	max-width: 100%;
 	overflow-x: auto;

@@ -7,10 +7,11 @@ import { loadContextTree } from "../src/parser";
 type FakeNote = { path: string; content: string; frontmatter?: Record<string, unknown> };
 
 function fakeApp(notes: FakeNote[], resolvedLinks: Record<string, Record<string, number>>): App {
-	const files = notes.map((note) => ({ path: note.path, basename: note.path.split("/").pop()!.replace(/\.md$/, "") }));
+	const files = notes.map((note) => ({ path: note.path, basename: note.path.split("/").pop()!.replace(/\.md$/, ""), extension: "md" }));
 	return {
 		vault: {
 			getMarkdownFiles: () => files,
+			getAbstractFileByPath: (path: string) => files.find((file) => file.path === path) ?? null,
 			cachedRead: (file: { path: string }) => Promise.resolve(notes.find((note) => note.path === file.path)!.content),
 		},
 		metadataCache: {

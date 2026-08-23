@@ -57,7 +57,7 @@ export interface TopicCardState {
 
 export interface InlineMarkdownEditorCallbacks {
 	onInput: (content: string) => void;
-	onCopyDraft: () => void;
+	onSelectDraft: () => void;
 	onReloadSource: () => void;
 	onOpenSource: () => void;
 }
@@ -360,10 +360,10 @@ export class TopicCardRenderer {
 		const conflict = wrapper.createDiv({ cls: "context-tree-edit-conflict", attr: { role: "alert" } });
 		conflict.createSpan({ text: COPY.notice.inlineSaveConflict });
 		const actions = conflict.createDiv({ cls: "context-tree-edit-conflict-actions" });
-		const copy = actions.createEl("button", { text: COPY.actions.copyDraft });
-		copy.addEventListener("click", (event) => {
+		const select = actions.createEl("button", { text: COPY.actions.selectDraft });
+		select.addEventListener("click", (event) => {
 			event.stopPropagation();
-			callbacks.onCopyDraft();
+			callbacks.onSelectDraft();
 		});
 		const open = actions.createEl("button", { text: COPY.actions.openSource });
 		open.addEventListener("click", (event) => {

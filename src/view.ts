@@ -821,7 +821,7 @@ export class ContextTreeView extends FileView {
 			}
 			this.cards.startInlineMarkdownEditing(element, editorSource, readingCardHeight, {
 				onInput: (content) => this.queueInlineMarkdownSave(content),
-				onCopyDraft: () => void this.copyInlineMarkdownDraft(),
+				onSelectDraft: () => this.selectInlineMarkdownDraft(),
 				onReloadSource: () => void this.reloadInlineMarkdownSource(),
 				onOpenSource: () => void this.openInlineMarkdownSource(),
 			});
@@ -933,22 +933,22 @@ export class ContextTreeView extends FileView {
 		const element = this.nodeElements.get(edit.nodeId);
 		if (!element) return;
 		this.cards.showInlineMarkdownConflict(element, {
-			onCopyDraft: () => void this.copyInlineMarkdownDraft(),
+			onSelectDraft: () => this.selectInlineMarkdownDraft(),
 			onReloadSource: () => void this.reloadInlineMarkdownSource(),
 			onOpenSource: () => void this.openInlineMarkdownSource(),
 		});
 		new Notice(COPY.notice.inlineSaveConflict);
 	}
 
-	private async copyInlineMarkdownDraft(): Promise<void> {
+	private selectInlineMarkdownDraft(): void {
 		const edit = this.inlineEdit;
 		if (!edit) return;
-		try {
-			await navigator.clipboard.writeText(edit.content);
-			new Notice(COPY.notice.inlineDraftCopied);
-		} catch (error) {
-			console.error("Context Graph: failed to copy inline Markdown draft", error);
-		}
+		const element = this.nodeElements.get(edit.nodeId);
+		const editor = element?.querySelector<HTMLTextAreaElement>(".context-tree-markdown-editor");
+		if (!editor) return;
+		editor.focus();
+		editor.select();
+		new Notice(COPY.notice.inlineDraftSelected);
 	}
 
 	private reloadInlineMarkdownSource(): void {

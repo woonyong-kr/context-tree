@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.2
+
+- Remove every CSS `!important` override by scoping component selectors under the Context Graph view, keeping theme isolation without a Community scanner warning.
+- Replace automatic clipboard writes in edit-conflict recovery with an explicit **Select my edit** action while retaining the recoverable local draft.
+- Limit saved-graph discovery to the plugin-owned definition folder and document why backlink and legacy-scope construction inspects Vault Markdown paths.
+
 ## 0.5.1
 
 - Create cards from a current-note graph beside its root note instead of deriving a Vault folder from the transient graph ID.

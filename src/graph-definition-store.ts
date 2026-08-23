@@ -1,4 +1,4 @@
-import { App, TFile } from "obsidian";
+import { App, TFile, TFolder } from "obsidian";
 import {
 	GRAPH_DEFINITION_EXTENSION,
 	GRAPH_DEFINITION_FOLDER,
@@ -40,8 +40,9 @@ export class GraphDefinitionStore {
 		this.sources.clear();
 		const seen = new Set<string>();
 		const graphs: GraphWorkspace[] = [];
-		for (const file of this.app.vault.getFiles()) {
-			if (!this.isDefinitionPath(file.path)) continue;
+		for (const path of await this.definitionPaths()) {
+			const file = this.app.vault.getAbstractFileByPath(path);
+			if (!(file instanceof TFile) || !this.isDefinitionPath(file.path)) continue;
 			const source = await this.app.vault.cachedRead(file);
 			const graph = parseGraphDefinition(source);
 			if (!graph || seen.has(graph.id)) continue;
@@ -90,7 +91,7 @@ export class GraphDefinitionStore {
 
 		const targetPath = availableGraphDefinitionPath(
 			graph,
-			this.app.vault.getFiles().map((item) => item.path),
+			await this.definitionPaths(),
 		);
 		let resolved: TFile | undefined;
 		try {
@@ -119,6 +120,13 @@ export class GraphDefinitionStore {
 			if (candidate instanceof TFile) return candidate;
 		}
 		return undefined;
+	}
+
+	/** Lists only the plugin-owned definition folder, never the whole Vault. */
+	private async definitionPaths(): Promise<string[]> {
+		const folder = this.app.vault.getAbstractFileByPath(GRAPH_DEFINITION_FOLDER);
+		if (!(folder instanceof TFolder)) return [];
+		return (await this.app.vault.adapter.list(GRAPH_DEFINITION_FOLDER)).files;
 	}
 
 	private async ensureFolder(path: string): Promise<void> {

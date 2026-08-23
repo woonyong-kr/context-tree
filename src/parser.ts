@@ -1,4 +1,4 @@
-import { App } from "obsidian";
+import type { App, TAbstractFile, TFile } from "obsidian";
 import { GraphWorkspace, graphScopeIncludesPath, rootedGraphPaths } from "./domain/graph-workspace";
 import { noteLinkTarget } from "./domain/note-link";
 import { DIRECT_RELATION, isContextRelationType, relationItems } from "./domain/relations";
@@ -8,6 +8,10 @@ import { buildContextTree } from "./tree";
 
 function text(value: unknown): string {
 	return typeof value === "string" ? value.trim() : "";
+}
+
+function isMarkdownFile(file: TAbstractFile | null): file is TFile {
+	return file !== null && "extension" in file && file.extension === "md";
 }
 
 function removeFrontmatter(content: string): string {
@@ -120,9 +124,16 @@ export async function loadContextTree(
 	const rootedPaths = rootedScope
 		? new Set(rootedGraphPaths(rootedScope.rootPath, rootedScope.expandedPaths, outgoingByPath, rootedScope.excludePaths))
 		: undefined;
-	const files = app.vault.getMarkdownFiles().filter((file) => rootedPaths?.has(file.path) ?? graphScopeIncludesPath(graph.scope, file.path));
+	const markdownFiles = app.vault.getMarkdownFiles();
+	const files = rootedPaths
+		? [...rootedPaths]
+			.map((path) => app.vault.getAbstractFileByPath(path))
+			.filter(isMarkdownFile)
+		: markdownFiles.filter((file) => graphScopeIncludesPath(graph.scope, file.path));
 	const declaredIdCounts = new Map<string, number>();
-	for (const file of app.vault.getMarkdownFiles()) {
+	// This pass reads only cached metadata needed to keep authored IDs unique;
+	// note content is read later for files that belong to the active graph.
+	for (const file of markdownFiles) {
 		const declaredId = text(app.metadataCache.getFileCache(file)?.frontmatter?.context_tree_id);
 		if (declaredId) declaredIdCounts.set(declaredId, (declaredIdCounts.get(declaredId) ?? 0) + 1);
 	}

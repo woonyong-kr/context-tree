@@ -78,8 +78,8 @@ Opening that editor does not change graph scope, layout, or camera position.
 
 Edits are autosaved with an optimistic revision check. If the file changes in
 another editor after Source mode starts, Context Graph stops before overwriting
-it, keeps the draft in local plugin data, and offers actions to copy the draft,
-open the source, or explicitly reload the newer file.
+it, keeps the draft in local plugin data, and offers actions to select the draft
+for manual copying, open the source, or explicitly reload the newer file.
 
 ### Markdown support
 
@@ -193,6 +193,26 @@ Note content is never copied into a graph definition or card database. Context
 Graph has no network client, telemetry, analytics, advertisements, remote-code
 loader, or external account integration. It uses Obsidian's vault APIs and does
 not read files outside the vault.
+
+### Why Context Graph inspects Vault paths
+
+Obsidian's plugin review reports Vault enumeration because Context Graph asks
+Obsidian for the Markdown file list. This is required to find backlinks, verify
+that optional authored card IDs are unique, and retain compatibility with saved
+folder, curated, and all-note graph scopes. The boundary is narrower than a
+full-content scan:
+
+- the current-note workflow resolves its visible files from Obsidian's cached
+  link map;
+- the Vault-wide pass reads cached frontmatter for ID uniqueness, not note
+  bodies;
+- Markdown content is read only for notes included in the active graph;
+- saved graph discovery lists only `maps/context-graph/`;
+- no path, metadata, or content leaves Obsidian.
+
+Clipboard access is not requested. During an edit conflict, **Select my edit**
+selects the preserved Source text so the user can decide whether to copy it with
+the operating system shortcut.
 
 See [SECURITY.md](SECURITY.md) for the security boundary and reporting process.
 The implementation and release interaction rules live in one place:
