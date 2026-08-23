@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.3
+
+- Avoid Vault-wide Markdown enumeration for the ordinary current-note workflow;
+  the list is requested only for legacy broad scopes or authored ID uniqueness.
+- Document and regression-test the narrower automatic-review disclosure boundary.
+
 ## 0.5.2
 
 - Remove every CSS `!important` override by scoping component selectors under the Context Graph view, keeping theme isolation without a Community scanner warning.

@@ -196,16 +196,17 @@ not read files outside the vault.
 
 ### Why Context Graph inspects Vault paths
 
-Obsidian's plugin review reports Vault enumeration because Context Graph asks
-Obsidian for the Markdown file list. This is required to find backlinks, verify
-that optional authored card IDs are unique, and retain compatibility with saved
-folder, curated, and all-note graph scopes. The boundary is narrower than a
-full-content scan:
+Obsidian's plugin review reports Vault enumeration because Context Graph can ask
+Obsidian for the Markdown file list. This retains compatibility with saved
+folder, curated, and all-note graph scopes, and verifies that optional authored
+card IDs remain unique beyond a visible neighbourhood. The boundary is narrower
+than a full-content scan:
 
-- the current-note workflow resolves its visible files from Obsidian's cached
-  link map;
-- the Vault-wide pass reads cached frontmatter for ID uniqueness, not note
-  bodies;
+- the ordinary current-note workflow resolves visible files from Obsidian's
+  cached link map without enumerating the Vault;
+- a current-note graph requests the Markdown list only when a visible note uses
+  an optional authored ID, and then reads cached frontmatter only to verify ID
+  uniqueness;
 - Markdown content is read only for notes included in the active graph;
 - saved graph discovery lists only `maps/context-graph/`;
 - no path, metadata, or content leaves Obsidian.

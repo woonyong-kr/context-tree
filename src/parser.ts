@@ -124,16 +124,21 @@ export async function loadContextTree(
 	const rootedPaths = rootedScope
 		? new Set(rootedGraphPaths(rootedScope.rootPath, rootedScope.expandedPaths, outgoingByPath, rootedScope.excludePaths))
 		: undefined;
-	const markdownFiles = app.vault.getMarkdownFiles();
+	const markdownFiles = rootedPaths ? undefined : app.vault.getMarkdownFiles();
 	const files = rootedPaths
 		? [...rootedPaths]
 			.map((path) => app.vault.getAbstractFileByPath(path))
 			.filter(isMarkdownFile)
-		: markdownFiles.filter((file) => graphScopeIncludesPath(graph.scope, file.path));
+		: markdownFiles!.filter((file) => graphScopeIncludesPath(graph.scope, file.path));
 	const declaredIdCounts = new Map<string, number>();
-	// This pass reads only cached metadata needed to keep authored IDs unique;
-	// note content is read later for files that belong to the active graph.
-	for (const file of markdownFiles) {
+	const graphUsesAuthoredIds = files.some((file) =>
+		text(app.metadataCache.getFileCache(file)?.frontmatter?.context_tree_id),
+	);
+	// A rooted graph does not enumerate the Vault in the common case. It asks
+	// for the Markdown list only when a visible note uses an authored ID whose
+	// uniqueness must be checked beyond the current one-hop range.
+	const idScanFiles = markdownFiles ?? (graphUsesAuthoredIds ? app.vault.getMarkdownFiles() : []);
+	for (const file of idScanFiles) {
 		const declaredId = text(app.metadataCache.getFileCache(file)?.frontmatter?.context_tree_id);
 		if (declaredId) declaredIdCounts.set(declaredId, (declaredIdCounts.get(declaredId) ?? 0) + 1);
 	}

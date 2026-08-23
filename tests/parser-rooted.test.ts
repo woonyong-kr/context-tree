@@ -6,11 +6,18 @@ import { loadContextTree } from "../src/parser";
 
 type FakeNote = { path: string; content: string; frontmatter?: Record<string, unknown> };
 
-function fakeApp(notes: FakeNote[], resolvedLinks: Record<string, Record<string, number>>): App {
+function fakeApp(
+	notes: FakeNote[],
+	resolvedLinks: Record<string, Record<string, number>>,
+	onEnumerateMarkdown?: () => void,
+): App {
 	const files = notes.map((note) => ({ path: note.path, basename: note.path.split("/").pop()!.replace(/\.md$/, ""), extension: "md" }));
 	return {
 		vault: {
-			getMarkdownFiles: () => files,
+			getMarkdownFiles: () => {
+				onEnumerateMarkdown?.();
+				return files;
+			},
 			getAbstractFileByPath: (path: string) => files.find((file) => file.path === path) ?? null,
 			cachedRead: (file: { path: string }) => Promise.resolve(notes.find((note) => note.path === file.path)!.content),
 		},
@@ -21,6 +28,19 @@ function fakeApp(notes: FakeNote[], resolvedLinks: Record<string, Record<string,
 		},
 	} as unknown as App;
 }
+
+test("does not enumerate the Vault for an ordinary current-note graph", async () => {
+	let enumerations = 0;
+	const app = fakeApp([
+		{ path: "Root.md", content: "# Root\n\n[[Outgoing]]" },
+		{ path: "Outgoing.md", content: "# Outgoing" },
+	], { "Root.md": { "Outgoing.md": 1 } }, () => {
+		enumerations += 1;
+	});
+
+	await loadContextTree(app, createCurrentNoteGraph("Root.md", "Root"));
+	assert.equal(enumerations, 0);
+});
 
 test("loads an ordinary current note with outgoing and incoming one-hop Markdown links", async () => {
 	const app = fakeApp([
@@ -74,11 +94,15 @@ test("uses a unique authored graph id across note renames but disambiguates dupl
 });
 
 test("checks authored id uniqueness across the vault before a neighbour is expanded", async () => {
+	let enumerations = 0;
 	const app = fakeApp([
 		{ path: "Root.md", content: "# Root", frontmatter: { context_tree_id: "duplicate" } },
 		{ path: "Outside.md", content: "# Outside", frontmatter: { context_tree_id: "duplicate" } },
-	], {});
+	], {}, () => {
+		enumerations += 1;
+	});
 
 	const roots = await loadContextTree(app, createCurrentNoteGraph("Root.md", "Root"));
 	assert.equal(roots[0]?.id, "Root.md::duplicate");
+	assert.equal(enumerations, 1);
 });
