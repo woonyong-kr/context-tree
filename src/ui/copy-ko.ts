@@ -1,7 +1,7 @@
 export const COPY_KO = {
 	view: {
 		title: "Context Graph",
-		openCommand: "현재 노트 주변 보기",
+		openCommand: "연결된 노트 읽기 지도 열기",
 		manageCommand: "저장된 그래프 목록",
 		refreshCommand: "그래프 새로고침",
 		aria: "지식 그래프. 드래그로 이동하고 마우스 휠로 확대 또는 축소합니다.",
@@ -12,6 +12,10 @@ export const COPY_KO = {
 		saveGraph: "이 그래프로 저장",
 		expandNeighbours: "주변 노트 펼치기",
 		collapseNeighbours: "주변 노트 접기",
+		expandNeighboursCount: (count: number) => `주변 노트 ${count}개 펼치기`,
+		collapseNeighboursCount: (count: number) => count === 0
+			? "주변 펼침 해제 (숨겨지는 노트 없음)"
+			: `주변 노트 ${count}개 접기`,
 		removeFromGraph: "그래프에서 제거",
 		newCard: "새 카드",
 		createCard: "새 카드 만들기",
@@ -43,7 +47,8 @@ export const COPY_KO = {
 		emptyFolderScope: (folder: string) => `“${folder}” 범위에서 그래프에 포함할 노트를 찾지 못했습니다.`,
 		emptyCuratedScope: "이 그래프에는 아직 직접 추가한 노트가 없습니다.",
 		emptyAllScope: "이 그래프에 표시할 노트가 아직 없습니다.",
-		emptyNextStep: "Markdown 노트를 연 뒤 현재 노트 주변 보기를 시작하세요.",
+		emptyNextStep: "Markdown 노트를 연 뒤 연결된 노트 읽기 지도를 시작하세요.",
+		noVisibleLinks: "아직 연결된 노트가 없습니다. wikilink나 backlink를 추가하면 이 지도가 자랍니다.",
 	},
 	relations: {
 		derived: "맥락",
@@ -66,7 +71,7 @@ export const COPY_KO = {
 	modal: {
 		graphsTitle: "저장된 그래프",
 		graphsDescription: "저장된 그래프는 Markdown을 복제하지 않고 탐색 범위와 배치만 보관합니다.",
-		noSavedGraphs: "저장된 그래프가 없습니다. Markdown 노트에서 ‘현재 노트 주변 보기’를 연 뒤 현재 탐색을 저장하세요.",
+		noSavedGraphs: "저장된 그래프가 없습니다. Markdown 노트에서 ‘연결된 노트 읽기 지도 열기’를 실행한 뒤 현재 탐색을 저장하세요.",
 		trashTitle: "원본 노트를 휴지통으로 이동할까요?",
 		trashDescription: (title: string) => `“${title}” Markdown 원본을 휴지통으로 이동합니다. 이 노트를 사용하는 모든 그래프에서 사라집니다.`,
 		reloadSourceTitle: "원문을 다시 불러올까요?",

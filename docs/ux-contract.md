@@ -4,15 +4,16 @@
 
 ## 제품 모델
 
-1. 기본 진입점은 **현재 노트 주변 보기**다. 활성 Markdown 노트를 중심으로 직접 연결된 노트를 즉시 보여 주며, 사전 설정이나 전용 frontmatter를 요구하지 않는다.
-2. 현재 노트에서 시작한 탐색은 임시 상태다. 사용자가 **이 그래프로 저장**을 선택했을 때만 이름·확장 범위·카메라·카드 위치를 가진 **저장된 그래프**가 된다.
-3. Markdown 노트가 내용의 유일한 정본이다. 일반 wikilink와 backlink는 기본 연결이며, `context_tree_links`의 관계 유형은 선택적 확장 계약이다. 플러그인은 별도 카드 데이터베이스를 만들지 않는다.
-4. `Focus Graph`, `Workspace`, `Relation Profile`, `Graph Manager`는 사용자 용어가 아니다. 화면에는 각각 **현재 노트 주변 보기**, **저장된 그래프**, **관계 표시 설정**, **저장된 그래프 목록**만 사용한다.
-5. 저장된 그래프 파일은 탐색 구성을, plugin settings는 장치별 카메라와 카드 배치를 소유한다. 동일한 그래프 정의를 두 저장소에 중복 정본으로 두지 않는다.
+1. Context Graph의 단일 핵심 작업은 **연결된 Markdown 원문을 지도를 잃지 않고 읽는 것**이다. 그래프 스타일링·전체 Vault 분석·관계 추론은 핵심 제품 범위가 아니다.
+2. 기본 진입점은 **연결된 노트 읽기 지도 열기**다. 활성 Markdown 노트 또는 파일 메뉴에서 선택한 Markdown 노트를 중심으로 직접 연결된 노트를 즉시 보여 주며, 사전 설정이나 전용 frontmatter를 요구하지 않는다. Command Palette와 파일 메뉴는 동일한 진입 경로를 사용하고, 활성 Markdown 노트가 없을 때 저장된 그래프로 임의 fallback하지 않는다.
+3. 현재 노트에서 시작한 탐색은 임시 상태다. 사용자가 **이 그래프로 저장**을 선택했을 때만 이름·확장 범위·카메라·카드 위치를 가진 **저장된 그래프**가 된다.
+4. Markdown 노트가 내용의 유일한 정본이다. 일반 wikilink와 backlink는 기본 연결이며, `context_tree_links`의 관계 유형은 선택적 확장 계약이다. 플러그인은 별도 카드 데이터베이스를 만들지 않는다.
+5. `Focus Graph`, `Workspace`, `Relation Profile`, `Graph Manager`는 사용자 용어가 아니다. 화면에는 각각 **연결된 노트 읽기 지도**, **저장된 그래프**, **관계 표시 설정**, **저장된 그래프 목록**만 사용한다.
+6. 저장된 그래프 파일은 탐색 구성을, plugin settings는 장치별 카메라와 카드 배치를 소유한다. 동일한 그래프 정의를 두 저장소에 중복 정본으로 두지 않는다.
 
 ## 상호작용 깊이
 
-1. 현재 노트 주변 보기, 카드 읽기, 인접 노트 펼치기·접기, 오른쪽 원문 편집기 열기, 검색과 필터는 한 번의 직접 동작으로 끝난다. 인접 노트와 원문 편집기는 카드의 직접 동작으로 제공하며 더보기 메뉴를 거치지 않는다. 새 이웃이 없는 카드는 무효한 펼치기 동작을 노출하지 않는다.
+1. 연결된 노트 읽기 지도 열기, 카드 읽기, 인접 노트 펼치기·접기, 오른쪽 원문 편집기 열기, 검색과 필터는 한 번의 직접 동작으로 끝난다. 인접 노트와 원문 편집기는 카드의 직접 동작으로 제공하며 더보기 메뉴를 거치지 않는다. 새 이웃이 없는 카드는 무효한 펼치기 동작을 노출하지 않고, 유효한 동작은 실행 전에 바뀔 노트 수를 이름으로 알려 준다.
 2. 기존 노트 연결, 새 노트 연결, 현재 탐색 저장은 최대 두 단계로 끝난다. 일상 동작에서 modal 위에 modal을 열지 않는다.
 3. 그래프에서 카드 제거는 두 단계 이내로 끝나되 Markdown 원문을 변경하지 않는다. 원본 노트를 휴지통으로 보내는 작업만 명시적 경고와 확인을 포함한 세 단계까지 허용한다.
 4. 첫 실행은 설정 wizard 대신 현재 노트 주변 그래프와 한 줄 도움말을 보여 준다. 빈 상태의 주 동작은 하나만 제공한다.
@@ -66,7 +67,7 @@
 | 휠 소유권과 중앙 기준 줌 | `canvas-wheel-target.ts`, `canvas-wheel-action.ts`, `ContextTreeView.zoomAt()` | `canvas-wheel-target.test.ts`, `canvas-wheel-action.test.ts` |
 | Markdown Reading 의미 | `TopicCardRenderer.ensureDetails()`, `createReadingMarkdownFrame()`, `topicDisplayContent()`, `styles.css` | `reading-markdown-frame.test.ts`, `topic-display.test.ts`, Desktop UI 검증 |
 | 관계 삭제 드롭 안전성 | `disconnect-drop-action.ts` | `disconnect-drop-action.test.ts` |
-| 현재 노트와 1-hop 탐색 | `graph-workspace.ts`, `parser.ts`, `ContextTreePlugin.activateCurrentNote()` | `graph-workspace.test.ts`, `parser-rooted.test.ts` |
+| 현재 노트와 1-hop 탐색 | `graph-workspace.ts`, `parser.ts`, `ContextTreePlugin.activateCurrentNote()`, Markdown file menu | `graph-workspace.test.ts`, `parser-rooted.test.ts`, Desktop UI 검증 |
 | 새 카드 저장 위치 | `graphNoteFolder()`, `ContextTreeView.createInlineTopic()` | `graph-workspace.test.ts` |
 | 편집 draft 복구 | `inline-editor-draft.ts`, `ContextTreeView` lifecycle, plugin settings | `inline-editor-draft.test.ts`, lifecycle regression |
 | 그래프 제거와 원문 휴지통 구분 | `graph-workspace.ts`, card menu callbacks | `graph-workspace.test.ts`, copy regression, Desktop UI 검증 |
@@ -81,7 +82,7 @@ Obsidian에서 플러그인을 다시 활성화한다. 짧은 카드와 화면�
 같이 준비해, 아래 순서를 같은 그래프에서 확인한다. 이 절차의 결과는 릴리스 후보
 검토 기록에 남긴다.
 
-1. **도구와 열기:** 그래프 명령으로 열었을 때 도구 모음은 우하단에 있고 카드 내부에는
+1. **도구와 열기:** Command Palette와 Markdown 파일 메뉴에서 같은 노트를 열었을 때 동일한 임시 그래프가 나타난다. 활성 Markdown 노트가 없으면 저장 그래프로 fallback하지 않는다. 그래프를 열었을 때 도구 모음은 우하단에 있고 카드 내부에는
    `+`가 없으며 레이어 아이콘과 좌상단 텍스트 버튼도 없다. 그래프 이름은 탭 제목에만 보이고, 임시 탐색의 저장 아이콘은 같은 도구 모음에 있다.
    카드를 열어도 카메라와 막 열린 카드의 좌표는 바뀌지 않는다.
 2. **Reading·Source 이동:** 카드 제목·요약을 클릭하면 카드를 열고 닫고, 5px 이상 끌면
@@ -99,7 +100,7 @@ Obsidian에서 플러그인을 다시 활성화한다. 짧은 카드와 화면�
    동작으로 닫히거나 포커스를 빼앗기지 않는다.
 6. **관계 안전:** 연결점은 다른 카드 위에 놓을 때만 관계를 만든다. 선택된 단일 직접
    관계 끝점만 빈 캔버스에 놓아 제거할 수 있으며, 카드·도구·그래프 밖에 놓으면 취소된다.
-7. **주변 탐색:** 새 이웃이 있는 카드에서 주변 노트를 펼치면 카메라와 seed 카드 좌표가
+7. **주변 탐색:** 새 이웃이 있는 카드의 동작 이름은 실제 추가될 노트 수를 먼저 보여 준다. 주변 노트를 펼치면 카메라와 seed 카드 좌표가
    유지되고 새 카드만 추가된다. 같은 동작을 다시 선택하면 seed는 남고 그 확장 범위만
    접힌다. 새 이웃이 없는 카드에는 무효한 동작이 보이지 않는다.
 8. **원본 pane:** 카드의 원본 편집기 아이콘을 한 번 선택하면 같은 노트가

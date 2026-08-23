@@ -339,31 +339,48 @@ export function rootedGraphPaths(
 
 export type RootedNeighbourhoodAction = "expand" | "collapse" | "none";
 
-/**
- * Returns the reversible action for one visible card in a rooted graph.
- * A leaf that would add no new paths exposes no misleading expand control.
- */
-export function rootedNeighbourhoodAction(
+export interface RootedNeighbourhoodState {
+	action: RootedNeighbourhoodAction;
+	affectedCount: number;
+}
+
+/** Describes both the reversible action and the visible change it will make. */
+export function rootedNeighbourhoodState(
 	scope: RootedGraphScope,
 	path: string,
 	outgoingByPath: Readonly<Record<string, readonly string[]>>,
-): RootedNeighbourhoodAction {
+): RootedNeighbourhoodState {
 	const normalized = normalizedPath(path);
-	if (!normalized || normalized === scope.rootPath) return "none";
-	if (scope.expandedPaths.includes(normalized)) return "collapse";
-	const current = new Set(rootedGraphPaths(
+	if (!normalized || normalized === scope.rootPath) return { action: "none", affectedCount: 0 };
+	const currentPaths = rootedGraphPaths(
 		scope.rootPath,
 		scope.expandedPaths,
 		outgoingByPath,
 		scope.excludePaths,
-	));
+	);
+	const current = new Set(currentPaths);
+	if (scope.expandedPaths.includes(normalized)) {
+		const collapsed = new Set(rootedGraphPaths(
+			scope.rootPath,
+			scope.expandedPaths.filter((candidate) => candidate !== normalized),
+			outgoingByPath,
+			scope.excludePaths,
+		));
+		return {
+			action: "collapse",
+			affectedCount: currentPaths.filter((candidate) => !collapsed.has(candidate)).length,
+		};
+	}
 	const expanded = rootedGraphPaths(
 		scope.rootPath,
 		[...scope.expandedPaths, normalized],
 		outgoingByPath,
 		scope.excludePaths,
 	);
-	return expanded.some((candidate) => !current.has(candidate)) ? "expand" : "none";
+	const affectedCount = expanded.filter((candidate) => !current.has(candidate)).length;
+	return affectedCount > 0
+		? { action: "expand", affectedCount }
+		: { action: "none", affectedCount: 0 };
 }
 
 /** Collapses one deliberately expanded seed without removing its Markdown note. */

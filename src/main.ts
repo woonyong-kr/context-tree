@@ -67,6 +67,13 @@ export default class ContextTreePlugin extends Plugin {
 			name: COPY.view.manageCommand,
 			callback: () => this.openGraphPicker(),
 		});
+		this.registerEvent(this.app.workspace.on("file-menu", (menu, file) => {
+			if (!(file instanceof TFile) || file.extension !== "md") return;
+			menu.addItem((item) => item
+				.setTitle(COPY.view.openCommand)
+				.setIcon("share-2")
+				.onClick(() => void this.activateNote(file)));
+		}));
 
 		this.registerEvent(this.app.vault.on("create", (file) => this.handleVaultChange(file)));
 		this.registerEvent(this.app.vault.on("modify", (file) => this.handleVaultChange(file)));
@@ -143,11 +150,13 @@ export default class ContextTreePlugin extends Plugin {
 	async activateCurrentNote(): Promise<void> {
 		const file = this.app.workspace.getActiveFile();
 		if (!(file instanceof TFile) || file.extension !== "md") {
-			const fallback = this.defaultGraph();
-			if (fallback) await this.activateView(fallback.id);
-			else new Notice(COPY.notice.openMarkdownFirst);
+			new Notice(COPY.notice.openMarkdownFirst);
 			return;
 		}
+		await this.activateNote(file);
+	}
+
+	private async activateNote(file: TFile): Promise<void> {
 		const existing = [...this.transientGraphs.entries()].find(([, graph]) =>
 			graph.scope.kind === "rooted" && graph.scope.rootPath === file.path,
 		);

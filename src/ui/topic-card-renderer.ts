@@ -7,7 +7,7 @@ import {
 import { readingCardMaximumHeight, settledReadingCardHeight } from "../domain/reading-card-layout";
 import { CardAnchor, cardAnchorAtPoint } from "../graph/simulation";
 import { ContextTreeNode } from "../types";
-import type { RootedNeighbourhoodAction } from "../domain/graph-workspace";
+import type { RootedNeighbourhoodState } from "../domain/graph-workspace";
 import { COPY, cardToggleLabel } from "./copy";
 import { createReadingMarkdownFrame } from "./reading-markdown-frame";
 
@@ -26,7 +26,7 @@ export interface TopicCardRendererCallbacks {
 	onOpenSource: (node: ContextTreeNode) => void;
 	onToggleNeighbours: (node: ContextTreeNode) => void;
 	onRemoveFromGraph: (node: ContextTreeNode) => void;
-	neighbourAction: (node: ContextTreeNode) => RootedNeighbourhoodAction;
+	neighbourState: (node: ContextTreeNode) => RootedNeighbourhoodState;
 	canRemoveFromGraph: (node: ContextTreeNode) => boolean;
 	onMoveToTrash: (node: ContextTreeNode) => void;
 	onOpenInternalLink: (event: MouseEvent, sourcePath: string) => void;
@@ -217,14 +217,15 @@ export class TopicCardRenderer {
 		card.toggleClass("is-detail-open", state.isOpen);
 		card.toggleClass("is-editing", state.isEditing);
 		card.toggleClass("is-pinned", state.isPinned);
-		const neighbourAction = this.callbacks.neighbourAction(node);
+		const neighbourhood = this.callbacks.neighbourState(node);
+		const neighbourAction = neighbourhood.action;
 		const neighbourButton = card.querySelector<HTMLButtonElement>(".context-tree-card-expand");
 		card.toggleClass("has-expand-action", neighbourAction !== "none");
 		neighbourButton?.toggleClass("is-hidden", neighbourAction === "none");
 		if (neighbourButton && neighbourAction !== "none") {
 			const label = neighbourAction === "collapse"
-				? COPY.actions.collapseNeighbours
-				: COPY.actions.expandNeighbours;
+				? COPY.actions.collapseNeighboursCount(neighbourhood.affectedCount)
+				: COPY.actions.expandNeighboursCount(neighbourhood.affectedCount);
 			neighbourButton.setAttribute("aria-label", label);
 			neighbourButton.setAttribute("title", label);
 			neighbourButton.setAttribute("aria-pressed", String(neighbourAction === "collapse"));

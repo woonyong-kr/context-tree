@@ -14,7 +14,7 @@ import {
 	migrateGraphViewStates,
 	migrateGraphWorkspaces,
 	rootedGraphPaths,
-	rootedNeighbourhoodAction,
+	rootedNeighbourhoodState,
 	renamePathInScope,
 	renamePathInViewState,
 } from "../src/domain/graph-workspace";
@@ -27,14 +27,37 @@ test("offers only meaningful reversible neighbourhood actions", () => {
 		"notes/leaf.md": [],
 	};
 
-	assert.equal(rootedNeighbourhoodAction(graph.scope, "notes/root.md", links), "none");
-	assert.equal(rootedNeighbourhoodAction(graph.scope, "notes/leaf.md", links), "none");
-	assert.equal(rootedNeighbourhoodAction(graph.scope, "notes/branch.md", links), "expand");
+	assert.equal(rootedNeighbourhoodState(graph.scope, "notes/root.md", links).action, "none");
+	assert.equal(rootedNeighbourhoodState(graph.scope, "notes/leaf.md", links).action, "none");
+	assert.equal(rootedNeighbourhoodState(graph.scope, "notes/branch.md", links).action, "expand");
+	assert.deepEqual(rootedNeighbourhoodState(graph.scope, "notes/branch.md", links), {
+		action: "expand",
+		affectedCount: 1,
+	});
 	graph.scope.expandedPaths.push("notes/branch.md");
-	assert.equal(rootedNeighbourhoodAction(graph.scope, "notes/branch.md", links), "collapse");
+	assert.equal(rootedNeighbourhoodState(graph.scope, "notes/branch.md", links).action, "collapse");
+	assert.deepEqual(rootedNeighbourhoodState(graph.scope, "notes/branch.md", links), {
+		action: "collapse",
+		affectedCount: 1,
+	});
 	const collapsed = collapsePathInScope(graph.scope, "notes/branch.md");
 	assert.equal(collapsed.kind, "rooted");
 	if (collapsed.kind === "rooted") assert.deepEqual(collapsed.expandedPaths, []);
+});
+
+test("reports when collapsing a redundant branch hides no visible notes", () => {
+	const graph = createCurrentNoteGraph("notes/root.md", "Root");
+	const links = {
+		"notes/root.md": ["notes/branch-a.md", "notes/branch-b.md"],
+		"notes/branch-a.md": ["notes/shared.md"],
+		"notes/branch-b.md": ["notes/shared.md"],
+	};
+	graph.scope.expandedPaths.push("notes/branch-a.md", "notes/branch-b.md");
+
+	assert.deepEqual(rootedNeighbourhoodState(graph.scope, "notes/branch-a.md", links), {
+		action: "collapse",
+		affectedCount: 0,
+	});
 });
 
 test("a curated graph includes only explicitly added Markdown notes", () => {

@@ -3,7 +3,7 @@ import type { COPY_KO } from "./copy-ko";
 export const COPY_EN: typeof COPY_KO = {
 	view: {
 		title: "Context Graph",
-		openCommand: "Show around current note",
+		openCommand: "Open linked-note reading map",
 		manageCommand: "Open saved graphs",
 		refreshCommand: "Refresh graph",
 		aria: "Knowledge graph. Drag to pan and use the mouse wheel to zoom.",
@@ -14,6 +14,10 @@ export const COPY_EN: typeof COPY_KO = {
 		saveGraph: "Save this graph",
 		expandNeighbours: "Show neighbouring notes",
 		collapseNeighbours: "Collapse neighbouring notes",
+		expandNeighboursCount: (count: number) => `Show ${count} neighbouring ${count === 1 ? "note" : "notes"}`,
+		collapseNeighboursCount: (count: number) => count === 0
+			? "Reset branch expansion (no notes hidden)"
+			: `Collapse ${count} neighbouring ${count === 1 ? "note" : "notes"}`,
 		removeFromGraph: "Remove from graph",
 		newCard: "New card",
 		createCard: "Create a card",
@@ -45,7 +49,8 @@ export const COPY_EN: typeof COPY_KO = {
 		emptyFolderScope: (folder: string) => `No graph notes were found under “${folder}”.`,
 		emptyCuratedScope: "No notes have been added to this graph yet.",
 		emptyAllScope: "There are no notes to show in this graph yet.",
-		emptyNextStep: "Open a Markdown note and show its surroundings to begin.",
+		emptyNextStep: "Open a Markdown note, then open its linked-note reading map.",
+		noVisibleLinks: "No linked notes are visible yet. Add a wikilink or backlink to grow this map.",
 	},
 	relations: {
 		derived: "Context",
@@ -68,7 +73,7 @@ export const COPY_EN: typeof COPY_KO = {
 	modal: {
 		graphsTitle: "Saved graphs",
 		graphsDescription: "Saved graphs keep an exploration range and layout without copying Markdown.",
-		noSavedGraphs: "There are no saved graphs. Open the surroundings of a Markdown note, then save that exploration.",
+		noSavedGraphs: "There are no saved graphs. Open a linked-note reading map, then save that exploration.",
 		trashTitle: "Move the source note to trash?",
 		trashDescription: (title: string) => `Move the Markdown source for “${title}” to trash. It will disappear from every graph that uses it.`,
 		reloadSourceTitle: "Reload the source?",

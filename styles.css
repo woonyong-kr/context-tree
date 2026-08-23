@@ -862,6 +862,22 @@
 	cursor: pointer;
 }
 .context-tree-connection-jump:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
+
+.context-tree-root-only-hint {
+	position: absolute;
+	top: 14px;
+	left: 16px;
+	z-index: 4;
+	max-width: min(420px, calc(100% - 32px));
+	padding: 6px 9px;
+	border-radius: 7px;
+	background: color-mix(in srgb, var(--background-primary) 82%, transparent);
+	color: var(--text-muted);
+	font-size: calc(0.78rem * var(--ct-font-scale));
+	line-height: 1.4;
+	pointer-events: none;
+}
+
 .context-tree-graph-controls {
 	position: absolute;
 	/* A theme must not turn this canvas HUD into an in-flow, centre control.

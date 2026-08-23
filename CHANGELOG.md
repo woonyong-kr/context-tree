@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.4
+
+- Position Context Graph as a linked-note reading map: read the original
+  Markdown in place, expand one branch at a time, and save only useful
+  explorations.
+- Open a specific Markdown note directly from its file menu as well as the
+  Command Palette, without falling back to an unrelated saved graph.
+- Show the exact number of notes that a reversible neighbourhood action will
+  add or remove, and explain the root-only state without adding another modal
+  or persistent toolbar control.
+- Align the public description, README, and UX contract with the shipped
+  interaction model.
+
 ## 0.5.3
 
 - Avoid Vault-wide Markdown enumeration for the ordinary current-note workflow;

@@ -1,39 +1,66 @@
 # Context Graph
 
-Context Graph turns the Markdown note you are reading into a small, explorable
-graph. It starts with that note, its outgoing links, and its backlinks. Each
-card remains the original note: open it to read, edit its source in place, or
-send it to a normal Obsidian editor on the right.
+**Read linked notes without losing the map.**
 
-The graph grows only where you ask it to. There is no folder setup, graph
-database, account, or plugin-specific frontmatter required to begin.
+Context Graph turns the Markdown note you are reading into a temporary,
+one-hop reading map. Open a card to read the actual note, expand only the
+branch you need, and edit the same Markdown without leaving the map.
+
+There is no drawing step, folder setup, graph database, account, semantic AI,
+or plugin-specific frontmatter required to begin. The graph grows only where
+you ask it to, and it becomes a saved artifact only when you choose to keep it.
+
+![Context Graph showing a Markdown note opened among its linked notes](docs/assets/context-graph-reading-map.png)
+
+The map above was opened from one Markdown note. The centre card is the actual
+note rendered by Obsidian; the surrounding cards are its inspectable links.
 
 ## When Context Graph is useful
 
-Obsidian already has several good spatial views. Context Graph is for the case
-where you want to follow relationships and keep reading the actual notes at the
-same time.
+Obsidian already has several good spatial views. Context Graph has a narrower
+job: follow explicit Markdown links while reading the linked notes in place.
 
 - Use **Global Graph** for the shape of a whole vault.
 - Use **Local Graph** for a compact link map around the active note.
 - Use **Canvas** for a freely arranged diagram or presentation that you author
   directly.
 - Use **Context Graph** to read through one linked neighbourhood, expand only
-  selected branches, preserve deliberate card placement, and optionally save
-  that exploration for later.
+  selected branches without rearranging what you already read, and optionally
+  save that exploration for later.
+
+Context Graph is not a drawing surface, a full-vault analytics dashboard, or a
+semantic recommendation engine. It does not infer that two notes are related:
+every visible relationship comes from an authored Markdown link, backlink, or
+optional typed relationship that you can inspect in the source.
 
 Typical uses include tracing the notes produced by a long research or Q&A
 session, reviewing the evidence around a decision, following prerequisite and
 follow-up notes while learning, or keeping a root document and its changing
 context visible without maintaining a second set of cards.
 
-## Start with any note
+### How it differs from adjacent tools
+
+These tools can coexist in the same Vault; they optimize for different jobs.
+
+| Tool | Its centre of gravity | Context Graph's different job |
+| --- | --- | --- |
+| [Excalidraw](https://github.com/zsviczian/obsidian-excalidraw-plugin) | Authoring drawings, visual thinking, and media-rich canvases | Derive a temporary reading map from existing Markdown links without drawing or maintaining another visual document. |
+| [Juggl](https://github.com/HEmile/juggl) | A stylable, expandable graph workspace with multiple layouts | Keep the surface deliberately narrow: read Obsidian-rendered Markdown in each card, expand one branch, and preserve the current map. |
+| [ExcaliBrain](https://github.com/zsviczian/excalibrain) | A structured mind map generated from Vault metadata and inferred parent, child, friend, and sibling roles | Show only inspectable authored links and optional typed relations, with no Dataview or Excalidraw dependency and no inferred ontology. |
+| [Breadcrumbs](https://github.com/michaelpporter/breadcrumbs) | Defining and navigating typed hierarchy, sequence, tree, matrix, and trail views | Make ordinary links sufficient and optimize the graph itself for reading and editing the linked source notes in place. |
+
+Use one of those tools when its primary job is the job you need. Use Context
+Graph when opening each linked note in separate tabs would make you lose the
+question, evidence trail, or document neighbourhood you are following.
+
+## Start in one action
 
 1. Open a Markdown note.
-2. Run **Context Graph: Show around current note** from the command palette.
+2. Right-click the note and choose **Open linked-note reading map**, or run the
+   same Context Graph command from the command palette.
 3. Select a card to read it in place.
-4. Use **Show neighbouring notes** on a card when you want to continue beyond
-   the initial neighbourhood. Use the same action again to collapse that branch.
+4. Use **Show _n_ neighbouring notes** when you want to continue beyond the
+   initial neighbourhood. Use the same action again to collapse that branch.
 5. Choose **Save this graph** only if the exploration is worth keeping.
 
 The first view is temporary. Closing it creates no graph file. Saving creates a
@@ -114,7 +141,7 @@ like this:
 | Wheel over an open card, including its header | Scroll that card under the pointer. |
 | Wheel over graph space | Smoothly zoom around the pane centre. A previously focused editor does not steal the gesture. |
 | **Keep card open** | Keep that Reading or Source card available while another card opens. It does not lock card position. |
-| **Show neighbouring notes** | Expand or collapse that card's meaningful one-hop range without moving existing cards. |
+| **Show/Collapse _n_ neighbouring notes** | Preview the size of the change, then expand or collapse that card's meaningful one-hop range without moving existing cards. |
 | **Open source in the right editor** | Open the same note in a reusable Obsidian split on the right. |
 | Hover a card | Emphasize that card and its visible direct relationships without changing layout. |
 | Search | Match title, compact summary, and body; retain direct graph context around matches. |
@@ -282,7 +309,7 @@ When Context Graph is available in the Community directory:
 1. Open **Settings → Community plugins → Browse**.
 2. Search for **Context Graph**.
 3. Select **Install**, then **Enable**.
-4. Open a Markdown note and run **Context Graph: Show around current note**.
+4. Open a Markdown note and run **Context Graph: Open linked-note reading map**.
 
 For a manual release install, download `main.js`, `manifest.json`, and
 `styles.css` from the same GitHub release and place them in:

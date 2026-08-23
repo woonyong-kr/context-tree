@@ -16,8 +16,8 @@ import {
 	graphNoteFolder,
 	GraphViewState,
 	GraphWorkspace,
-	rootedNeighbourhoodAction,
-	type RootedNeighbourhoodAction,
+	rootedNeighbourhoodState,
+	type RootedNeighbourhoodState,
 } from "./domain/graph-workspace";
 import { shouldFitInitialOverview } from "./domain/initial-viewport";
 import { decideInlineEditorSave } from "./domain/inline-editor-save";
@@ -126,6 +126,7 @@ export class ContextTreeView extends FileView {
 	private searchPanel?: HTMLElement;
 	private searchPanelMode?: "search" | "filter";
 	private searchPanelButtons?: Record<"search" | "filter", HTMLButtonElement>;
+	private rootOnlyHint?: HTMLElement;
 	private refreshPending = false;
 	private isOpen = false;
 	private rootedOutgoingByPath: Readonly<Record<string, readonly string[]>> = {};
@@ -142,7 +143,7 @@ export class ContextTreeView extends FileView {
 			onOpenSource: (node) => void this.openNodeSourceBesideGraph(node),
 			onToggleNeighbours: (node) => void this.toggleNodeNeighbourhood(node),
 			onRemoveFromGraph: (node) => void this.removeNodeFromGraph(node),
-			neighbourAction: (node) => this.nodeNeighbourhoodAction(node),
+			neighbourState: (node) => this.nodeNeighbourhoodState(node),
 			canRemoveFromGraph: (node) => this.graph.scope.kind !== "rooted" || this.graph.scope.rootPath !== node.path,
 			onMoveToTrash: (node) => void this.deleteFromCard(node),
 			onOpenInternalLink: (event, sourcePath) => this.openInternalLink(event, sourcePath),
@@ -324,6 +325,11 @@ export class ContextTreeView extends FileView {
 		this.edges = this.scene.createSvg("svg", { cls: "context-tree-edges" });
 		this.draftEdges = this.viewport.createSvg("svg", { cls: "context-tree-draft-edges" });
 		this.createGraphControls(this.viewport);
+		this.rootOnlyHint = this.viewport.createDiv({
+			cls: "context-tree-root-only-hint",
+			text: COPY.labels.noVisibleLinks,
+			attr: { hidden: "true", role: "status" },
+		});
 		this.applyTransform();
 		this.bindCanvasControls(this.viewport);
 		this.viewportObserver?.disconnect();
@@ -355,6 +361,7 @@ export class ContextTreeView extends FileView {
 		this.viewportObserver?.disconnect();
 		this.viewportObserver = undefined;
 		this.viewport = undefined;
+		this.rootOnlyHint = undefined;
 		this.scene = undefined;
 		this.edges = undefined;
 		this.draftEdges = undefined;
@@ -672,6 +679,10 @@ export class ContextTreeView extends FileView {
 
 	private syncCards(): void {
 		if (!this.scene) return;
+		this.rootOnlyHint?.toggleAttribute(
+			"hidden",
+			!(this.graph.scope.kind === "rooted" && this.simNodes.length === 1),
+		);
 		const wanted = new Set(this.simNodes.map((node) => node.id));
 		const visibility = this.searchVisibility();
 		for (const [id, element] of this.nodeElements) {
@@ -1083,10 +1094,10 @@ export class ContextTreeView extends FileView {
 		this.showDeleteTopic(node);
 	}
 
-	private nodeNeighbourhoodAction(node: ContextTreeNode): RootedNeighbourhoodAction {
+	private nodeNeighbourhoodState(node: ContextTreeNode): RootedNeighbourhoodState {
 		return this.graph.scope.kind === "rooted"
-			? rootedNeighbourhoodAction(this.graph.scope, node.path, this.rootedOutgoingByPath)
-			: "none";
+			? rootedNeighbourhoodState(this.graph.scope, node.path, this.rootedOutgoingByPath)
+			: { action: "none", affectedCount: 0 };
 	}
 
 	private lockNeighbourhoodLayout(): void {
@@ -1100,7 +1111,7 @@ export class ContextTreeView extends FileView {
 	}
 
 	private async toggleNodeNeighbourhood(node: ContextTreeNode): Promise<void> {
-		const action = this.nodeNeighbourhoodAction(node);
+		const { action } = this.nodeNeighbourhoodState(node);
 		if (action === "none") return;
 		this.lockNeighbourhoodLayout();
 		try {
