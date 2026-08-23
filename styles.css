@@ -726,6 +726,11 @@
 
 .context-tree-view .context-tree-summary {
 	margin: 6px 0 0;
+	/* Compact cards are map labels, not miniature document readers. Bound the
+	   preview to three text lines so an unusually long first paragraph cannot
+	   cover neighbouring cards before the measured collision pass settles. */
+	max-height: calc(3.7rem * var(--ct-font-scale));
+	overflow: hidden;
 	color: var(--ct-muted);
 	font-size: calc(0.81rem * var(--ct-font-scale));
 	line-height: 1.52;
@@ -823,19 +828,17 @@
 }
 
 /* Keep the document surface quiet. Links remain discoverable through a
-   restrained underline and use the accent only on direct interaction. */
+   restrained baseline and use the accent only on direct interaction. A border
+   keeps the treatment compatible with the plugin's minimum Obsidian version. */
 .context-tree-detail a {
 	color: inherit;
-	text-decoration-line: underline;
-	text-decoration-color: color-mix(in srgb, currentColor 32%, transparent);
-	text-decoration-thickness: 1px;
-	text-underline-offset: 0.16em;
+	border-bottom: 1px solid var(--text-faint);
 }
 
 .context-tree-detail a:hover,
 .context-tree-detail a:focus-visible {
 	color: var(--text-accent);
-	text-decoration-color: currentColor;
+	border-bottom-color: currentColor;
 }
 
 /* Mirror Obsidian's Reading View class boundary so the active theme, snippets,

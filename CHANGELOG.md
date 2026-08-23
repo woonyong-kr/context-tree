@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.6
+
+- Replace partially supported advanced text-decoration properties with a
+  minimum-version-compatible link baseline, clearing the Community CSS scan
+  warning without changing Reading hierarchy or interaction.
+- Bound compact summaries to a three-line map preview so long first paragraphs
+  cannot visually cover neighbouring cards during the initial overview.
+- Refresh the README overview, Reading, and Source captures from the exact
+  installed 0.5.6 build.
+
 ## 0.5.5
 
 - Replace the high-contrast graph chrome with a quiet, document-first visual

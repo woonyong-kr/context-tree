@@ -1,5 +1,5 @@
 {
-	"version": "0.5.5",
+	"version": "0.5.6",
 	"capturedWith": "Obsidian 1.13.7",
 	"capturedAt": "2026-08-23",
 	"publicSafeSample": true,
@@ -8,19 +8,19 @@
 			"path": "docs/assets/context-graph-01-overview.png",
 			"width": 1116,
 			"height": 769,
-			"sha256": "7e8364889451b826c10558d9ebfd47fde9332dfbcf4ef2fd311210bd9478f205"
+			"sha256": "33a86223aee3977358c2666cc6fdb21342549434aa00c547f15b73956c58fb75"
 		},
 		{
 			"path": "docs/assets/context-graph-02-reading.png",
 			"width": 1116,
 			"height": 769,
-			"sha256": "2af92abb0e3a76eff85f7c525a3676f235d922ded82e98441b7a60c0cbab302f"
+			"sha256": "74ec3e28d7dd1373f4984594a2ef43ce9110f60dcd4ffb72be21d0cd372ec5ba"
 		},
 		{
 			"path": "docs/assets/context-graph-03-source.png",
 			"width": 1116,
 			"height": 769,
-			"sha256": "e71b2645ae4ce65852cdedb7b90e34211d72056ee680e39549781729ba8b862b"
+			"sha256": "29c8aad7be9651e94363f52521b046e60562943b0350f676e3f90f5e9378561c"
 		}
 	]
 }
