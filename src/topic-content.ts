@@ -89,9 +89,10 @@ export function markdownWithoutFencedCode(content: string): string {
 	return withoutFencedCode(content);
 }
 
-/** Build the portable Markdown source for a directly authored graph card. */
-export function newTopicContent(title: string, body: string): string {
+/** Build the Markdown source for a directly authored graph card. */
+export function newTopicContent(title: string, body: string, includeLegacyMarker = true): string {
 	const normalizedTitle = title.trim();
 	const normalizedBody = body.trim();
-	return `---\ncontext_tree: true\n---\n# ${normalizedTitle}\n${normalizedBody ? `\n${normalizedBody}\n` : ""}`;
+	const frontmatter = includeLegacyMarker ? "---\ncontext_tree: true\n---\n" : "";
+	return `${frontmatter}# ${normalizedTitle}\n${normalizedBody ? `\n${normalizedBody}\n` : ""}`;
 }

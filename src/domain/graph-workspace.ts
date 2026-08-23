@@ -185,12 +185,18 @@ export function currentNoteGraphPath(id: string): string | undefined {
 }
 
 /**
- * New cards need a durable vault location even when a workspace is curated or
- * global. Folder-scoped graphs preserve the author's chosen folder; all other
- * graphs receive a predictable, private-to-the-workspace default.
+ * New cards need a predictable Vault location. Folder-scoped graphs preserve
+ * the author's chosen folder, a current-note graph stays beside its root, and
+ * other graph scopes receive a private-to-the-workspace default.
  */
 export function graphNoteFolder(graph: Pick<GraphWorkspace, "id" | "scope">): string {
-	return graph.scope.folders[0] ?? `maps/context-graph/${graph.id}`;
+	const configured = graph.scope.folders[0];
+	if (configured) return configured;
+	if (graph.scope.kind === "rooted") {
+		const separator = graph.scope.rootPath.lastIndexOf("/");
+		return separator >= 0 ? graph.scope.rootPath.slice(0, separator) : "";
+	}
+	return `maps/context-graph/${graph.id}`;
 }
 
 /**

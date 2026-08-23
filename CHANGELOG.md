@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.1
+
+- Create cards from a current-note graph beside its root note instead of deriving a Vault folder from the transient graph ID.
+- Keep new current-note cards as ordinary Markdown without adding the legacy `context_tree` marker; retained saved graph scopes still receive the marker when they require it.
+- Open the reusable right-hand Markdown leaf in editable Source mode instead of inheriting the user's default Reading mode.
+- Consolidate graph-definition reconciliation, remove the last detected source duplicate, and replace inherited repository boilerplate with Context Graph-specific maintenance rules.
+- Expand the Community-facing README with the product use case, exact graph range, interaction model, write effects, Markdown support, storage and privacy boundary, limitations, and troubleshooting.
+
 ## 0.5.0
 
 - Open an immediate one-hop graph from any current Markdown note, using ordinary wikilinks and backlinks without requiring plugin frontmatter.

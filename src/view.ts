@@ -1005,7 +1005,11 @@ export class ContextTreeView extends FileView {
 				? this.sourceLeaf
 				: this.app.workspace.getLeaf("split", "vertical");
 			this.sourceLeaf = leaf;
-			await leaf.openFile(file, { active: true });
+			await leaf.setViewState({
+				type: "markdown",
+				state: { file: file.path, mode: "source" },
+				active: true,
+			});
 			await this.app.workspace.revealLeaf(leaf);
 		} catch (error) {
 			console.error("Context Graph: failed to open source beside graph", error);
@@ -1186,7 +1190,12 @@ export class ContextTreeView extends FileView {
 	}
 
 	private createInlineTopic(): void {
-		void createTopic(this.app, { title: COPY.labels.newTopicTitle, body: "", fallbackFolder: graphNoteFolder(this.graph) })
+		void createTopic(this.app, {
+			title: COPY.labels.newTopicTitle,
+			body: "",
+			fallbackFolder: graphNoteFolder(this.graph),
+			includeLegacyMarker: this.graph.scope.kind !== "rooted",
+		})
 			.then(async (file) => {
 				await this.plugin.includePathInGraph(this.getGraphId(), file.path);
 				this.pendingEditorPath = file.path;

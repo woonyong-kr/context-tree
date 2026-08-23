@@ -42,7 +42,7 @@
 
 ## 도구와 가독성
 
-1. 새 카드는 전역 그래프 도구 모음에서만 만든다. 카드 내부에는 중복 `+`를 두지 않는다.
+1. 새 카드는 전역 그래프 도구 모음에서만 만든다. 카드 내부에는 중복 `+`를 두지 않는다. 현재 노트 주변 그래프에서는 루트 노트와 같은 폴더에 일반 Markdown으로 만들며 legacy opt-in frontmatter를 추가하지 않는다. 저장된 legacy scope 그래프에서는 해당 그래프의 설정 폴더 또는 안전한 전용 폴더와 호환 marker를 사용한다. 임시 그래프 ID를 Vault 경로로 사용하지 않는다.
 2. 그래프 도구 모음은 뷰포트 우하단에 고정한다.
 3. 그래프 이름은 Obsidian 탭 제목에만 표시하고 캔버스 위에 중복 텍스트 버튼을 두지 않는다. 임시 탐색의 **이 그래프로 저장**은 우하단 도구 모음의 아이콘으로 한 번에 실행한다. 도구 모음에는 레이어·새로고침·관리 버튼을 두지 않는다.
 4. 본문 텍스트는 1.2배로 읽기 쉽게 하되, 아이콘과 버튼의 물리적 크기·위치는 바꾸지 않는다. 핀은 위치 고정이 아니라 **카드 열어두기**이며 고정 여부와 무관하게 카드 프레임을 끌어 이동할 수 있다.
@@ -67,6 +67,7 @@
 | Markdown Reading 의미 | `TopicCardRenderer.ensureDetails()`, `createReadingMarkdownFrame()`, `topicDisplayContent()`, `styles.css` | `reading-markdown-frame.test.ts`, `topic-display.test.ts`, Desktop UI 검증 |
 | 관계 삭제 드롭 안전성 | `disconnect-drop-action.ts` | `disconnect-drop-action.test.ts` |
 | 현재 노트와 1-hop 탐색 | `graph-workspace.ts`, `parser.ts`, `ContextTreePlugin.activateCurrentNote()` | `graph-workspace.test.ts`, `parser-rooted.test.ts` |
+| 새 카드 저장 위치 | `graphNoteFolder()`, `ContextTreeView.createInlineTopic()` | `graph-workspace.test.ts` |
 | 편집 draft 복구 | `inline-editor-draft.ts`, `ContextTreeView` lifecycle, plugin settings | `inline-editor-draft.test.ts`, lifecycle regression |
 | 그래프 제거와 원문 휴지통 구분 | `graph-workspace.ts`, card menu callbacks | `graph-workspace.test.ts`, copy regression, Desktop UI 검증 |
 | 저장된 그래프 단일 정본 | graph definition adapter, plugin settings migration | graph definition integration regression |

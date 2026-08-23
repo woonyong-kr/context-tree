@@ -465,16 +465,17 @@ export default class ContextTreePlugin extends Plugin {
 			}
 			this.settings.definitionsMigrated = true;
 		}
-		this.settings.graphs = discovered;
-		this.settings.viewStates = migrateGraphViewStates(this.settings.viewStates, discovered.map((graph) => graph.id));
-		if (!this.settings.graphs.some((graph) => graph.id === this.settings.defaultGraphId)) {
-			this.settings.defaultGraphId = this.settings.graphs[0]?.id ?? "";
-		}
-		await this.persistSettings();
+		await this.replaceGraphDefinitions(discovered);
 	}
 
 	private async reloadGraphDefinitions(): Promise<void> {
 		const graphs = await this.definitionStore.readAll();
+		await this.replaceGraphDefinitions(graphs);
+		this.refreshOpenViews();
+	}
+
+	/** Reconciles portable graph files with device-local view state in one path. */
+	private async replaceGraphDefinitions(graphs: GraphWorkspace[]): Promise<void> {
 		this.settings.graphs = graphs;
 		this.settings.viewStates = migrateGraphViewStates(
 			this.settings.viewStates,
@@ -484,7 +485,6 @@ export default class ContextTreePlugin extends Plugin {
 			this.settings.defaultGraphId = this.settings.graphs[0]?.id ?? "";
 		}
 		await this.persistSettings();
-		this.refreshOpenViews();
 	}
 
 	private async writeGraphDefinition(graph: GraphWorkspace): Promise<void> {

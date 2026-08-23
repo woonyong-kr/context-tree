@@ -8,6 +8,10 @@ test("creates a directly authored card without parent metadata", () => {
 	assert.doesNotMatch(content, /context_tree_parent/);
 });
 
+test("creates an ordinary Markdown note for the current-note workflow", () => {
+	assert.equal(newTopicContent("새 주제", "본문", false), "# 새 주제\n\n본문\n");
+});
+
 test("extracts and removes a visible Markdown summary without touching frontmatter", () => {
 	const source = `---\ncontext_tree: true\ncontext_tree_summary: Legacy summary.\n---\n# Topic\n\n> [!summary] 카드 요약\n> Existing summary.\n\nBody`;
 	assert.equal(markdownSummary(source), "Existing summary.");

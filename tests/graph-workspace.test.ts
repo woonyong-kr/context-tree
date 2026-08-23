@@ -52,6 +52,14 @@ test("a graph without a folder scope creates its first note in its own predictab
 	assert.equal(graphNoteFolder(graph), "maps/context-graph/학습-그래프");
 });
 
+test("a current-note graph creates a new note beside its root without leaking the transient id into a path", () => {
+	const nested = createCurrentNoteGraph("projects/interview/Root.md", "Root");
+	const atRoot = createCurrentNoteGraph("Root.md", "Root");
+
+	assert.equal(graphNoteFolder(nested), "projects/interview");
+	assert.equal(graphNoteFolder(atRoot), "");
+});
+
 test("a folder-scoped graph creates its first note in the author's selected folder", () => {
 	const graph = createGraphWorkspace("인터뷰", [], { kind: "folders", folders: ["maps/interview"] });
 

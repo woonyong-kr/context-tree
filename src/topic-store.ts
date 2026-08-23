@@ -55,10 +55,10 @@ async function availablePath(app: App, folder: string, title: string): Promise<s
 
 export async function createTopic(
 	app: App,
-	options: { title: string; body: string; fallbackFolder: string },
+	options: { title: string; body: string; fallbackFolder: string; includeLegacyMarker?: boolean },
 ): Promise<TFile> {
 	const path = await availablePath(app, options.fallbackFolder, options.title);
-	return app.vault.create(path, newTopicContent(options.title, options.body));
+	return app.vault.create(path, newTopicContent(options.title, options.body, options.includeLegacyMarker));
 }
 
 export async function addRelation(
