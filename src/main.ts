@@ -1,11 +1,13 @@
 import { Notice, Plugin, TAbstractFile, TFile, WorkspaceLeaf } from "obsidian";
 import { GRAPH_DEFINITION_EXTENSION } from "./domain/graph-definition";
 import {
+	collapsePathInScope,
 	createCurrentNoteGraph,
 	createGraphWorkspace,
 	currentNoteGraphId,
 	currentNoteGraphPath,
 	excludePathFromScope,
+	GraphScope,
 	GraphScopeInput,
 	GraphViewState,
 	GraphWorkspace,
@@ -188,25 +190,26 @@ export default class ContextTreePlugin extends Plugin {
 	async includePathInGraph(graphId: string, path: string): Promise<void> {
 		const graph = this.getGraph(graphId);
 		if (!graph || graphScopeIncludesPath(graph.scope, path)) return;
-		const previousScope = graph.scope;
-		graph.scope = includePathInScope(graph.scope, path);
-		if (!this.isTransientGraph(graphId)) {
-			try {
-				await this.writeGraphDefinition(graph);
-			} catch (error) {
-				graph.scope = previousScope;
-				throw error;
-			}
-			await this.persistSettings();
-		}
-		this.refreshOpenViews();
+		await this.updateGraphScope(graphId, graph, includePathInScope(graph.scope, path));
+	}
+
+	async collapsePathInGraph(graphId: string, path: string): Promise<void> {
+		const graph = this.getGraph(graphId);
+		if (!graph || graph.scope.kind !== "rooted" || !graph.scope.expandedPaths.includes(path)) return;
+		await this.updateGraphScope(graphId, graph, collapsePathInScope(graph.scope, path));
 	}
 
 	async removePathFromGraph(graphId: string, path: string): Promise<void> {
 		const graph = this.getGraph(graphId);
 		if (!graph || (graph.scope.kind === "rooted" && graph.scope.rootPath === path)) return;
+		await this.updateGraphScope(graphId, graph, excludePathFromScope(graph.scope, path));
+	}
+
+	/** Persists one graph-scope transition atomically and restores it on failure. */
+	private async updateGraphScope(graphId: string, graph: GraphWorkspace, nextScope: GraphScope): Promise<void> {
+		if (nextScope === graph.scope) return;
 		const previousScope = graph.scope;
-		graph.scope = excludePathFromScope(graph.scope, path);
+		graph.scope = nextScope;
 		if (!this.isTransientGraph(graphId)) {
 			try {
 				await this.writeGraphDefinition(graph);

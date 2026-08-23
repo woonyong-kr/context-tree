@@ -1,7 +1,6 @@
 const CANVAS_CONTROL_SELECTOR = [
 	".context-tree-card",
 	".context-tree-graph-controls",
-	".context-tree-graph-header",
 	".context-tree-search-panel",
 ].join(", ");
 

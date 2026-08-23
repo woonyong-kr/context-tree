@@ -12,7 +12,7 @@
 
 ## 상호작용 깊이
 
-1. 현재 노트 주변 보기, 카드 읽기, 인접 노트 펼치기, 원문 열기, 검색과 필터는 한 번의 직접 동작으로 끝난다.
+1. 현재 노트 주변 보기, 카드 읽기, 인접 노트 펼치기·접기, 오른쪽 원문 편집기 열기, 검색과 필터는 한 번의 직접 동작으로 끝난다. 인접 노트와 원문 편집기는 카드의 직접 동작으로 제공하며 더보기 메뉴를 거치지 않는다. 새 이웃이 없는 카드는 무효한 펼치기 동작을 노출하지 않는다.
 2. 기존 노트 연결, 새 노트 연결, 현재 탐색 저장은 최대 두 단계로 끝난다. 일상 동작에서 modal 위에 modal을 열지 않는다.
 3. 그래프에서 카드 제거는 두 단계 이내로 끝나되 Markdown 원문을 변경하지 않는다. 원본 노트를 휴지통으로 보내는 작업만 명시적 경고와 확인을 포함한 세 단계까지 허용한다.
 4. 첫 실행은 설정 wizard 대신 현재 노트 주변 그래프와 한 줄 도움말을 보여 준다. 빈 상태의 주 동작은 하나만 제공한다.
@@ -23,13 +23,13 @@
 2. 관계 칩 탐색과 검색 결과 선택처럼 사용자가 명시적으로 `이동`을 선택한 경우에만 카메라를 해당 카드로 이동한다. 카메라 이동도 카드 좌표나 물리 배치를 바꾸지 않는다.
 3. Reading과 Source는 같은 카드의 두 표현이다. Source에 들어갈 때 확정한 외곽 폭·높이는 Markdown을 수정하고 Reading으로 돌아와도 카드를 닫을 때까지 유지한다. 바뀐 내용이 길어지면 Source와 Reading 모두 카드 내부에서만 스크롤하며 카드와 다른 카드의 좌표를 바꾸지 않는다.
 4. Markdown 상세가 아직 렌더링·펼침 중이면 Source 전환은 완성된 Reading 높이를 얻을 때까지 기다린다. 중간 애니메이션 높이를 저장하지 않는다.
-5. **더보기 → 원본을 오른쪽에서 열기**는 같은 Markdown 노트를 현재 그래프 오른쪽의 세로 분할 pane에 연다. 이 탐색은 그래프 좌표·카메라·관계를 바꾸지 않는다.
+5. 카드의 **원본을 오른쪽 편집기로 열기** 아이콘은 같은 Markdown 노트를 현재 그래프 오른쪽의 세로 분할 pane에 한 번에 연다. 이 탐색은 그래프 좌표·카메라·관계를 바꾸지 않는다.
 
 ## 포인터와 키보드
 
 1. 배경 드래그는 캔버스를 이동한다. 편집 중인 카드가 고정되지 않았더라도 배경을 끌면 먼저 캔버스를 이동하며, 배경 클릭만 편집 종료를 요청한다.
 2. 카드의 제목·요약은 클릭하면 Reading을 열고 닫으며, 5px 이상 끌면 고정·Reading·Source 여부와 무관하게 그 카드만 이동하는 주 drag handle이다. Reading 본문과 Source textarea·스크롤 영역은 선택·편집·스크롤의 고유 동작을 우선한다.
-3. Reading 본문과 Source 편집기 위 휠은 포인터 아래 카드 내부를 스크롤한다. 배경 위 휠은 포커스와 무관하게 뷰포트 중앙을 기준으로 캔버스를 확대·축소하며, 줌 자체가 화면 중심을 이동시키는 암묵적 pan이 되어서는 안 된다. 검색 패널 위 휠은 검색 패널의 고유 동작을 유지한다.
+3. 열린 Reading·Source 카드 위 휠은 제목과 여백을 포함해 포인터 아래 카드 내부를 스크롤한다. 배경 위 휠은 포커스와 무관하게 뷰포트 중앙을 기준으로 캔버스를 확대·축소하며, 줌 자체가 화면 중심을 이동시키는 암묵적 pan이 되어서는 안 된다. 검색 패널 위 휠은 검색 패널의 고유 동작을 유지한다.
 4. 카드의 링크·버튼·입력 요소·관계 칩은 카드 드래그를 시작하지 않는다.
 
 ## 관계와 안전
@@ -44,9 +44,10 @@
 
 1. 새 카드는 전역 그래프 도구 모음에서만 만든다. 카드 내부에는 중복 `+`를 두지 않는다.
 2. 그래프 도구 모음은 뷰포트 우하단에 고정한다.
-3. 좌상단에는 현재 루트 또는 저장된 그래프 이름을 표시하고 선택하면 **저장된 그래프 목록**을 연다. 임시 탐색에는 **이 그래프로 저장**을 바로 제공한다. 도구 모음에는 레이어·새로고침·관리 버튼을 두지 않는다.
+3. 그래프 이름은 Obsidian 탭 제목에만 표시하고 캔버스 위에 중복 텍스트 버튼을 두지 않는다. 임시 탐색의 **이 그래프로 저장**은 우하단 도구 모음의 아이콘으로 한 번에 실행한다. 도구 모음에는 레이어·새로고침·관리 버튼을 두지 않는다.
 4. 본문 텍스트는 1.2배로 읽기 쉽게 하되, 아이콘과 버튼의 물리적 크기·위치는 바꾸지 않는다. 핀은 위치 고정이 아니라 **카드 열어두기**이며 고정 여부와 무관하게 카드 프레임을 끌어 이동할 수 있다.
 5. Reading 본문은 Obsidian의 native Reading View DOM 경계 안에서 `MarkdownRenderer`와 등록된 Markdown post-processor가 직접 렌더링한다. 제목·목록·task·callout·wikilink·embed·수식·코드·표·각주·지원 HTML 등 Obsidian이 지원하는 Markdown 문법을 플러그인이 부분 재구현하거나 평탄화하지 않는다. 문서의 첫 H1과 `[!summary]`는 카드 제목·요약으로 한 번만 표현하고, frontmatter를 포함한 불변 원문 전체는 Source에서 제공한다. 긴 카드의 내부 스크롤은 유지하되, 스크롤바는 hover 또는 focus 중에만 드러내 중첩 패널처럼 보이지 않게 한다.
+6. 카드의 직접 동작과 더보기는 같은 hover·keyboard focus 상태에서 드러난다. 낮은 그래프 배율에서도 카드 동작은 제한된 역배율을 적용해 클릭 가능한 크기를 유지하되 카드보다 커지지 않는다. 원본 편집기 동작은 Reading·Source 전환으로 다른 아이콘이 생겨도 더보기 바로 왼쪽의 같은 슬롯을 유지한다.
 
 ## 검증 원칙
 
@@ -58,7 +59,8 @@
 | --- | --- | --- |
 | 제자리 열기와 명시적 탐색 | `card-open-action.ts`, `ContextTreeView.openNode()` | `card-open-action.test.ts` |
 | Reading ↔ Source 풋프린트 | `reading-card-layout.ts`, `inline-editor-layout.ts`, `TopicCardRenderer.waitForStableReadingCardHeight()` | `reading-card-layout.test.ts`, `inline-editor-layout.test.ts` |
-| 오른쪽 원본 pane | `TopicCardRenderer.createMoreMenu()`, `ContextTreeView.openSourceFileBesideGraph()` | `copy.test.ts`, Desktop UI 검증 |
+| 오른쪽 원본 pane | `TopicCardRenderer.create()`, `ContextTreeView.openSourceFileBesideGraph()` | `copy.test.ts`, Desktop UI 검증 |
+| 가역적 주변 탐색 | `rootedNeighbourhoodAction()`, `collapsePathInScope()`, `ContextTreeView.toggleNodeNeighbourhood()` | `graph-workspace.test.ts`, Desktop UI 검증 |
 | 카드 표면·본문 드래그 구분 | `card-pointer-action.ts` | `card-pointer-action.test.ts` |
 | 배경 클릭·드래그 구분 | `canvas-pointer-action.ts` | `canvas-pointer-action.test.ts` |
 | 휠 소유권과 중앙 기준 줌 | `canvas-wheel-target.ts`, `canvas-wheel-action.ts`, `ContextTreeView.zoomAt()` | `canvas-wheel-target.test.ts`, `canvas-wheel-action.test.ts` |
@@ -79,7 +81,7 @@ Obsidian에서 플러그인을 다시 활성화한다. 짧은 카드와 화면�
 검토 기록에 남긴다.
 
 1. **도구와 열기:** 그래프 명령으로 열었을 때 도구 모음은 우하단에 있고 카드 내부에는
-   `+`가 없으며 레이어 아이콘도 없다. 좌상단 그래프 이름과 명령 팔레트의 **저장된 그래프 목록**은 같은 단순 목록을 연다.
+   `+`가 없으며 레이어 아이콘과 좌상단 텍스트 버튼도 없다. 그래프 이름은 탭 제목에만 보이고, 임시 탐색의 저장 아이콘은 같은 도구 모음에 있다.
    카드를 열어도 카메라와 막 열린 카드의 좌표는 바뀌지 않는다.
 2. **Reading·Source 이동:** 카드 제목·요약을 클릭하면 카드를 열고 닫고, 5px 이상 끌면
    고정 여부와 무관하게 그 카드만 이동한다. Reading 본문은 텍스트
@@ -96,9 +98,12 @@ Obsidian에서 플러그인을 다시 활성화한다. 짧은 카드와 화면�
    동작으로 닫히거나 포커스를 빼앗기지 않는다.
 6. **관계 안전:** 연결점은 다른 카드 위에 놓을 때만 관계를 만든다. 선택된 단일 직접
    관계 끝점만 빈 캔버스에 놓아 제거할 수 있으며, 카드·도구·그래프 밖에 놓으면 취소된다.
-7. **원본 pane:** 카드의 **더보기 → 원본을 오른쪽에서 열기**를 선택하면 같은 노트가
+7. **주변 탐색:** 새 이웃이 있는 카드에서 주변 노트를 펼치면 카메라와 seed 카드 좌표가
+   유지되고 새 카드만 추가된다. 같은 동작을 다시 선택하면 seed는 남고 그 확장 범위만
+   접힌다. 새 이웃이 없는 카드에는 무효한 동작이 보이지 않는다.
+8. **원본 pane:** 카드의 원본 편집기 아이콘을 한 번 선택하면 같은 노트가
    오른쪽 세로 분할에 열리고, 그래프 카드·카메라·관계는 그대로 남는다.
-8. **Markdown Reading:** `##`·`###` 제목 단계, 목록·task, callout, inline/fenced code,
+9. **Markdown Reading:** `##`·`###` 제목 단계, 목록·task, callout, inline/fenced code,
    내부 링크·embed, 수식, 미디어, 표, 각주와 지원 HTML이 Obsidian Reading 의미로
    렌더링되고 등록된 Markdown post-processor가 실행된다. 첫 H1·summary가 본문에
    중복되지 않으며 Source에는 frontmatter를 포함한 전체 원문이 남는다. 긴 카드의

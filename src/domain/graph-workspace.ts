@@ -331,6 +331,46 @@ export function rootedGraphPaths(
 	return [...visible].sort((left, right) => left.localeCompare(right));
 }
 
+export type RootedNeighbourhoodAction = "expand" | "collapse" | "none";
+
+/**
+ * Returns the reversible action for one visible card in a rooted graph.
+ * A leaf that would add no new paths exposes no misleading expand control.
+ */
+export function rootedNeighbourhoodAction(
+	scope: RootedGraphScope,
+	path: string,
+	outgoingByPath: Readonly<Record<string, readonly string[]>>,
+): RootedNeighbourhoodAction {
+	const normalized = normalizedPath(path);
+	if (!normalized || normalized === scope.rootPath) return "none";
+	if (scope.expandedPaths.includes(normalized)) return "collapse";
+	const current = new Set(rootedGraphPaths(
+		scope.rootPath,
+		scope.expandedPaths,
+		outgoingByPath,
+		scope.excludePaths,
+	));
+	const expanded = rootedGraphPaths(
+		scope.rootPath,
+		[...scope.expandedPaths, normalized],
+		outgoingByPath,
+		scope.excludePaths,
+	);
+	return expanded.some((candidate) => !current.has(candidate)) ? "expand" : "none";
+}
+
+/** Collapses one deliberately expanded seed without removing its Markdown note. */
+export function collapsePathInScope(scope: GraphScope, path: string): GraphScope {
+	if (scope.kind !== "rooted") return scope;
+	const normalized = normalizedPath(path);
+	if (!normalized || !scope.expandedPaths.includes(normalized)) return scope;
+	return {
+		...scope,
+		expandedPaths: scope.expandedPaths.filter((candidate) => candidate !== normalized),
+	};
+}
+
 export function renamePathInScope(scope: GraphScope, previousPath: string, nextPath: string): GraphScope {
 	const previous = normalizedPath(previousPath);
 	const next = normalizedPath(nextPath);

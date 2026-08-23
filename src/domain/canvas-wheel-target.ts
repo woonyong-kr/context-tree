@@ -10,8 +10,10 @@ export type CanvasWheelSurface = {
 };
 
 export function canvasWheelSurface(target: Element | null): CanvasWheelSurface {
+	const openCard = target?.closest<HTMLElement>(".context-tree-card.is-detail-open");
 	const cardScroller = target?.closest<HTMLElement>(".context-tree-markdown-editor-scroll")
 		?? target?.closest<HTMLElement>(".context-tree-detail-wrap")
+		?? openCard?.querySelector<HTMLElement>(".context-tree-markdown-editor-scroll, .context-tree-detail-wrap")
 		?? undefined;
 	return {
 		isOverCardScroller: !!cardScroller,

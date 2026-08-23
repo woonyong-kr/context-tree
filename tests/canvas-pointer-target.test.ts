@@ -8,11 +8,10 @@ function pointerTarget(className?: string): Element {
 	} as unknown as Element;
 }
 
-test("graph cards, toolbars, headers, and search retain their pointer gesture", () => {
+test("graph cards, toolbars, and search retain their pointer gesture", () => {
 	for (const className of [
 		".context-tree-card",
 		".context-tree-graph-controls",
-		".context-tree-graph-header",
 		".context-tree-search-panel",
 	]) assert.equal(isCanvasControlTarget(pointerTarget(className)), true, className);
 });

@@ -34,8 +34,8 @@ The pencil opens the complete source of that same note inside the card,
 including frontmatter. Reading and Source keep the same outer card footprint;
 long content scrolls inside it. If another editor changes the note at the same
 time, Context Graph stops before overwriting it and keeps the local draft for
-recovery. **Open source on the right** uses a normal Obsidian editor pane when a
-full editing surface is more useful.
+recovery. **Open source in the right editor** opens the same note directly in a
+normal Obsidian editor when a full editing surface is more useful.
 
 An optional visible summary can be placed near the top of a note:
 
@@ -57,15 +57,16 @@ mode always shows the unmodified document.
 | Wheel over Reading or Source | Scroll the card under the pointer. |
 | Wheel over graph space | Smoothly zoom around the pane centre; focused editors do not steal the gesture. |
 | Pin on an open card | Keep that Reading or Source card open while using another card. It does not disable dragging. |
-| Show neighbouring notes on a card | Add that card's one-hop neighbourhood to this exploration. |
+| Show neighbouring notes | Add or collapse that card's one-hop neighbourhood in one action. |
+| Open source in the right editor | Open that note directly in an Obsidian editor on the right. |
 | More → Remove from graph | Hide the card only in this graph. The Markdown file is unchanged. |
 | More → Move source note to trash | Move the Markdown file to Obsidian's configured trash after confirmation. |
 | Drag a card's perimeter point to another card | Add a `related` relationship in the source card's frontmatter. |
 | Search or relation filter | Narrow what is emphasized without re-laying out the graph. |
 
-The graph toolbar appears at the lower right. New cards are created there (or
-by double-clicking empty graph space), not from duplicate controls on each card.
-The graph name at the upper left opens the saved graph list.
+The graph toolbar appears at the lower right. New cards are created there, not
+from duplicate controls on each card. The graph name appears only in the
+Obsidian tab; **Open saved graphs** is available from the command palette.
 
 ## Links and optional typed relations
 
@@ -132,7 +133,8 @@ files from `.obsidian/plugins/context-tree/` to
 - The initial view is deliberately one hop. Expanding a few relevant cards is
   preferable to rendering a very large vault at once.
 - Context Graph edits Markdown source, but it is not a replacement for
-  Obsidian's full editor. Use **Open source on the right** for advanced editing.
+  Obsidian's full editor. Use **Open source in the right editor** for advanced
+  editing.
 
 ## Development
 

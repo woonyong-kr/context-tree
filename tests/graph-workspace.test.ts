@@ -3,6 +3,7 @@ import test from "node:test";
 import {
 	createGraphWorkspace,
 	createCurrentNoteGraph,
+	collapsePathInScope,
 	currentNoteGraphId,
 	currentNoteGraphPath,
 	graphNoteFolder,
@@ -13,9 +14,28 @@ import {
 	migrateGraphViewStates,
 	migrateGraphWorkspaces,
 	rootedGraphPaths,
+	rootedNeighbourhoodAction,
 	renamePathInScope,
 	renamePathInViewState,
 } from "../src/domain/graph-workspace";
+
+test("offers only meaningful reversible neighbourhood actions", () => {
+	const graph = createCurrentNoteGraph("notes/root.md", "Root");
+	const links = {
+		"notes/root.md": ["notes/branch.md", "notes/leaf.md"],
+		"notes/branch.md": ["notes/deeper.md"],
+		"notes/leaf.md": [],
+	};
+
+	assert.equal(rootedNeighbourhoodAction(graph.scope, "notes/root.md", links), "none");
+	assert.equal(rootedNeighbourhoodAction(graph.scope, "notes/leaf.md", links), "none");
+	assert.equal(rootedNeighbourhoodAction(graph.scope, "notes/branch.md", links), "expand");
+	graph.scope.expandedPaths.push("notes/branch.md");
+	assert.equal(rootedNeighbourhoodAction(graph.scope, "notes/branch.md", links), "collapse");
+	const collapsed = collapsePathInScope(graph.scope, "notes/branch.md");
+	assert.equal(collapsed.kind, "rooted");
+	if (collapsed.kind === "rooted") assert.deepEqual(collapsed.expandedPaths, []);
+});
 
 test("a curated graph includes only explicitly added Markdown notes", () => {
 	const graph = createGraphWorkspace("인터뷰 준비", [], { kind: "curated" });

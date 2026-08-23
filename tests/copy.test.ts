@@ -9,8 +9,8 @@ test("searchable physics settings retain the graph that each control changes", (
 });
 
 test("describes the native source destination instead of an ambiguous new tab", () => {
-	assert.equal(COPY_KO.actions.openSourceBesideGraph, "원본을 오른쪽에서 열기");
-	assert.equal(COPY_EN.actions.openSourceBesideGraph, "Open source on the right");
+	assert.equal(COPY_KO.actions.openSourceBesideGraph, "원본을 오른쪽 편집기로 열기");
+	assert.equal(COPY_EN.actions.openSourceBesideGraph, "Open source in the right editor");
 });
 
 test("ships complete Korean and English relation labels", () => {

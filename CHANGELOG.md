@@ -3,11 +3,11 @@
 ## 0.5.0
 
 - Open an immediate one-hop graph from any current Markdown note, using ordinary wikilinks and backlinks without requiring plugin frontmatter.
-- Let a current-note exploration expand one card at a time and become durable only through **Save this graph**; saved definitions are now the single graph canon instead of being duplicated in plugin settings.
+- Let a current-note exploration expand and collapse one card's neighbourhood at a time without moving the existing map, then become durable only through **Save this graph**; saved definitions are the single graph canon instead of being duplicated in plugin settings.
 - Replace the old graph-creation form with a shallow saved-graph list and remove redundant card and toolbar controls.
 - Render Reading cards through Obsidian's native Reading View boundary and registered Markdown post-processors, preserving Obsidian-supported Markdown syntax and the active theme.
 - Keep Reading and Source at the same bounded card footprint, scroll the card under the pointer, preserve recoverable edit drafts, and stop before overwriting concurrent source changes.
-- Keep cards draggable in compact, Reading, Source, and keep-open states; opening or editing a card preserves its graph coordinate and camera.
+- Keep cards draggable in compact, Reading, Source, and keep-open states; opening or editing a card preserves its graph coordinate and camera, while a direct action reuses one native editor pane on the right.
 - Smooth mouse-wheel and trackpad zoom around the graph pane centre so zooming does not become an implicit pan gesture.
 - Separate graph-only removal from the explicitly confirmed source-note trash action, and cancel connection authoring on pointer cancellation.
 - Preserve graph scope, deliberate card positions, and authored IDs across Markdown renames while disambiguating duplicate IDs across the whole vault.

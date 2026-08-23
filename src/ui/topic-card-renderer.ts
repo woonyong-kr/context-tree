@@ -1,5 +1,5 @@
 import { App, Component, MarkdownRenderer, setIcon } from "obsidian";
-import { cardPointerAction } from "../domain/card-pointer-action";
+import { cardPointerAction, hasCardDragExceededClickThreshold } from "../domain/card-pointer-action";
 import {
 	inlineEditorCardHeight,
 	retainsInlineEditorFootprint,
@@ -7,6 +7,7 @@ import {
 import { readingCardMaximumHeight, settledReadingCardHeight } from "../domain/reading-card-layout";
 import { CardAnchor, cardAnchorAtPoint } from "../graph/simulation";
 import { ContextTreeNode } from "../types";
+import type { RootedNeighbourhoodAction } from "../domain/graph-workspace";
 import { COPY, cardToggleLabel } from "./copy";
 import { createReadingMarkdownFrame } from "./reading-markdown-frame";
 
@@ -16,17 +17,16 @@ export interface CardConnection {
 }
 
 export interface TopicCardRendererCallbacks {
-	onToggle: (nodeId: string) => void;
-	onOpen: (nodeId: string) => void;
+	onToggle: (nodeId: string, fromKeyboard: boolean) => void;
 	onCardDragStart: (event: PointerEvent, node: ContextTreeNode) => void;
 	onConnectionStart: (event: PointerEvent, node: ContextTreeNode, anchor: CardAnchor) => void;
 	onConnectionCandidate: (nodeId?: string, anchor?: CardAnchor) => void;
 	onPin: (node: ContextTreeNode) => void;
 	onEdit: (node: ContextTreeNode) => void;
 	onOpenSource: (node: ContextTreeNode) => void;
-	onExpand: (node: ContextTreeNode) => void;
+	onToggleNeighbours: (node: ContextTreeNode) => void;
 	onRemoveFromGraph: (node: ContextTreeNode) => void;
-	canExpand: (node: ContextTreeNode) => boolean;
+	neighbourAction: (node: ContextTreeNode) => RootedNeighbourhoodAction;
 	canRemoveFromGraph: (node: ContextTreeNode) => boolean;
 	onMoveToTrash: (node: ContextTreeNode) => void;
 	onOpenInternalLink: (event: MouseEvent, sourcePath: string) => void;
@@ -103,13 +103,33 @@ export class TopicCardRenderer {
 		// their own card-like surface, which breaks the visual card boundary.
 		trigger.createSpan({ cls: "context-tree-title", text: node.title });
 		if (node.summary) trigger.createSpan({ cls: "context-tree-summary", text: node.summary });
-		trigger.addEventListener("click", () => this.callbacks.onToggle(nodeReference.current.id));
-		// Two click events precede `dblclick`. Make the final gesture idempotently
-		// open the card so a double click cannot leave it closed after toggling twice.
-		trigger.addEventListener("dblclick", (event) => {
-			event.preventDefault();
-			event.stopPropagation();
-			this.callbacks.onOpen(nodeReference.current.id);
+		let togglePointer: { pointerId: number; origin: { x: number; y: number }; moved: boolean } | undefined;
+		let toggleFromKeyboard = false;
+		trigger.addEventListener("pointerdown", (event) => {
+			if (event.button !== 0) return;
+			togglePointer = {
+				pointerId: event.pointerId,
+				origin: { x: event.clientX, y: event.clientY },
+				moved: false,
+			};
+		});
+		trigger.addEventListener("keydown", (event) => {
+			if (event.key === "Enter" || event.key === " ") {
+				togglePointer = undefined;
+				toggleFromKeyboard = true;
+			}
+		});
+		trigger.addEventListener("click", (event) => {
+			const wasDragged = togglePointer?.moved ?? false;
+			togglePointer = undefined;
+			const fromKeyboard = toggleFromKeyboard;
+			toggleFromKeyboard = false;
+			if (wasDragged) {
+				event.preventDefault();
+				event.stopPropagation();
+				return;
+			}
+			this.callbacks.onToggle(nodeReference.current.id, fromKeyboard);
 		});
 		card.addEventListener("pointerdown", (event) => {
 			const target = event.target;
@@ -127,6 +147,12 @@ export class TopicCardRenderer {
 		});
 		card.addEventListener("pointerenter", () => this.callbacks.onHover(nodeReference.current.id));
 		card.addEventListener("pointermove", (event) => {
+			if (togglePointer?.pointerId === event.pointerId && !togglePointer.moved) {
+				togglePointer.moved = hasCardDragExceededClickThreshold(togglePointer.origin, {
+					x: event.clientX,
+					y: event.clientY,
+				});
+			}
 			const bounds = card.getBoundingClientRect();
 			this.callbacks.onConnectionCandidate(nodeReference.current.id, cardAnchorAtPoint(
 				{ width: bounds.width, height: bounds.height },
@@ -137,6 +163,9 @@ export class TopicCardRenderer {
 			this.callbacks.onHover();
 			this.callbacks.onConnectionCandidate();
 		});
+		card.addEventListener("pointercancel", (event) => {
+			if (togglePointer?.pointerId === event.pointerId) togglePointer = undefined;
+		});
 
 		const quickActions = card.createDiv({ cls: "context-tree-card-quick-actions" });
 		this.createIconAction(
@@ -144,7 +173,7 @@ export class TopicCardRenderer {
 			"network",
 			COPY.actions.expandNeighbours,
 			"context-tree-card-quick-action context-tree-card-expand",
-			() => this.callbacks.onExpand(nodeReference.current),
+			() => this.callbacks.onToggleNeighbours(nodeReference.current),
 		);
 		this.createIconAction(quickActions, "pin", COPY.actions.pinCard, "context-tree-card-quick-action context-tree-card-pin", () => {
 			this.callbacks.onPin(nodeReference.current);
@@ -163,6 +192,15 @@ export class TopicCardRenderer {
 		this.createIconAction(quickActions, "pencil", COPY.actions.editCard, "context-tree-card-quick-action context-tree-card-detail-action", () => {
 			this.callbacks.onEdit(nodeReference.current);
 		});
+		// Keep the source action next to the fixed overflow slot so its physical
+		// position does not move when Reading reveals pin and edit controls.
+		this.createIconAction(
+			quickActions,
+			"panel-right-open",
+			COPY.actions.openSourceBesideGraph,
+			"context-tree-card-quick-action context-tree-card-open-source",
+			() => this.callbacks.onOpenSource(nodeReference.current),
+		);
 		this.createMoreMenu(card, () => nodeReference.current);
 		return element;
 	}
@@ -179,9 +217,18 @@ export class TopicCardRenderer {
 		card.toggleClass("is-detail-open", state.isOpen);
 		card.toggleClass("is-editing", state.isEditing);
 		card.toggleClass("is-pinned", state.isPinned);
-		const canExpand = this.callbacks.canExpand(node);
-		card.toggleClass("has-expand-action", canExpand);
-		card.querySelector<HTMLElement>(".context-tree-card-expand")?.toggleClass("is-hidden", !canExpand);
+		const neighbourAction = this.callbacks.neighbourAction(node);
+		const neighbourButton = card.querySelector<HTMLButtonElement>(".context-tree-card-expand");
+		card.toggleClass("has-expand-action", neighbourAction !== "none");
+		neighbourButton?.toggleClass("is-hidden", neighbourAction === "none");
+		if (neighbourButton && neighbourAction !== "none") {
+			const label = neighbourAction === "collapse"
+				? COPY.actions.collapseNeighbours
+				: COPY.actions.expandNeighbours;
+			neighbourButton.setAttribute("aria-label", label);
+			neighbourButton.setAttribute("title", label);
+			neighbourButton.setAttribute("aria-pressed", String(neighbourAction === "collapse"));
+		}
 		if (!retainsInlineEditorFootprint(state.isOpen, card.hasClass("has-fixed-open-footprint"))) {
 			card.style.removeProperty("--ct-open-card-height");
 			card.style.removeProperty("--ct-source-card-height");
@@ -378,7 +425,9 @@ export class TopicCardRenderer {
 		const title = card.querySelector<HTMLElement>(".context-tree-title");
 		if (!title) return;
 		card.removeClass("has-wrapped-title");
-		const quickActionSpace = card.hasClass("has-expand-action") ? 74 : 44;
+		// Reserve title space for the always-available source action and overflow
+		// menu, plus the optional neighbouring-notes action.
+		const quickActionSpace = card.hasClass("has-expand-action") ? 104 : 74;
 		const desired = Math.max(276, this.measureTitleWidth(title, titleText) + 32 + quickActionSpace);
 		const viewportWidth = card.closest<HTMLElement>(".context-tree-viewport")?.clientWidth ?? 500;
 		const maximum = Math.min(500, Math.max(160, viewportWidth - 32));
@@ -490,41 +539,35 @@ export class TopicCardRenderer {
 		const menuWrap = parent.createDiv({ cls: "context-tree-card-more" });
 		const trigger = menuWrap.createEl("button", {
 			cls: "context-tree-card-quick-action",
-			attr: { "aria-label": COPY.actions.more, title: COPY.actions.more, "aria-haspopup": "menu", "aria-expanded": "false" },
+			attr: { "aria-label": COPY.actions.more, title: COPY.actions.more, "aria-expanded": "false" },
 		});
 		// The vertical overflow glyph is the conventional compact-menu signifier.
 		// A horizontal ellipsis can read as ordinary text inside a dense card.
 		setIcon(trigger, "ellipsis-vertical");
 		const menu = menuWrap.createDiv({
 			cls: "context-tree-card-menu",
-			attr: { role: "menu", hidden: "true", "aria-hidden": "true" },
-		});
-		const openSourceItem = menu.createEl("button", {
-			cls: "context-tree-card-menu-item",
-			text: COPY.actions.openSourceBesideGraph,
-			attr: { role: "menuitem" },
+			attr: { role: "group", "aria-label": COPY.actions.more, hidden: "true", "aria-hidden": "true" },
 		});
 		const removeItem = this.callbacks.canRemoveFromGraph(currentNode())
 			? menu.createEl("button", {
 				cls: "context-tree-card-menu-item",
 				text: COPY.actions.removeFromGraph,
-				attr: { role: "menuitem" },
 			})
 			: undefined;
 		const deleteItem = menu.createEl("button", {
 			cls: "context-tree-card-menu-item is-destructive",
 			text: COPY.actions.moveToTrash,
-			attr: { role: "menuitem" },
+		});
+		menuWrap.addEventListener("keydown", (event) => {
+			if (event.key !== "Escape" || this.activeMenu?.wrap !== menuWrap) return;
+			event.preventDefault();
+			event.stopPropagation();
+			this.closeActiveMenu();
 		});
 		trigger.addEventListener("click", (event) => {
 			event.stopPropagation();
 			if (this.activeMenu?.wrap === menuWrap) this.closeActiveMenu();
 			else this.openMenu(menuWrap, trigger, menu);
-		});
-		openSourceItem.addEventListener("click", (event) => {
-			event.stopPropagation();
-			this.closeActiveMenu();
-			this.callbacks.onOpenSource(currentNode());
 		});
 		removeItem?.addEventListener("click", (event) => {
 			event.stopPropagation();

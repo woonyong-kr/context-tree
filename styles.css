@@ -232,7 +232,8 @@
 	gap: 3px;
 	opacity: 0;
 	visibility: hidden;
-	transform: translateY(-2px);
+	transform: translateY(-2px) scale(var(--ct-card-control-scale, 1));
+	transform-origin: right top;
 	pointer-events: none;
 	transition: opacity 150ms ease, transform 150ms ease, visibility 0s linear 150ms;
 }
@@ -253,11 +254,22 @@
 	color: var(--interactive-accent);
 }
 
+.context-tree-card-expand[aria-pressed="true"] {
+	border-color: var(--interactive-accent);
+	color: var(--interactive-accent);
+}
+
 .context-tree-card-more {
 	position: absolute;
 	top: 8px;
 	right: 8px;
 	z-index: 3;
+	opacity: 0;
+	visibility: hidden;
+	transform: scale(var(--ct-card-control-scale, 1));
+	transform-origin: right top;
+	pointer-events: none;
+	transition: opacity 150ms ease, transform 150ms ease, visibility 0s linear 150ms;
 }
 
 .context-tree-card-menu {
@@ -342,9 +354,19 @@
 .context-tree-card.is-pinned .context-tree-card-quick-actions,
 .context-tree-node.is-drag-connection-source .context-tree-card-quick-actions {
 	opacity: 1;
-	transform: translateY(0);
+	transform: translateY(0) scale(var(--ct-card-control-scale, 1));
 	pointer-events: auto;
 	visibility: visible;
+	transition-delay: 0s;
+}
+
+.context-tree-card:hover .context-tree-card-more,
+.context-tree-card:focus-within .context-tree-card-more,
+.context-tree-card.is-pinned .context-tree-card-more,
+.context-tree-card-more.is-open {
+	opacity: 1;
+	visibility: visible;
+	pointer-events: auto;
 	transition-delay: 0s;
 }
 
@@ -440,7 +462,7 @@
 	min-width: 0;
 	width: 100%;
 	margin: 0;
-	padding: 0 44px 0 0;
+	padding: 0 74px 0 0;
 	border: 0 !important;
 	border-radius: 0 !important;
 	background: transparent !important;
@@ -564,7 +586,7 @@
 .context-tree-card.is-editing .context-tree-card-quick-actions {
 	opacity: 1;
 	visibility: visible;
-	transform: translateY(0);
+	transform: translateY(0) scale(var(--ct-card-control-scale, 1));
 	pointer-events: auto;
 }
 
@@ -650,11 +672,19 @@
 	outline: 0;
 }
 
-/* Expanded cards reserve one stable action rail: pin, edit and ⋮. This
+/* Expanded cards reserve one stable action rail: neighbourhood, pin, edit,
+   native source and ⋮. This
    prevents long titles or summaries from painting under controls that remain
    visible for a pinned working card. */
-.context-tree-card.is-detail-open .context-tree-card-trigger { padding-right: 96px; }
-.context-tree-card.is-detail-open.has-expand-action .context-tree-card-trigger { padding-right: 126px; }
+.context-tree-card:not(.is-detail-open).has-expand-action .context-tree-card-trigger {
+	padding-right: 104px;
+}
+.context-tree-card.is-detail-open .context-tree-card-trigger {
+	padding-right: 96px;
+}
+.context-tree-card.is-detail-open.has-expand-action .context-tree-card-trigger {
+	padding-right: 126px;
+}
 .context-tree-card.has-wrapped-title .context-tree-title { white-space: normal !important; }
 .context-tree-card:not(.is-detail-open):not(.has-wrapped-title) .context-tree-title { white-space: nowrap !important; }
 
@@ -848,42 +878,18 @@
 	box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08);
 }
 
-.context-tree-graph-header {
-	position: absolute;
-	top: 14px;
-	left: 14px;
-	z-index: 8;
-	display: flex;
-	box-sizing: border-box;
-	max-width: calc(100% - 28px);
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 6px;
-}
-
-.context-tree-graph-picker,
-.context-tree-save-graph,
 .context-tree-save-graph-input {
+	position: absolute;
+	right: 0;
+	bottom: calc(100% + 7px);
 	box-sizing: border-box;
-	height: 32px;
+	height: 30px;
 	border: 1px solid var(--ct-border);
-	border-radius: 8px;
+	border-radius: 6px;
 	background: color-mix(in srgb, var(--background-primary) 92%, transparent);
 	color: var(--text-normal);
 	font: inherit;
-}
-
-.context-tree-graph-picker,
-.context-tree-save-graph { padding: 0 10px; cursor: pointer; }
-.context-tree-graph-picker {
-	max-width: min(260px, 100%);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-.context-tree-save-graph { color: var(--text-accent); }
-.context-tree-save-graph-input {
-	width: min(220px, max(120px, calc(var(--ct-viewport-width, 100vw) - 48px)));
+	width: min(180px, max(112px, calc(var(--ct-viewport-width, 100vw) - 32px)));
 	padding: 0 9px;
 }
 
@@ -1001,9 +1007,8 @@
 	font-weight: 600;
 	letter-spacing: 0.02em;
 	text-align: left;
-	cursor: pointer;
+	cursor: default;
 }
-.context-tree-empty-eyebrow:hover { color: var(--text-muted); }
 
 .context-tree-empty h2 {
 	margin: 0;
@@ -1022,12 +1027,15 @@
 }
 
 @media (hover: none) {
-	.context-tree-card-quick-actions {
+	.context-tree-card-quick-actions,
+	.context-tree-card-more {
 		opacity: 1;
 		visibility: visible;
 		pointer-events: auto;
-		transform: translateY(0);
 		transition-delay: 0s;
+	}
+	.context-tree-card-quick-actions {
+		transform: translateY(0) scale(var(--ct-card-control-scale, 1));
 	}
 }
 
