@@ -9,7 +9,7 @@ import { buildLinkedCanvasProjection, linkedCanvasVaultLinks } from "./domain/li
 import {
 	createLinkedCanvasProfile,
 	createLinkedCanvasProfileForExistingCanvas,
-	LINKED_CANVAS_FOLDER,
+	enableLinkedCanvasExpansion,
 	linkedCanvasIncludesSource,
 	linkedCanvasProfileFileName,
 	linkedCanvasProfilePath,
@@ -88,10 +88,37 @@ export class LinkedCanvasService {
 			.sort((left, right) => left.basename.localeCompare(right.basename));
 	}
 
+	canvases(): TFile[] {
+		// The Vault is the card library and every standard Canvas is a valid
+		// whiteboard. A profile is optional automation, not an ownership marker.
+		return this.app.vault.getFiles()
+			.filter((file) => file.extension === "canvas")
+			.sort((left, right) => left.basename.localeCompare(right.basename));
+	}
+
+	async createBlank(suggestedName = "Linked Canvas", folderPath = ""): Promise<TFile> {
+		const canvasPath = this.availableCanvasPath(suggestedName, folderPath);
+		const profilePath = linkedCanvasProfilePath(canvasPath);
+		const profile = createLinkedCanvasProfile(canvasPath);
+		const canvasSource = serializeJsonCanvas({ nodes: [], edges: [] });
+		const profileSource = serializeLinkedCanvasProfile(profile);
+		const canvas = await this.app.vault.create(canvasPath, canvasSource);
+		let profileFile: TFile;
+		try {
+			profileFile = await this.app.vault.create(profilePath, profileSource);
+		} catch (error) {
+			const detail = error instanceof Error ? ` ${error.message}` : "";
+			throw new Error(`Created ${canvas.path}, but could not create its Linked Canvas profile.${detail}`);
+		}
+		this.profilesByCanvasPath.set(canvasPath, profile);
+		this.profileFilesByCanvasPath.set(canvasPath, profileFile);
+		this.profileSourcesByCanvasPath.set(canvasPath, profileSource);
+		return canvas;
+	}
+
 	async createFromRoot(root: TFile, suggestedName = `${root.basename} Canvas`): Promise<TFile> {
 		if (root.extension !== "md") throw new Error("Linked Canvas requires a Markdown root.");
-		await this.ensureFolder(LINKED_CANVAS_FOLDER);
-		const canvasPath = this.availableCanvasPath(suggestedName);
+		const canvasPath = this.availableCanvasPath(suggestedName, root.parent?.path ?? "");
 		const profilePath = linkedCanvasProfilePath(canvasPath);
 		const profile = createLinkedCanvasProfile(canvasPath, root.path);
 		const projection = this.projection(profile);
@@ -118,7 +145,13 @@ export class LinkedCanvasService {
 
 	async enableForExistingCanvas(canvasFile: TFile): Promise<boolean> {
 		if (canvasFile.extension !== "canvas") throw new Error("Linked Canvas requires an Obsidian Canvas file.");
-		if (this.hasProfile(canvasFile.path)) return false;
+		const existingProfile = this.profilesByCanvasPath.get(canvasFile.path);
+		if (existingProfile) {
+			if (!enableLinkedCanvasExpansion(existingProfile)) return false;
+			await this.writeProfile(existingProfile);
+			await this.syncCanvas(canvasFile.path);
+			return true;
+		}
 		const canvasSource = await this.app.vault.cachedRead(canvasFile);
 		const canvas = parseJsonCanvas(canvasSource);
 		if (!canvas) throw new Error(`Linked Canvas did not modify malformed Canvas: ${canvasFile.path}`);
@@ -348,30 +381,17 @@ export class LinkedCanvasService {
 		return true;
 	}
 
-	private availableCanvasPath(name: string): string {
+	private availableCanvasPath(name: string, folderPath: string): string {
 		const stem = safeFileStem(name);
+		const folder = normalizePath(folderPath).replace(/^\/+|\/+$/g, "");
 		let suffix = 0;
 		while (true) {
 			const fileName = suffix ? `${stem} ${suffix + 1}.canvas` : `${stem}.canvas`;
-			const candidate = normalizePath(`${LINKED_CANVAS_FOLDER}/${fileName}`);
+			const candidate = normalizePath(folder ? `${folder}/${fileName}` : fileName);
 			if (!this.app.vault.getAbstractFileByPath(candidate)
 				&& !this.app.vault.getAbstractFileByPath(linkedCanvasProfilePath(candidate))) return candidate;
 			suffix += 1;
 		}
 	}
 
-	private async ensureFolder(path: string): Promise<void> {
-		const parts = normalizePath(path).split("/").filter(Boolean);
-		let current = "";
-		for (const part of parts) {
-			current = current ? `${current}/${part}` : part;
-			if (this.app.vault.getAbstractFileByPath(current)) continue;
-			try {
-				await this.app.vault.createFolder(current);
-			} catch (error) {
-				if (this.app.vault.getAbstractFileByPath(current)) continue;
-				throw error;
-			}
-		}
-	}
 }

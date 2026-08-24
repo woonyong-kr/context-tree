@@ -3,6 +3,7 @@ import test from "node:test";
 import {
 	createLinkedCanvasProfile,
 	createLinkedCanvasProfileForExistingCanvas,
+	enableLinkedCanvasExpansion,
 	linkedCanvasProfilePath,
 	linkedCanvasIncludesSource,
 	manualCanvasRelations,
@@ -17,20 +18,20 @@ import type { JsonCanvasDocument } from "../src/domain/json-canvas";
 
 test("a linked canvas profile round-trips portable roots and safe defaults", () => {
 	const profile = createLinkedCanvasProfile("maps/linked-canvas/Project.canvas", "Project.md");
-	assert.equal(profile.depth, 1);
+	assert.equal(profile.depth, 0);
 	assert.equal(profile.relationSync, "visual-only");
 	assert.equal(profile.autoExpandDroppedMarkdown, true);
 	assert.deepEqual(parseLinkedCanvasProfile(serializeLinkedCanvasProfile(profile)), profile);
 	assert.equal(linkedCanvasProfilePath(profile.canvasPath), "maps/linked-canvas/Project.linked-canvas.json");
 });
 
-test("the primary entry point reuses a canvas containing the same source card", () => {
+test("the primary entry point reuses only deliberate roots and seeds", () => {
 	const profile = createLinkedCanvasProfile("Board.canvas", "Root.md");
 	profile.seedPaths = ["Manual.md"];
 	profile.managed.filesByNodeId = { linked: "Linked.md" };
 	assert.equal(linkedCanvasIncludesSource(profile, "Root.md"), true);
 	assert.equal(linkedCanvasIncludesSource(profile, "Manual.md"), true);
-	assert.equal(linkedCanvasIncludesSource(profile, "Linked.md"), true);
+	assert.equal(linkedCanvasIncludesSource(profile, "Linked.md"), false);
 	assert.equal(linkedCanvasIncludesSource(profile, "Other.md"), false);
 });
 
@@ -40,7 +41,26 @@ test("an existing Canvas adopts every Markdown card as a root without inventing 
 		["Question.md", "Evidence.md", "Question.md"],
 	);
 	assert.deepEqual(profile?.rootPaths, ["Question.md", "Evidence.md"]);
+	assert.equal(profile?.depth, 1);
 	assert.equal(createLinkedCanvasProfileForExistingCanvas("Boards/Empty.canvas", []), undefined);
+});
+
+test("zero-depth profiles remain valid while legacy profiles without a depth keep one-hop sync", () => {
+	const zeroDepth = createLinkedCanvasProfile("Board.canvas", "Root.md");
+	assert.equal(parseLinkedCanvasProfile(serializeLinkedCanvasProfile(zeroDepth))?.depth, 0);
+	assert.equal(parseLinkedCanvasProfile(JSON.stringify({
+		schemaVersion: 1,
+		canvasPath: "Legacy.canvas",
+		rootPaths: ["Root.md"],
+	}))?.depth, 1);
+});
+
+test("link-aware expansion is an explicit one-time transition", () => {
+	const profile = createLinkedCanvasProfile("Board.canvas", "Root.md");
+	assert.equal(enableLinkedCanvasExpansion(profile), true);
+	assert.equal(profile.depth, 1);
+	assert.equal(enableLinkedCanvasExpansion(profile), false);
+	assert.equal(profile.depth, 1);
 });
 
 test("renaming a source or Canvas keeps portable profile identity and managed provenance", () => {
@@ -59,9 +79,11 @@ test("renaming a source or Canvas keeps portable profile identity and managed pr
 	assert.equal(renamedCanvas.canvasPath, "maps/linked-canvas/New.canvas");
 });
 
-test("a malformed profile cannot widen an unknown canvas", () => {
+test("a blank-board profile is valid but a malformed target cannot be adopted", () => {
+	const blank = createLinkedCanvasProfile("Board.canvas");
+	assert.deepEqual(blank.rootPaths, []);
+	assert.deepEqual(parseLinkedCanvasProfile(serializeLinkedCanvasProfile(blank)), blank);
 	assert.equal(parseLinkedCanvasProfile("{}"), undefined);
-	assert.equal(parseLinkedCanvasProfile('{"schemaVersion":1,"canvasPath":"Board.canvas","rootPaths":[]}'), undefined);
 	assert.equal(parseLinkedCanvasProfile('{"schemaVersion":1,"canvasPath":"Board.md","rootPaths":["Root.md"]}'), undefined);
 });
 

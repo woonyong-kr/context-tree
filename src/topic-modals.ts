@@ -95,3 +95,38 @@ export class LinkedCanvasPickerModal extends FuzzySuggestModal<TFile> {
 		this.onChoose(canvas);
 	}
 }
+
+export type LinkedCanvasLaunchChoice =
+	| { kind: "blank" }
+	| { kind: "current"; file: TFile }
+	| { kind: "canvas"; file: TFile };
+
+export class LinkedCanvasLauncherModal extends FuzzySuggestModal<LinkedCanvasLaunchChoice> {
+	constructor(
+		app: App,
+		private readonly canvases: readonly TFile[],
+		private readonly currentNote: TFile | undefined,
+		private readonly onChoose: (choice: LinkedCanvasLaunchChoice) => void,
+	) {
+		super(app);
+		this.setPlaceholder(COPY.modal.canvasLauncherPlaceholder);
+	}
+
+	getItems(): LinkedCanvasLaunchChoice[] {
+		return [
+			{ kind: "blank" },
+			...(this.currentNote ? [{ kind: "current" as const, file: this.currentNote }] : []),
+			...this.canvases.map((file) => ({ kind: "canvas" as const, file })),
+		];
+	}
+
+	getItemText(choice: LinkedCanvasLaunchChoice): string {
+		if (choice.kind === "blank") return COPY.modal.canvasLauncherBlank;
+		if (choice.kind === "current") return COPY.modal.canvasLauncherCurrent(choice.file.basename);
+		return COPY.modal.canvasLauncherExisting(choice.file.basename);
+	}
+
+	onChooseItem(choice: LinkedCanvasLaunchChoice): void {
+		this.onChoose(choice);
+	}
+}

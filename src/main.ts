@@ -19,7 +19,12 @@ import {
 import { GraphPhysics } from "./graph/simulation";
 import { GraphDefinitionStore } from "./graph-definition-store";
 import { ContextTreeSettingTab, ContextTreeSettings, DEFAULT_SETTINGS } from "./settings";
-import { LinkedCanvasPickerModal, SavedGraphsModal } from "./topic-modals";
+import {
+	LinkedCanvasLauncherModal,
+	LinkedCanvasPickerModal,
+	SavedGraphsModal,
+	type LinkedCanvasLaunchChoice,
+} from "./topic-modals";
 import { COPY } from "./ui/copy";
 import { ContextTreeView, VIEW_TYPE_CONTEXT_TREE } from "./view";
 import type { InlineEditorDraft } from "./domain/inline-editor-draft";
@@ -63,13 +68,13 @@ export default class ContextTreePlugin extends Plugin {
 		});
 
 		this.addRibbonIcon("layout-dashboard", COPY.view.openRibbon, () => {
-			void this.openCurrentNoteInLinkedCanvas();
+			void this.openLinkedCanvasLauncher();
 		});
 
 		this.addCommand({
 			id: "open-linked-canvas",
 			name: COPY.view.openCanvasCommand,
-			callback: () => void this.openCurrentNoteInLinkedCanvas(),
+			callback: () => void this.openLinkedCanvasLauncher(),
 		});
 		this.addCommand({
 			id: "show-linked-canvas-help",
@@ -112,10 +117,6 @@ export default class ContextTreePlugin extends Plugin {
 				.setTitle(COPY.view.openCanvasCommand)
 				.setIcon("layout-dashboard")
 				.onClick(() => void this.openNoteInLinkedCanvas(file)));
-			menu.addItem((item) => item
-				.setTitle(COPY.view.openCommand)
-				.setIcon("git-fork")
-				.onClick(() => void this.activateNote(file)));
 		}));
 
 		this.registerEvent(this.app.vault.on("create", (file) => this.handleVaultChange(file)));
@@ -134,9 +135,46 @@ export default class ContextTreePlugin extends Plugin {
 
 	openHelp(): void {
 		new LinkedCanvasHelpModal(this.app, {
-			openCanvas: () => this.openCurrentNoteInLinkedCanvas(),
-			openMap: () => this.activateCurrentNote(),
+			openCanvas: () => this.openLinkedCanvasLauncher(),
 		}).open();
+	}
+
+	async openLinkedCanvasLauncher(): Promise<void> {
+		try {
+			await this.linkedCanvas.initialize();
+			const active = this.app.workspace.getActiveFile();
+			const currentNote = active instanceof TFile && active.extension === "md" ? active : undefined;
+			new LinkedCanvasLauncherModal(
+				this.app,
+				this.linkedCanvas.canvases(),
+				currentNote,
+				(choice) => void this.handleLinkedCanvasLaunch(choice),
+			).open();
+		} catch (error) {
+			console.error("Linked Canvas: failed to open the workspace launcher", error);
+			new Notice(COPY.notice.canvasOpenFailed);
+		}
+	}
+
+	private async handleLinkedCanvasLaunch(choice: LinkedCanvasLaunchChoice): Promise<void> {
+		if (choice.kind === "canvas") {
+			await this.linkedCanvas.open(choice.file);
+			new Notice(COPY.notice.canvasOpened);
+			return;
+		}
+		if (choice.kind === "current") {
+			await this.openNoteInLinkedCanvas(choice.file);
+			return;
+		}
+		try {
+			const active = this.app.workspace.getActiveFile();
+			const canvas = await this.linkedCanvas.createBlank("Linked Canvas", active?.parent?.path ?? "");
+			await this.linkedCanvas.open(canvas);
+			new Notice(COPY.notice.blankCanvasCreated);
+		} catch (error) {
+			console.error("Linked Canvas: failed to create a blank Canvas", error);
+			new Notice(COPY.notice.canvasCreateFailed);
+		}
 	}
 
 	async loadSettings(): Promise<void> {

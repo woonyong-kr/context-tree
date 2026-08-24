@@ -3,7 +3,6 @@ import { isContextRelationType } from "./relations";
 import type { ContextRelationType } from "../types";
 
 const LINKED_CANVAS_SCHEMA_VERSION = 1;
-export const LINKED_CANVAS_FOLDER = "maps/linked-canvas";
 const LINKED_CANVAS_PROFILE_SUFFIX = ".linked-canvas.json";
 
 function isMarkdownPath(value: string): boolean {
@@ -57,13 +56,15 @@ function managedState(value: unknown): LinkedCanvasManagedState {
 	};
 }
 
-export function createLinkedCanvasProfile(canvasPath: string, rootPath: string): LinkedCanvasProfile {
+export function createLinkedCanvasProfile(canvasPath: string, rootPath = ""): LinkedCanvasProfile {
 	return {
 		schemaVersion: LINKED_CANVAS_SCHEMA_VERSION,
 		canvasPath: path(canvasPath),
 		rootPaths: [path(rootPath)].filter(Boolean),
 		seedPaths: [],
-		depth: 1,
+		// A new whiteboard starts with the card the user chose. Neighbour
+		// expansion is an explicit opt-in so index notes cannot flood the board.
+		depth: 0,
 		includeOutgoing: true,
 		includeBacklinks: true,
 		autoExpandDroppedMarkdown: true,
@@ -80,9 +81,18 @@ export function createLinkedCanvasProfileForExistingCanvas(
 	const roots = uniquePaths(markdownPaths);
 	if (!roots.length) return undefined;
 	return {
-		...createLinkedCanvasProfile(canvasPath, roots[0]!),
+		...createLinkedCanvasProfile(canvasPath, roots[0]),
 		rootPaths: roots,
+		// Enabling an existing Canvas is the deliberate automation action.
+		depth: 1,
 	};
+}
+
+/** Enables the one-hop automation once without changing a board that already opted in. */
+export function enableLinkedCanvasExpansion(profile: LinkedCanvasProfile): boolean {
+	if (profile.depth > 0) return false;
+	profile.depth = 1;
+	return true;
 }
 
 export function parseLinkedCanvasProfile(source: string): LinkedCanvasProfile | undefined {
@@ -91,9 +101,9 @@ export function parseLinkedCanvasProfile(source: string): LinkedCanvasProfile | 
 		if (!value || value.schemaVersion !== LINKED_CANVAS_SCHEMA_VERSION) return undefined;
 		const canvasPath = path(value.canvasPath);
 		const rootPaths = uniquePaths(value.rootPaths);
-		if (!canvasPath.endsWith(".canvas") || !rootPaths.length) return undefined;
+		if (!canvasPath.endsWith(".canvas")) return undefined;
 		const depth = typeof value.depth === "number" && Number.isInteger(value.depth)
-			? Math.max(1, Math.min(3, value.depth))
+			? Math.max(0, Math.min(3, value.depth))
 			: 1;
 		return {
 			schemaVersion: LINKED_CANVAS_SCHEMA_VERSION,
@@ -118,16 +128,15 @@ export function serializeLinkedCanvasProfile(profile: LinkedCanvasProfile): stri
 }
 
 /**
- * A source belongs to a Linked Canvas when it is an authored root, a manually
- * added seed, or a currently managed linked card. This lets the primary entry
- * point reopen spatial context instead of creating duplicate canvases.
+ * A source deliberately belongs to a Linked Canvas when it is an authored root
+ * or a manually added seed. A derived one-hop card does not claim the source:
+ * opening that note may start its own independent spatial context.
  */
 export function linkedCanvasIncludesSource(profile: LinkedCanvasProfile, sourcePath: string): boolean {
 	const normalized = path(sourcePath);
 	if (!normalized) return false;
 	return profile.rootPaths.includes(normalized)
-		|| profile.seedPaths.includes(normalized)
-		|| Object.values(profile.managed.filesByNodeId).includes(normalized);
+		|| profile.seedPaths.includes(normalized);
 }
 
 export function linkedCanvasProfilePath(canvasPath: string): string {

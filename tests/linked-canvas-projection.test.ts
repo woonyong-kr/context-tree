@@ -11,8 +11,16 @@ const links = {
 	"Orphan.md": [],
 };
 
-test("a current note projects outgoing links, backlinks and linked media at one hop", () => {
+test("a new whiteboard contains only the card the user chose", () => {
 	const profile = createLinkedCanvasProfile("Board.canvas", "Root.md");
+	const projection = buildLinkedCanvasProjection(profile, paths, links);
+	assert.deepEqual(projection.filePaths, ["Root.md"]);
+	assert.deepEqual(projection.relations, []);
+});
+
+test("explicit link-aware sync projects outgoing links, backlinks and media at one hop", () => {
+	const profile = createLinkedCanvasProfile("Board.canvas", "Root.md");
+	profile.depth = 1;
 	const projection = buildLinkedCanvasProjection(profile, paths, links);
 	assert.deepEqual(projection.filePaths, ["Root.md", "Backlink.md", "image.png", "Outgoing.md"]);
 	assert.deepEqual(projection.relations, [
@@ -20,6 +28,14 @@ test("a current note projects outgoing links, backlinks and linked media at one 
 		{ fromPath: "Root.md", toPath: "Outgoing.md" },
 		{ fromPath: "Backlink.md", toPath: "Root.md" },
 	]);
+});
+
+test("manually chosen cards keep their real relation without pulling in their neighbours", () => {
+	const profile = createLinkedCanvasProfile("Board.canvas", "Root.md");
+	profile.seedPaths = ["Outgoing.md"];
+	const projection = buildLinkedCanvasProjection(profile, paths, links);
+	assert.deepEqual(projection.filePaths, ["Root.md", "Outgoing.md"]);
+	assert.deepEqual(projection.relations, [{ fromPath: "Root.md", toPath: "Outgoing.md" }]);
 });
 
 test("depth expands deliberately without including the rest of the vault", () => {
@@ -33,6 +49,7 @@ test("depth expands deliberately without including the rest of the vault", () =>
 test("manually dropped Markdown seeds expand independently while exclusions win", () => {
 	const profile = createLinkedCanvasProfile("Board.canvas", "Root.md");
 	profile.seedPaths = ["Outgoing.md"];
+	profile.depth = 1;
 	profile.excludedPaths = ["image.png", "Backlink.md"];
 	const projection = buildLinkedCanvasProjection(profile, paths, links);
 	assert.deepEqual(projection.rootPaths, ["Root.md", "Outgoing.md"]);

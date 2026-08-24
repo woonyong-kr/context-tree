@@ -58,10 +58,12 @@ Linked Map is a secondary inspection tool rather than a competing whiteboard.
 6. **Geometry is stable.** Hover, focus, Reading, Source, and pin state cannot
    move or resize a card. Visual polish must not change the interaction
    contract.
-7. **A board is not a graph screenshot.** A newly generated standard Canvas
-   starts with one generous root card and a compact two-column reference board.
-   It never uses radial or force-directed placement. This affects only first
-   placement; after creation, the user's Canvas geometry is authoritative.
+7. **A board is not a graph screenshot.** The primary launcher creates a blank
+   standard Canvas, optionally starts with the current note, or reopens an
+   existing board. It never converts every link in an index note into a spatial
+   decision. Cards the user deliberately adds, or an explicitly enabled bounded
+   expansion, use compact board placement rather than a radial or force-directed
+   layout. After placement, the user's Canvas geometry is authoritative.
 
 ## Single source of truth
 
@@ -125,10 +127,12 @@ Generated JSON Canvas cards use the same rule at the protocol boundary:
 `src/domain/generated-canvas-design.ts` is the single source for standard
 Canvas role colours, default dimensions, and initial placement rhythm.
 `json-canvas.ts` consumes that contract and never carries visual constants.
-The root acts as the reading anchor. Linked Markdown and media begin in a
-two-column board beside it with enough room for the widest PDF card. This keeps
-the initial fit readable and leaves native Canvas drag, resize, group, and
-colour controls as the long-term layout authority.
+A blank board has no generated cards and a current-note shortcut has only that
+one file card. When explicit link-aware expansion adds missing Markdown or
+media, generated cards use the role contract and compact columns beside the
+existing seed area. Manually placed cards keep their authored geometry and
+colour. Native Canvas drag, resize, group, and colour controls remain the
+long-term layout authority.
 
 ## Visual release gate
 

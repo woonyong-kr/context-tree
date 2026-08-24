@@ -1,9 +1,9 @@
 {
 	"id": "context-graph",
 	"name": "Linked Canvas",
-	"version": "0.5.11",
+	"version": "0.5.12",
 	"minAppVersion": "1.8.0",
-	"description": "Turn Markdown links into a living Canvas, read notes in place, and keep file-backed cards synchronized.",
+	"description": "Arrange Vault files on standard Canvas boards and optionally keep real Markdown links visible.",
 	"author": "woonyong-kr",
 	"authorUrl": "https://github.com/woonyong-kr",
 	"isDesktopOnly": true

@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.5.12
+
+- Add one native launcher for creating a blank Canvas, optionally starting with
+  the current note, or reopening an existing board.
+- Rewrite the Community listing description around the whiteboard-first job:
+  arrange Vault files first, then opt into bounded Markdown link assistance.
+- Treat Obsidian's File Explorer as the card library: a blank board receives
+  only the Markdown, PDFs, and images the user deliberately places on it.
+- List every standard Vault Canvas in the launcher, including boards that have
+  not enabled a Linked Canvas sidecar yet.
+- Preserve native PDF and image cards, including PNG, JPG, GIF, WebP, SVG, and
+  AVIF, while keeping non-Markdown material out of relationship expansion.
+- Treat Markdown cards deliberately dropped onto the board as additional seeds,
+  synchronising real relations among selected cards without importing their
+  neighbourhood.
+- Make one-hop link expansion an explicit **Enable link-aware sync** action while
+  preserving the one-hop behaviour of already enabled and legacy canvases.
+- Keep automatically derived neighbour cards from claiming a source note or
+  blocking that note from starting its own independent board.
+- Rewrite the in-app guide, README, design system, and UX contract around the
+  curated-board default and the secondary, temporary Linked Map boundary.
+- Remove Linked Map from the Markdown file menu and label it as an advanced
+  Command Palette reader so it no longer competes with the primary whiteboard.
+
 ## 0.5.11
 
 - Add a task-first in-app guide that distinguishes durable Linked Canvas work,

@@ -3,7 +3,6 @@ import { COPY } from "./copy";
 
 export interface LinkedCanvasHelpActions {
 	openCanvas(): Promise<void>;
-	openMap(): Promise<void>;
 }
 
 /** A short, task-first guide. It explains which surface to choose without
@@ -31,12 +30,6 @@ export class LinkedCanvasHelpModal extends Modal {
 
 		new Setting(this.contentEl)
 			.setClass("linked-canvas-help-actions")
-			.addButton((button) => button
-				.setButtonText(COPY.help.openMap)
-				.onClick(() => {
-					this.close();
-					void this.actions.openMap();
-				}))
 			.addButton((button) => button
 				.setCta()
 				.setButtonText(COPY.help.openCanvas)

@@ -16,7 +16,9 @@ import {
 test("keeps generated Canvas role visuals and placement in one design contract", () => {
 	assert.equal(generatedCanvasRole("Root.md", true), "root");
 	assert.equal(generatedCanvasRole("paper.pdf", false), "pdf");
-	assert.equal(generatedCanvasRole("diagram.webp", false), "image");
+	for (const image of ["diagram.png", "photo.jpg", "animation.gif", "vector.svg", "modern.webp", "scan.avif"]) {
+		assert.equal(generatedCanvasRole(image, false), "image");
+	}
 	assert.equal(generatedCanvasRole("Note.md", false), "markdown");
 	assert.deepEqual(generatedCanvasNodeDesign("paper.pdf", false), GENERATED_CANVAS_DESIGN.roles.pdf);
 	assert.deepEqual(generatedCanvasNodePosition(0), {
