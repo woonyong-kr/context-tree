@@ -149,9 +149,9 @@ Obsidian에서 플러그인을 다시 활성화한다. 짧은 카드와 화면�
    열린 카드 hover는 다른 카드와 관계를 지우지 않는다. 카드 동작은 하나의 hover surface로
    보이며 54% 배율에서도 제목·본문과 겹치지 않는다. 우하단 도구 모음,
    검색 패널, 메뉴와 빈 상태는 같은 surface·radius·shadow 체계를 사용한다. component selector에 raw colour·length·radius·shadow·duration·type scale을 추가하지 않고 `styles.css`의 단일 semantic token layer를 거쳐야 하며 `npm run check:css`가 이를 거부해야 한다.
-12. **Linked Canvas 전환:** Map 우하단 **Canvas에서 계속**과 Markdown file menu에서 각각 한 번 실행해 표준 `.canvas`가 열리는지 확인한다. 같은 root의 Canvas가 있으면 파일 수를 늘리지 않고 다시 열며, 없을 때만 생성한다. root, outgoing, backlink, link된 이미지·PDF는 file card이고 원문 내용이 복제되지 않아야 한다.
+12. **Linked Canvas 전환:** Map 우하단 **Canvas에서 계속**을 한 번 실행해 표준 `.canvas`가 열리는지 확인한다. 같은 root의 Canvas가 있으면 파일 수를 늘리지 않고 다시 열며, 없을 때만 생성한다. Map은 고급 Command Palette 탐색기이고 Markdown file menu에는 진입 동작을 추가하지 않는다. root, outgoing, backlink, link된 이미지·PDF는 file card이고 원문 내용이 복제되지 않아야 한다.
 13. **기존 Canvas 활성화:** Markdown·text·image·PDF·group과 수동 edge가 있는 Canvas에서 동기화를 켠다. 모든 기존 geometry와 수동 개체가 유지되고 Markdown 카드의 1-hop만 추가되어야 한다.
-14. **양방향 작업:** Canvas에서 Markdown card를 편집하면 원본 `.md`가 바뀌고 다른 editor에서 즉시 보인다. Markdown을 Canvas에 직접 놓으면 주변 카드가 추가되며, 그 카드를 옮기고 크기를 바꾼 뒤 source link를 변경해도 geometry가 유지된다.
+14. **양방향 작업:** Canvas에서 Markdown card를 편집하면 원본 `.md`가 바뀌고 다른 editor에서 즉시 보인다. Markdown을 Canvas에 직접 놓으면 그 파일은 seed가 되고, 기본 depth 0에서는 이미 놓인 seed 사이의 실제 link만 연결한다. 사용자가 연결 동기화를 켠 Canvas에서만 주변 1-hop card가 추가된다. 카드를 옮기고 크기를 바꾼 뒤 source link를 변경해도 geometry가 유지된다.
 15. **제외·재시작:** 자동 card를 삭제한 뒤 sync·plugin 재활성화·Obsidian 재시작을 거쳐도 다시 생기지 않아야 한다. 같은 파일을 직접 다시 놓으면 복원된다. Canvas·source rename도 끊기지 않아야 한다.
 16. **관계 쓰기 안전:** 기본 모드에서 수동 Canvas edge가 Markdown을 바꾸지 않는지 확인한다. opt-in 뒤 새 방향성 edge는 `linked_canvas_links`에 한 번만 추가되고, edge 삭제는 원문 관계를 삭제하지 않아야 한다.
 17. **비활성 호환성:** 플러그인을 끈 상태에서도 생성·활성화한 `.canvas`를 Obsidian Canvas로 열어 Markdown·PDF·이미지·그룹·text와 수동 edge를 읽고 이동할 수 있어야 한다. `.linked-canvas.json`은 렌더링 필수 파일이 아니다. 확인 뒤 플러그인을 다시 켜고 같은 Canvas를 열었을 때 자동 범위가 이어져야 한다.
