@@ -1,7 +1,7 @@
 import type { App, TAbstractFile, TFile } from "obsidian";
 import { GraphWorkspace, graphScopeIncludesPath, rootedGraphPaths } from "./domain/graph-workspace";
 import { noteLinkTarget } from "./domain/note-link";
-import { DIRECT_RELATION, isContextRelationType, relationItems } from "./domain/relations";
+import { DIRECT_RELATION, isContextRelationType, storedRelationItems } from "./domain/relations";
 import { markdownSummary, markdownWithoutFencedCode, removeMarkdownSummary } from "./topic-content";
 import { ContextTreeLink, ContextTreeNode, ParsedTopic } from "./types";
 import { buildContextTree } from "./tree";
@@ -37,7 +37,7 @@ export function topicGraphMetadataSignature(content: string): string {
 		}
 		return value.join("\n").trim();
 	};
-	return ["context_tree", "context_tree_id", "context_tree_parent", "context_tree_links", "title", "context_tree_summary"]
+	return ["context_tree", "context_tree_id", "context_tree_parent", "linked_canvas_links", "context_tree_links", "title", "context_tree_summary"]
 		.map(entry)
 		.join("\n\u0000\n");
 }
@@ -79,7 +79,7 @@ function extractLinks(app: App, rawValue: unknown, sourcePath: string): ContextT
 	const seen = new Set<string>();
 	const links: ContextTreeLink[] = [];
 
-	for (const item of relationItems(rawValue)) {
+	for (const item of Array.isArray(rawValue) ? rawValue : []) {
 		const rawTarget = typeof item === "string"
 			? item
 			: item && typeof item === "object"
@@ -170,7 +170,7 @@ export async function loadContextTree(
 			title: display.title,
 			summary: display.summary,
 			body: display.body,
-			links: extractLinks(app, frontmatter?.context_tree_links, file.path),
+			links: extractLinks(app, storedRelationItems(frontmatter), file.path),
 			referencePaths: rootedPaths
 				? (outgoingByPath[file.path] ?? []).filter((path) => rootedPaths.has(path))
 				: [],

@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.5.8
+
+- Rename the visible product to **Linked Canvas** while retaining the
+  `context-graph` plugin ID and every legacy saved-map format for update
+  compatibility.
+- Create a standard JSON Canvas from the current Markdown note and its bounded
+  outgoing links, backlinks, PDFs, and images without copying source content.
+- Add adjacent `.linked-canvas.json` profiles for roots, manually dropped
+  seeds, exclusions, sync policy, and generated-object provenance.
+- Preserve native Canvas positions, sizes, colours, groups, text/link cards,
+  media, and manual edges; keep a deleted generated card excluded until the
+  user deliberately drops it again.
+- Adopt existing Obsidian Canvas files without changing their authored layout,
+  and follow both source-note and Canvas renames.
+- Keep Canvas connections visual-only by default, with an explicit additive
+  opt-in that writes directed relations to `linked_canvas_links`.
+- Remove the old Canvas-self backlink artifact on startup and ignore Canvas
+  file-card references when discovering Markdown backlinks.
+- Give newly generated root, Markdown, PDF, and image cards restrained standard
+  Canvas colours for readable role separation.
+- Keep edge-positioned Map documents inside the pane, replace the ambiguous
+  position pin with a keep-open bookmark, and retain full-width native Reading.
+- Replace the public guide with an actual 0.5.8 Map-to-Canvas workflow, four
+  desktop captures, an animated tour, storage contracts, and migration details.
+
 ## 0.5.7
 
 - Restore a restrained spatial dot grid and define three theme-aware surface

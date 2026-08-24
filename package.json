@@ -1,7 +1,7 @@
 {
-	"name": "context-graph",
-	"version": "0.5.7",
-	"description": "A linked-note reading map for Obsidian that preserves Markdown and context.",
+	"name": "linked-canvas",
+	"version": "0.5.8",
+	"description": "Turn Markdown links into a living Canvas while preserving every Vault file as the source of truth.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {
@@ -17,19 +17,21 @@
 	},
 	"keywords": [
 		"obsidian",
+		"canvas",
+		"markdown",
+		"whiteboard",
 		"knowledge-management",
-		"mindmap",
-		"learning"
+		"knowledge-graph"
 	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/woonyong-kr/context-tree.git"
+		"url": "git+https://github.com/woonyong-kr/linked-canvas.git"
 	},
 	"bugs": {
-		"url": "https://github.com/woonyong-kr/context-tree/issues"
+		"url": "https://github.com/woonyong-kr/linked-canvas/issues"
 	},
-	"homepage": "https://github.com/woonyong-kr/context-tree#readme",
+	"homepage": "https://github.com/woonyong-kr/linked-canvas#readme",
 	"engines": {
 		"node": ">=20"
 	},

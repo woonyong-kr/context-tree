@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420" role="img" aria-labelledby="title desc">
+  <title id="title">Linked Canvas source and layout boundary</title>
+  <desc id="desc">Markdown and media flow into file-backed Canvas cards while the Canvas keeps layout.</desc>
+  <rect width="960" height="420" rx="32" fill="#171923"/>
+  <g font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif">
+    <rect x="64" y="104" width="224" height="212" rx="22" fill="#262936" stroke="#596273" stroke-width="2"/>
+    <text x="96" y="154" fill="#f5f6fa" font-size="26" font-weight="700">Source files</text>
+    <text x="96" y="204" fill="#b8bfcc" font-size="20">Markdown</text>
+    <text x="96" y="242" fill="#b8bfcc" font-size="20">PDF</text>
+    <text x="96" y="280" fill="#b8bfcc" font-size="20">Images</text>
+    <path d="M310 210 H432" stroke="#8b5cf6" stroke-width="5" stroke-linecap="round"/>
+    <path d="M420 192 L444 210 L420 228" fill="none" stroke="#8b5cf6" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="464" y="64" width="432" height="292" rx="24" fill="#222635" stroke="#8b5cf6" stroke-width="3"/>
+    <text x="504" y="120" fill="#ffffff" font-size="28" font-weight="700">Linked Canvas</text>
+    <rect x="504" y="154" width="150" height="120" rx="14" fill="#323748" stroke="#687386"/>
+    <rect x="698" y="174" width="150" height="120" rx="14" fill="#323748" stroke="#687386"/>
+    <path d="M654 214 C680 214 676 234 698 234" fill="none" stroke="#43b7d8" stroke-width="4"/>
+    <text x="524" y="204" fill="#f5f6fa" font-size="20" font-weight="600">Live note</text>
+    <text x="718" y="224" fill="#f5f6fa" font-size="20" font-weight="600">Evidence</text>
+    <text x="504" y="326" fill="#b8bfcc" font-size="18">Canvas owns layout. Files keep content.</text>
+  </g>
+</svg>

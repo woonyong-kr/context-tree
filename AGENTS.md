@@ -1,8 +1,9 @@
-# Context Graph repository guide
+# Linked Canvas repository guide
 
-Context Graph is a local-first Obsidian Community Plugin. Markdown notes are
-the source of truth; saved graphs are lenses over those notes, never a second
-content store.
+Linked Canvas is a local-first Obsidian Community Plugin. Markdown and other
+Vault files are the content source of truth; standard Canvas files own layout,
+and saved Maps are temporary lenses over notes rather than a second content
+store.
 
 ## Working agreement
 
@@ -19,8 +20,9 @@ content store.
 - Register workspace, vault, DOM, timer, and component resources through the
   corresponding Obsidian lifecycle owner so unloading the plugin releases them.
 - Keep user-facing copy in `src/ui/copy-ko.ts` and `src/ui/copy-en.ts`.
-- Preserve user changes in Markdown and graph-definition files with optimistic
-  conflict checks; never overwrite an externally changed source silently.
+- Preserve user changes in Markdown, Canvas, sidecar, and legacy Map files with
+  optimistic conflict checks; never overwrite an externally changed source
+  silently.
 
 ## Verification
 
@@ -40,7 +42,7 @@ the new release assets.
 - Keep `package.json`, `manifest.json`, and `versions.json` versions aligned.
 - Tag releases with the exact version, without a `v` prefix.
 - Release `main.js`, `manifest.json`, and `styles.css` as individual assets.
-- Refresh the three actual Obsidian README captures and
+- Refresh the four actual Obsidian README captures and short tour GIF, plus
   `docs/release-media.json` for every release version; `npm run build` enforces
   their version, dimensions, references, and hashes.
 - Do not commit generated `main.js`; CI builds and attests release artifacts.

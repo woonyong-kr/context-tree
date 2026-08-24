@@ -1,6 +1,6 @@
 # Release and Community directory process
 
-This runbook turns an already reviewed commit into a public Context Graph
+This runbook turns an already reviewed commit into a public Linked Canvas
 release. It does not replace the UX contract or the code review: the release
 must begin from a clean working tree and a reviewed commit on `main`.
 
@@ -11,7 +11,7 @@ must begin from a clean working tree and a reviewed commit on `main`.
 - `package.json.version` and `manifest.json.version` are identical semantic
   versions in `x.y.z` form.
 - `docs/release-media.json` names that exact version and records the current
-  README overview, Reading, and Source captures.
+  Canvas, Map, Reading, Source, and tour captures.
 - The release version has not been used as a Git tag or GitHub release.
 - Node.js 20 or later is installed.
 
@@ -36,11 +36,13 @@ it is intentionally ignored and must never be committed.
 Every release candidate must be shown in the README as it actually renders in
 Obsidian. Use one small set of synthetic, public-safe Markdown notes and capture:
 
-1. the compact one-hop overview;
-2. the same card opened in Reading; and
-3. the same card in Source.
+1. a generated native Canvas with distinguishable file roles;
+2. the compact one-hop Map;
+3. the same card opened in Reading;
+4. the same card in Source; and
+5. a short tour assembled only from those verified runtime captures.
 
-Replace the three files under `docs/assets/context-graph-0*.png`, then update
+Replace the four PNG files and one GIF under `docs/assets/linked-canvas-*`, then update
 their exact SHA-256 values, dimensions, Obsidian version, capture date, and
 release version in `docs/release-media.json`. Do not use a mockup, an older
 release, private Vault content, or an image with unrelated panes and notices.
@@ -77,8 +79,8 @@ After the workflow succeeds, verify the exact published release before
 submitting it:
 
 ```bash
-gh release view <version> --repo woonyong-kr/context-tree
-gh attestation verify main.js -R woonyong-kr/context-tree
+gh release view <version> --repo woonyong-kr/linked-canvas
+gh attestation verify main.js -R woonyong-kr/linked-canvas
 ```
 
 Download the release `main.js` for the second command. The release tag must
@@ -88,7 +90,7 @@ the three assets from that matching GitHub release.
 ## Submit to the Obsidian Community directory
 
 1. Sign in at `community.obsidian.md` and connect the GitHub account that owns
-   `woonyong-kr/context-tree`.
+   `woonyong-kr/linked-canvas`.
 2. On **Plugins**, select **New plugin** and supply the public repository URL.
 3. Use **Review branch** to preview the directory scan against `main` before
    submitting.

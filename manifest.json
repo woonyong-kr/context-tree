@@ -1,9 +1,9 @@
 {
 	"id": "context-graph",
-	"name": "Context Graph",
-	"version": "0.5.7",
+	"name": "Linked Canvas",
+	"version": "0.5.8",
 	"minAppVersion": "1.8.0",
-	"description": "Read linked Markdown in place, expand one branch at a time, and keep your map.",
+	"description": "Turn Markdown links into a living Canvas, read notes in place, and keep file-backed cards synchronized.",
 	"author": "woonyong-kr",
 	"authorUrl": "https://github.com/woonyong-kr",
 	"isDesktopOnly": true

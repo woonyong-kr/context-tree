@@ -26,6 +26,7 @@ import { COPY } from "./ui/copy";
 import { ContextTreeView, VIEW_TYPE_CONTEXT_TREE } from "./view";
 import type { InlineEditorDraft } from "./domain/inline-editor-draft";
 import { migrateInlineDrafts, persistedSettings } from "./domain/settings-storage";
+import { LinkedCanvasService } from "./linked-canvas-service";
 
 export default class ContextTreePlugin extends Plugin {
 	settings!: ContextTreeSettings;
@@ -37,10 +38,12 @@ export default class ContextTreePlugin extends Plugin {
 	private readonly pendingPhysicsGraphIds = new Set<string>();
 	private settingsSaveQueue: Promise<void> = Promise.resolve();
 	private definitionStore!: GraphDefinitionStore;
+	private linkedCanvas!: LinkedCanvasService;
 	private readonly transientGraphs = new Map<string, GraphWorkspace>();
 
 	async onload(): Promise<void> {
 		this.definitionStore = new GraphDefinitionStore(this.app);
+		this.linkedCanvas = new LinkedCanvasService(this.app);
 		await this.loadSettings();
 
 		this.registerView(
@@ -53,8 +56,15 @@ export default class ContextTreePlugin extends Plugin {
 		// file and then failing with "File already exists".
 		this.app.workspace.onLayoutReady(() => {
 			void this.initialiseGraphDefinitions().catch((error: unknown) => {
-				console.error("Context Graph: failed to initialise graph definitions", error);
+				console.error("Linked Canvas: failed to initialise legacy graph definitions", error);
 			});
+			void this.linkedCanvas.initialize().catch((error: unknown) => {
+				console.error("Linked Canvas: failed to initialise Canvas profiles", error);
+			});
+		});
+
+		this.addRibbonIcon("git-fork", COPY.view.openRibbon, () => {
+			void this.activateCurrentNote();
 		});
 
 		this.addCommand({
@@ -67,12 +77,36 @@ export default class ContextTreePlugin extends Plugin {
 			name: COPY.view.manageCommand,
 			callback: () => this.openGraphPicker(),
 		});
+		this.addCommand({
+			id: "create-linked-canvas",
+			name: COPY.view.createCanvasCommand,
+			callback: () => void this.createLinkedCanvasFromCurrentNote(),
+		});
+		this.addCommand({
+			id: "refresh-linked-canvas",
+			name: COPY.view.refreshCanvasCommand,
+			callback: () => void this.syncActiveLinkedCanvas(),
+		});
+		this.addCommand({
+			id: "enable-linked-canvas",
+			name: COPY.view.enableCanvasCommand,
+			callback: () => void this.enableActiveCanvas(),
+		});
+		this.addCommand({
+			id: "toggle-linked-canvas-relation-sync",
+			name: COPY.view.toggleCanvasRelationSyncCommand,
+			callback: () => void this.toggleActiveCanvasRelationSync(),
+		});
 		this.registerEvent(this.app.workspace.on("file-menu", (menu, file) => {
 			if (!(file instanceof TFile) || file.extension !== "md") return;
 			menu.addItem((item) => item
 				.setTitle(COPY.view.openCommand)
 				.setIcon("share-2")
 				.onClick(() => void this.activateNote(file)));
+			menu.addItem((item) => item
+				.setTitle(COPY.view.createCanvasCommand)
+				.setIcon("layout-dashboard")
+				.onClick(() => void this.createLinkedCanvas(file)));
 		}));
 
 		this.registerEvent(this.app.vault.on("create", (file) => this.handleVaultChange(file)));
@@ -171,6 +205,89 @@ export default class ContextTreePlugin extends Plugin {
 		await this.activateView(id);
 	}
 
+	async createLinkedCanvasFromCurrentNote(): Promise<void> {
+		const file = this.app.workspace.getActiveFile();
+		if (!(file instanceof TFile) || file.extension !== "md") {
+			new Notice(COPY.notice.openMarkdownFirst);
+			return;
+		}
+		await this.createLinkedCanvas(file);
+	}
+
+	async createLinkedCanvasFromPath(path: string): Promise<void> {
+		const file = this.app.vault.getAbstractFileByPath(path);
+		if (!(file instanceof TFile) || file.extension !== "md") {
+			new Notice(COPY.notice.sourceMissing);
+			return;
+		}
+		await this.createLinkedCanvas(file);
+	}
+
+	private async createLinkedCanvas(file: TFile): Promise<void> {
+		try {
+			const canvas = await this.linkedCanvas.createFromRoot(file);
+			await this.linkedCanvas.open(canvas);
+			new Notice(COPY.notice.canvasCreated);
+		} catch (error) {
+			console.error("Linked Canvas: failed to create Canvas", error);
+			new Notice(COPY.notice.canvasCreateFailed);
+		}
+	}
+
+	private activeLinkedCanvas(): TFile | undefined {
+		const file = this.app.workspace.getActiveFile();
+		return file instanceof TFile && file.extension === "canvas" && this.linkedCanvas.hasProfile(file.path)
+			? file
+			: undefined;
+	}
+
+	private async syncActiveLinkedCanvas(): Promise<void> {
+		const canvas = this.activeLinkedCanvas();
+		if (!canvas) {
+			new Notice(COPY.notice.openLinkedCanvasFirst);
+			return;
+		}
+		try {
+			await this.linkedCanvas.syncNow(canvas);
+			new Notice(COPY.notice.canvasSynced);
+		} catch (error) {
+			console.error("Linked Canvas: failed to sync Canvas", error);
+			new Notice(COPY.notice.canvasSyncFailed);
+		}
+	}
+
+	private async enableActiveCanvas(): Promise<void> {
+		const file = this.app.workspace.getActiveFile();
+		if (!(file instanceof TFile) || file.extension !== "canvas") {
+			new Notice(COPY.notice.openCanvasFirst);
+			return;
+		}
+		try {
+			const enabled = await this.linkedCanvas.enableForExistingCanvas(file);
+			new Notice(enabled ? COPY.notice.canvasEnabled : COPY.notice.canvasAlreadyEnabled);
+		} catch (error) {
+			console.error("Linked Canvas: failed to enable an existing Canvas", error);
+			new Notice(COPY.notice.canvasEnableFailed);
+		}
+	}
+
+	private async toggleActiveCanvasRelationSync(): Promise<void> {
+		const canvas = this.activeLinkedCanvas();
+		if (!canvas) {
+			new Notice(COPY.notice.openLinkedCanvasFirst);
+			return;
+		}
+		try {
+			const mode = await this.linkedCanvas.toggleRelationSync(canvas);
+			new Notice(mode === "frontmatter-additive"
+				? COPY.notice.canvasRelationSyncEnabled
+				: COPY.notice.canvasRelationSyncDisabled);
+		} catch (error) {
+			console.error("Linked Canvas: failed to change relation sync", error);
+			new Notice(COPY.notice.canvasSyncFailed);
+		}
+	}
+
 	async createGraph(
 		name: string,
 		scope: GraphScopeInput = { kind: "curated" },
@@ -231,16 +348,6 @@ export default class ContextTreePlugin extends Plugin {
 		this.refreshOpenViews();
 	}
 
-	async saveTransientGraph(
-		graphId: string,
-		name: string,
-		viewState: GraphViewState,
-	): Promise<GraphWorkspace> {
-		const transient = this.transientGraphs.get(graphId);
-		if (!transient) throw new Error("Only a current-note graph can be saved here.");
-		return this.createGraph(name, transient.scope, viewState);
-	}
-
 	inlineDraft(path: string): InlineEditorDraft | undefined {
 		return this.settings.inlineDrafts[path];
 	}
@@ -251,7 +358,7 @@ export default class ContextTreePlugin extends Plugin {
 		this.draftSaveTimer = window.setTimeout(() => {
 			this.draftSaveTimer = undefined;
 			void this.persistSettings().catch((error: unknown) => {
-				console.error("Context Graph: failed to persist inline draft", error);
+				console.error("Linked Canvas: failed to persist inline draft", error);
 			});
 		}, 600);
 	}
@@ -285,7 +392,7 @@ export default class ContextTreePlugin extends Plugin {
 		if (this.viewStateTimer !== undefined) window.clearTimeout(this.viewStateTimer);
 		this.viewStateTimer = window.setTimeout(() => {
 			this.viewStateTimer = undefined;
-			void this.persistSettings().catch((error: unknown) => console.error("Context Graph: failed to save view state", error));
+			void this.persistSettings().catch((error: unknown) => console.error("Linked Canvas: failed to save view state", error));
 		}, 420);
 	}
 
@@ -306,7 +413,7 @@ export default class ContextTreePlugin extends Plugin {
 		this.physicsSaveTimer = window.setTimeout(() => {
 			this.physicsSaveTimer = undefined;
 			void this.flushGraphPhysicsSaves().catch((error: unknown) => {
-				console.error("Context Graph: failed to save graph physics", error);
+				console.error("Linked Canvas: failed to save Map physics", error);
 				this.scheduleDefinitionRefresh();
 			});
 		}, 240);
@@ -327,12 +434,13 @@ export default class ContextTreePlugin extends Plugin {
 	private persistSettings(): Promise<void> {
 		const save = this.settingsSaveQueue.then(() => this.saveData(persistedSettings(this.settings)));
 		this.settingsSaveQueue = save.catch((error: unknown) => {
-			console.error("Context Graph: failed to persist plugin settings", error);
+			console.error("Linked Canvas: failed to persist plugin settings", error);
 		});
 		return save;
 	}
 
 	onunload(): void {
+		this.linkedCanvas.dispose();
 		if (this.refreshTimer !== undefined) window.clearTimeout(this.refreshTimer);
 		if (this.viewStateTimer !== undefined) {
 			window.clearTimeout(this.viewStateTimer);
@@ -347,7 +455,7 @@ export default class ContextTreePlugin extends Plugin {
 		}
 		if (this.pendingPhysicsGraphIds.size) {
 			void this.flushGraphPhysicsSaves().catch((error: unknown) => {
-				console.error("Context Graph: failed to flush graph physics", error);
+				console.error("Linked Canvas: failed to flush Map physics", error);
 			});
 		}
 	}
@@ -378,13 +486,14 @@ export default class ContextTreePlugin extends Plugin {
 	}
 
 	private handleVaultChange(file?: TAbstractFile, previousPath?: string): void {
+		if (file) this.linkedCanvas.handleVaultChange(file, previousPath);
 		if (this.definitionStore.isDefinitionPath(file?.path ?? "") || this.definitionStore.isDefinitionPath(previousPath ?? "")) {
 			this.scheduleDefinitionRefresh();
 			return;
 		}
 		if (file instanceof TFile && file.extension === "md" && previousPath?.endsWith(".md") && previousPath !== file.path) {
 			void this.handleMarkdownRename(previousPath, file.path).catch((error: unknown) => {
-				console.error("Context Graph: failed to preserve graph state after a note rename", error);
+				console.error("Linked Canvas: failed to preserve Map state after a note rename", error);
 			});
 			return;
 		}
@@ -417,7 +526,7 @@ export default class ContextTreePlugin extends Plugin {
 				await this.writeGraphDefinition(graph);
 			} catch (error) {
 				graph.scope = previousScope;
-				console.error(`Context Graph: did not overwrite externally changed graph ${graph.id}`, error);
+				console.error(`Linked Canvas: did not overwrite externally changed Map ${graph.id}`, error);
 			}
 		}
 		for (const [graphId, state] of Object.entries(this.settings.viewStates)) {
@@ -437,7 +546,7 @@ export default class ContextTreePlugin extends Plugin {
 		this.definitionRefreshTimer = window.setTimeout(() => {
 			this.definitionRefreshTimer = undefined;
 			void this.reloadGraphDefinitions().catch((error: unknown) => {
-				console.error("Context Graph: failed to reload graph definition files", error);
+				console.error("Linked Canvas: failed to reload Map definition files", error);
 			});
 		}, 180);
 	}
@@ -505,7 +614,7 @@ export default class ContextTreePlugin extends Plugin {
 			const view = leaf.view;
 			if (view instanceof ContextTreeView) {
 				void view.refresh().catch((error: unknown) => {
-					console.error("Context Graph: failed to refresh graph", error);
+					console.error("Linked Canvas: failed to refresh Map", error);
 				});
 			}
 		}

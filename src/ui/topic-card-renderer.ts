@@ -175,7 +175,7 @@ export class TopicCardRenderer {
 			"context-tree-card-quick-action context-tree-card-expand",
 			() => this.callbacks.onToggleNeighbours(nodeReference.current),
 		);
-		this.createIconAction(quickActions, "pin", COPY.actions.pinCard, "context-tree-card-quick-action context-tree-card-pin", () => {
+		this.createIconAction(quickActions, "bookmark", COPY.actions.pinCard, "context-tree-card-quick-action context-tree-card-pin", () => {
 			this.callbacks.onPin(nodeReference.current);
 		});
 		const connectionPort = this.createIconAction(
@@ -239,6 +239,7 @@ export class TopicCardRenderer {
 		const pinButton = card.querySelector<HTMLButtonElement>(".context-tree-card-pin");
 		if (pinButton) {
 			const label = state.isPinned ? COPY.actions.unpinCard : COPY.actions.pinCard;
+			setIcon(pinButton, state.isPinned ? "bookmark-check" : "bookmark");
 			pinButton.setAttribute("aria-label", label);
 			pinButton.setAttribute("title", label);
 			pinButton.setAttribute("aria-pressed", String(state.isPinned));
@@ -502,7 +503,7 @@ export class TopicCardRenderer {
 				this.callbacks.onMeasure();
 			})
 			.catch((error: unknown) => {
-				console.error("Context Graph: failed to render card Markdown", error);
+				console.error("Linked Canvas: failed to render card Markdown", error);
 				detail.setText(COPY.notice.renderFailed);
 				this.callbacks.onMeasure();
 			});

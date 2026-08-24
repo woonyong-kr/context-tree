@@ -4,8 +4,8 @@
 	--ct-font-scale: 1.2;
 	/* Three neutral surfaces keep spatial depth visible in every Obsidian theme:
 	   workspace, compact index card, and opened document. */
-	--ct-canvas: var(--background-secondary);
-	--ct-card: color-mix(in srgb, var(--background-primary) 94%, var(--text-normal) 6%);
+	--ct-canvas: color-mix(in srgb, var(--background-secondary) 94%, var(--background-primary) 6%);
+	--ct-card: color-mix(in srgb, var(--background-primary) 88%, var(--background-secondary) 12%);
 	--ct-card-open: color-mix(in srgb, var(--background-primary) 92%, var(--interactive-accent) 8%);
 	--ct-card-hover: color-mix(in srgb, var(--background-primary) 90%, var(--text-normal) 10%);
 	--ct-card-focus: color-mix(in srgb, var(--ct-card) 88%, var(--interactive-accent) 12%);
@@ -17,9 +17,14 @@
 	--ct-border-strong: rgb(128 128 128 / 58%);
 	--ct-edge: color-mix(in srgb, var(--text-muted) 52%, transparent);
 	--ct-dot: color-mix(in srgb, var(--text-faint) 46%, transparent);
+	--ct-related: color-mix(in srgb, var(--interactive-accent) 72%, var(--text-muted));
+	--ct-prerequisite: color-mix(in srgb, var(--color-orange, #c98a3a) 72%, var(--text-muted));
+	--ct-supports: color-mix(in srgb, var(--color-green, #58a66c) 72%, var(--text-muted));
+	--ct-contrasts: color-mix(in srgb, var(--color-red, #d35f5f) 72%, var(--text-muted));
+	--ct-follow-up: color-mix(in srgb, var(--color-purple, #9974d8) 72%, var(--text-muted));
 	--ct-muted: var(--text-muted);
-	--ct-card-radius: 6px;
-	--ct-card-shadow: none;
+	--ct-card-radius: 8px;
+	--ct-card-shadow: 0 1px 2px rgb(0 0 0 / 10%);
 	--ct-card-shadow-hover: 0 2px 8px rgb(0 0 0 / 8%);
 	--ct-popover-shadow: 0 8px 24px rgb(0 0 0 / 14%);
 	display: flex;
@@ -31,7 +36,7 @@
 
 .context-tree-action,
 .context-tree-zoom-button {
-	border: 1px solid transparent;
+	border: 1px solid var(--ct-border);
 	border-radius: 6px;
 	background: transparent;
 	color: var(--text-muted);
@@ -105,6 +110,14 @@
 	stroke-linecap: round;
 	vector-effect: non-scaling-stroke;
 }
+
+/* Colour is reserved for authored relationship meaning. Ordinary wikilinks
+   remain neutral, while typed relations keep a stable visual vocabulary. */
+.context-tree-edge[data-relation~="related"] { stroke: var(--ct-related); }
+.context-tree-edge[data-relation~="prerequisite"] { stroke: var(--ct-prerequisite); }
+.context-tree-edge[data-relation~="supports"] { stroke: var(--ct-supports); }
+.context-tree-edge[data-relation~="contrasts"] { stroke: var(--ct-contrasts); }
+.context-tree-edge[data-relation~="follow-up"] { stroke: var(--ct-follow-up); }
 
 .context-tree-edge-endpoint {
 	position: absolute;
@@ -245,7 +258,7 @@
 	width: min(var(--ct-card-width, 276px), max(160px, calc(var(--ct-viewport-width, 100vw) - 32px)));
 	min-height: 82px;
 	padding: 14px 16px 15px;
-	border: 1px solid transparent;
+	border: 1px solid var(--ct-border);
 	border-radius: var(--ct-card-radius);
 	cursor: grab;
 	background: var(--ct-card);
@@ -292,8 +305,8 @@
 }
 
 .context-tree-card-pin[aria-pressed="true"] {
-	background: var(--ct-control-hover);
-	color: var(--text-normal);
+	background: color-mix(in srgb, var(--interactive-accent) 18%, var(--ct-control));
+	color: var(--text-accent);
 }
 
 .context-tree-card-expand[aria-pressed="true"] {
@@ -568,16 +581,20 @@
 .context-tree-card.is-detail-open {
 	display: flex;
 	flex-direction: column;
-	width: min(680px, max(180px, calc(var(--ct-viewport-width, 100vw) - 40px)));
+	width: max(180px, min(680px, calc(var(--ct-viewport-width, 100vw) - 40px), var(--ct-open-card-max-width, 680px)));
 	max-height: max(180px, calc(var(--ct-viewport-height, 760px) - 72px));
 	padding: var(--ct-card-open-padding-top, 32px) 34px 32px;
-	border-color: rgb(128 128 128 / 24%);
-	border-radius: 4px;
-	background: var(--ct-card);
+	border-color: color-mix(in srgb, var(--interactive-accent) 34%, var(--ct-border));
+	border-radius: 10px;
+	background: var(--ct-card-open);
 	box-shadow: 0 12px 36px rgb(0 0 0 / 18%), 0 1px 2px rgb(0 0 0 / 10%);
 	cursor: grab;
 	transform: scale(var(--ct-card-detail-scale, 1));
 	transform-origin: center;
+}
+
+.context-tree-card.is-detail-open.is-pinned {
+	border-color: color-mix(in srgb, var(--interactive-accent) 44%, var(--ct-border));
 }
 
 /* Empty canvas may keep zooming while Reading stays open. Preserve the
@@ -859,6 +876,10 @@
 }
 
 .context-tree-detail {
+	/* Native Reading View may inherit the user's pane-level readable-line
+	   length. Inside a card the card itself is the readable column, so its
+	   rendered Markdown should use the complete inner width. */
+	--file-line-width: 100%;
 	max-width: 100%;
 	padding-top: 0;
 	border-top: 0;
@@ -981,21 +1002,6 @@
 	border-radius: 6px;
 	background: var(--ct-control);
 	box-shadow: 0 1px 4px rgb(0 0 0 / 8%);
-}
-
-.context-tree-save-graph-input {
-	position: absolute;
-	right: 0;
-	bottom: calc(100% + 7px);
-	box-sizing: border-box;
-	height: 30px;
-	border: 1px solid var(--ct-border);
-	border-radius: 6px;
-	background: var(--ct-control);
-	color: var(--text-normal);
-	font: inherit;
-	width: min(180px, max(112px, calc(var(--ct-viewport-width, 100vw) - 32px)));
-	padding: 0 9px;
 }
 
 .context-tree-search-panel {

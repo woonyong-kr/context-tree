@@ -1,26 +1,38 @@
 {
-	"version": "0.5.7",
+	"version": "0.5.8",
 	"capturedWith": "Obsidian 1.13.7",
 	"capturedAt": "2026-08-24",
 	"publicSafeSample": true,
 	"assets": [
 		{
-			"path": "docs/assets/context-graph-01-overview.png",
-			"width": 1116,
-			"height": 769,
-			"sha256": "4bf433db8bc16cf9794905529e1c81b5f50eeb00e9c82c59aed70a60cad699b7"
+			"path": "docs/assets/linked-canvas-01-canvas.png",
+			"width": 1229,
+			"height": 768,
+			"sha256": "b00113f9cced5a72a25ca895f5e39e6237bde53f73a54f0ba1293df38973a48c"
 		},
 		{
-			"path": "docs/assets/context-graph-02-reading.png",
-			"width": 1116,
-			"height": 769,
-			"sha256": "cb4604700026a1e8ad40f92f70bfd12ed6388b2378174502febdd79edafd8580"
+			"path": "docs/assets/linked-canvas-02-map.png",
+			"width": 1229,
+			"height": 768,
+			"sha256": "790d3e22d1ce8ab3e3782b703b7c61e371a4234d9b77fdebaab267ac27271eac"
 		},
 		{
-			"path": "docs/assets/context-graph-03-source.png",
-			"width": 1116,
-			"height": 769,
-			"sha256": "506255ab07a8e70d8271a4f99d1e7b03698ddd81cc67d0b58f130ef1a940827c"
+			"path": "docs/assets/linked-canvas-03-reading.png",
+			"width": 1229,
+			"height": 768,
+			"sha256": "6a849f7b0955ad6f73f8a1a59df9267ba9d19e0e6cbec2acf3b721c30fbf4fff"
+		},
+		{
+			"path": "docs/assets/linked-canvas-04-edit.png",
+			"width": 1229,
+			"height": 768,
+			"sha256": "96a874739888ee351075c36e74814467a19520177d648df62662e5f28e6e72a8"
+		},
+		{
+			"path": "docs/assets/linked-canvas-tour.gif",
+			"width": 1228,
+			"height": 767,
+			"sha256": "0b8ee5592fd4e5dfac9db924b523eedefe476270152c7416451074d577890bbf"
 		}
 	]
 }

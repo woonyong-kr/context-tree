@@ -3,9 +3,11 @@ import { readFile } from "node:fs/promises";
 
 const repository = new URL("../", import.meta.url);
 const requiredAssets = [
-	"docs/assets/context-graph-01-overview.png",
-	"docs/assets/context-graph-02-reading.png",
-	"docs/assets/context-graph-03-source.png",
+	"docs/assets/linked-canvas-01-canvas.png",
+	"docs/assets/linked-canvas-02-map.png",
+	"docs/assets/linked-canvas-03-reading.png",
+	"docs/assets/linked-canvas-04-edit.png",
+	"docs/assets/linked-canvas-tour.gif",
 ];
 
 const readJson = async (path) => JSON.parse(await readFile(new URL(path, repository), "utf8"));
@@ -18,6 +20,16 @@ const [packageJson, manifest, media, readme] = await Promise.all([
 
 const fail = (message) => {
 	throw new Error(`release media contract: ${message}`);
+};
+
+const imageDimensions = (bytes, path) => {
+	if (bytes.subarray(0, 8).toString("hex") === "89504e470d0a1a0a") {
+		return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+	}
+	if (["GIF87a", "GIF89a"].includes(bytes.subarray(0, 6).toString("ascii"))) {
+		return { width: bytes.readUInt16LE(6), height: bytes.readUInt16LE(8) };
+	}
+	fail(`${path} is not a PNG or GIF`);
 };
 
 if (packageJson.version !== manifest.version) fail("package and manifest versions differ");
@@ -37,10 +49,7 @@ for (const path of requiredAssets) {
 	if (!readme.includes(`](${path})`)) fail(`README does not embed ${path}`);
 
 	const bytes = await readFile(new URL(path, repository));
-	const pngSignature = "89504e470d0a1a0a";
-	if (bytes.subarray(0, 8).toString("hex") !== pngSignature) fail(`${path} is not a PNG`);
-	const width = bytes.readUInt32BE(16);
-	const height = bytes.readUInt32BE(20);
+	const { width, height } = imageDimensions(bytes, path);
 	if (width < 900 || height < 600) fail(`${path} is too small for README inspection`);
 	if (record.width !== width || record.height !== height) fail(`${path} dimensions are stale`);
 	const sha256 = createHash("sha256").update(bytes).digest("hex");

@@ -1,0 +1,54 @@
+{
+	"nodes": [
+		{
+			"id": "existing-group",
+			"type": "group",
+			"label": "Existing research space",
+			"x": -520,
+			"y": -360,
+			"width": 1160,
+			"height": 760,
+			"color": "6"
+		},
+		{
+			"id": "existing-context",
+			"type": "text",
+			"text": "# Hand-authored context\n\nThis text card, group, edge, and layout must remain user-owned.",
+			"x": -440,
+			"y": -220,
+			"width": 360,
+			"height": 220,
+			"color": "3"
+		},
+		{
+			"id": "existing-root",
+			"type": "file",
+			"file": "maps/linked-canvas/demo/Manual seed.md",
+			"x": 100,
+			"y": -220,
+			"width": 420,
+			"height": 300,
+			"color": "1"
+		},
+		{
+			"id": "existing-media",
+			"type": "file",
+			"file": "maps/linked-canvas/demo/workflow.svg",
+			"x": -180,
+			"y": 120,
+			"width": 420,
+			"height": 184
+		}
+	],
+	"edges": [
+		{
+			"id": "existing-manual-edge",
+			"fromNode": "existing-context",
+			"fromSide": "right",
+			"toNode": "existing-root",
+			"toSide": "left",
+			"label": "question",
+			"color": "3"
+		}
+	]
+}

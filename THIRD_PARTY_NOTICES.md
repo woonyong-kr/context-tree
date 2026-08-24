@@ -1,6 +1,6 @@
 # Third-party notices
 
-Context Graph bundles `d3-force`, `d3-dispatch`, `d3-quadtree`, and `d3-timer`.
+Linked Canvas bundles `d3-force`, `d3-dispatch`, `d3-quadtree`, and `d3-timer`.
 These packages use the following ISC license:
 
 Copyright 2010-2021 Mike Bostock

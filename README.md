@@ -1,348 +1,300 @@
-# Context Graph
+# Linked Canvas
 
-**Read linked Markdown in place, expand one branch at a time, and keep your
-map.**
+**Turn the note you are reading into a useful visual workspace—without copying
+its content into another database.**
 
-Context Graph opens the current Markdown note and its direct links as one quiet
-workspace. Read a linked note in place, expand only the branch that matters,
-and keep editing the original Markdown without losing the surrounding context.
+Linked Canvas connects two Obsidian workflows that normally stop short of each
+other:
 
-![Obsidian Markdown rendered in a document-like card without leaving the graph](docs/assets/context-graph-02-reading.png)
+- **Linked Map** opens the current note and its direct links as a temporary,
+  readable map. Open and edit the real Markdown inside a card.
+- **Linked Canvas** turns that neighbourhood into a standard `.canvas` file for
+  durable layout, groups, text cards, images, PDFs, and manual connections.
 
-The centre card above is the actual note, rendered by Obsidian. Its neighbours
-stay visible while the document scrolls, and opening or editing the card does
-not move the map.
+The files stay the source of truth. The Canvas owns space. A small sidecar owns
+only the bounded link automation that you explicitly enable.
 
-- **Start with a note, not a blank canvas.** One command resolves the current
-  note and its direct links. There is no workspace or drawing step to maintain.
-- **Read the real Markdown.** Headings, lists, callouts, embeds, code, tables,
-  math, and plugin post-processors use Obsidian's Reading renderer.
-- **Expand with intent.** Open one useful branch, collapse it again, or save the
-  map only when the reading trail is worth keeping.
+![Linked Canvas: map, in-place Reading, Source editing, and a native Obsidian Canvas](docs/assets/linked-canvas-tour.gif)
 
-Markdown remains the only source of truth. Context Graph adds no account,
-telemetry, remote service, graph database, semantic AI, or required frontmatter.
+## Why this plugin exists
 
-## Start with one note
+Obsidian already has a Local Graph and Canvas. Each is good at a different job:
 
-1. Open a Markdown note.
-2. Right-click the note and choose **Open linked-note reading map**, or run the
-   same Context Graph command from the command palette.
-3. Select a card to read it in place.
-4. Use **Show _n_ neighbouring notes** to continue through one branch. Use the
-   same action again to collapse that branch.
-5. Choose **Save this graph** only if the exploration is worth keeping.
+- Local Graph shows connections, but it is not a document-reading workspace.
+- Canvas is a capable whiteboard, but a new Canvas starts blank and does not
+  keep a selected note's Markdown neighbourhood in sync.
 
-The first view is temporary. Closing it creates no graph file. Saving creates a
-small `.context-graph` definition, while every card continues to read from its
-Markdown source.
+Linked Canvas adds the missing bridge. Start from a real note instead of an
+empty board, inspect the linked documents before committing to a layout, then
+keep the useful result as ordinary JSON Canvas. Disable the plugin and the
+Markdown, PDFs, images, groups, text cards, positions, sizes, and manual edges
+remain normal Obsidian content.
 
-## A reading surface, not another knowledge store
+It is most useful for:
 
-Context Graph is useful when opening every linked note in a separate tab would
-make you lose the question or evidence trail you are following. Typical uses
-include:
+- turning a research question into a board of sources, evidence, and decisions;
+- reviewing notes produced by a long Q&A or coding session without opening a
+  chain of tabs;
+- arranging a project root and the documents it actually links to;
+- building a learning map from prerequisites and follow-up notes; and
+- collecting Markdown, PDF, and image references on one portable whiteboard.
 
-- tracing notes produced by a long research or Q&A session;
-- reviewing the evidence and follow-up around a decision;
-- following prerequisites while learning; and
-- keeping a root document and its changing neighbourhood visible.
+## Your first useful board in 60 seconds
 
-Every visible relationship comes from an inspectable Markdown link, backlink,
-or optional typed relationship. Context Graph does not infer that two notes are
-related, and it does not turn the Vault into a second visual database.
+1. Open any Markdown note.
+2. Select the **Linked Canvas** ribbon icon. A one-hop Linked Map opens
+   immediately—no setup dialog, folder convention, or required frontmatter.
+3. Select a card to read the full note in place. Use the pencil to edit its
+   complete Markdown source without leaving the map.
+4. Select **Save as a Linked Canvas** in the lower-right toolbar when the
+   neighbourhood is worth arranging.
+5. In the native Canvas, move and resize cards, add groups or text, and drop
+   another Markdown note. Its direct neighbours appear automatically.
 
-## See the complete reading loop
+You can also skip the Map and run **Linked Canvas: Create a Linked Canvas from
+the current note**. To add automation to a Canvas you already made, open that
+Canvas and run **Linked Canvas: Enable link-aware sync for the current Canvas**.
 
-These captures come from the real Obsidian desktop plugin using public-safe
-sample notes. Context Graph does not replace the editor with a separate visual
-database; each step stays on the same Markdown and the same graph coordinates.
+## Two surfaces, one set of files
 
-### 1. Begin with the neighbourhood, not a blank canvas
+| Surface | Use it for | Persistence | Content authority |
+| --- | --- | --- | --- |
+| **Linked Map** | Quickly scan, read, search, expand one branch, and edit without losing context | Temporary unless you keep a legacy saved-map definition | Original Markdown |
+| **Linked Canvas** | Arrange a durable whiteboard with notes, PDFs, images, groups, text, and connections | Standard `.canvas` plus a small `.linked-canvas.json` automation profile | Original files for content; Canvas for layout |
 
-![A low-chrome overview of one note and its direct Markdown links](docs/assets/context-graph-01-overview.png)
+This separation is deliberate. Reading should be immediate; spatial curation
+should be durable. The plugin does not force every quick inspection to become a
+board, and it does not hide a proprietary card database behind the Canvas.
 
-Run one command from the note you are already reading. The first view shows the
-resolved one-hop neighbourhood without asking for a workspace, layout, schema,
-or drawing step. A restrained dot grid makes pan and zoom visible; canvas,
-compact cards, and the open document use three neutral surface levels so titles
-and relationship lines remain identifiable without decorative colour.
+## See the real desktop workflow
 
-### 2. Read the actual note in place
+These captures were made in Obsidian 1.13.7 with the exact 0.5.8 build and a
+public-safe fixture. Their version, dimensions, and hashes are checked during
+every release build.
 
-Select a title and that same card becomes the document surface shown at the top
-of this page. The card and camera keep their graph coordinates; at an unreadable
-overview zoom, the open document alone keeps a minimum readable screen size.
-Long documents scroll inside the card while neighbouring notes remain visible.
+### 1. Arrange the generated neighbourhood in native Canvas
 
-### 3. Inspect or edit the complete Markdown source
+![A standard Obsidian Canvas with colour-coded Markdown, PDF, and image cards](docs/assets/linked-canvas-01-canvas.png)
 
-![The complete Markdown source shown inside the same Context Graph card](docs/assets/context-graph-03-source.png)
+New cards receive restrained role colours: the starting note, other Markdown
+notes, PDFs, and images are distinguishable at a glance. These are standard
+JSON Canvas colours. After creation, the user owns every card's position, size,
+group, and colour.
 
-The pencil swaps Reading for the complete source, including frontmatter and the
-Markdown syntax projected into the compact title and summary. Returning to
-Reading updates the same card element and footprint. For properties UI, editor
-commands, or more room, the adjacent panel action opens the same file in one
-reused right-hand Obsidian editor without changing graph scope or layout.
+### 2. Inspect links before you commit to a board
 
-## Choosing the right spatial tool
+![A one-hop Linked Map centred on the current Markdown note](docs/assets/linked-canvas-02-map.png)
 
-Obsidian's spatial tools can coexist; they optimize for different jobs.
+Linked Map starts from the active note and includes resolved outgoing links and
+backlinks. The dot grid, surface contrast, and focused root make the reading
+range visible without turning the whole Vault into an analytics view.
 
-| Tool | Best at | Use Context Graph when you need to... |
-| --- | --- | --- |
-| **Global Graph** | Seeing the shape of a whole Vault | Read one explicit neighbourhood instead of analysing the whole Vault. |
-| **Local Graph** | A compact link map around the active note | Read and edit the linked notes inside the map. |
-| **Canvas** | Authoring a freely arranged diagram or presentation | Derive the map from existing Markdown without maintaining duplicate cards. |
-| [Excalidraw](https://github.com/zsviczian/obsidian-excalidraw-plugin) | Drawings, visual thinking, and media-rich canvases | Follow authored links without creating a drawing. |
-| [Juggl](https://github.com/HEmile/juggl) | A stylable graph workspace with multiple layouts | Keep a deliberately narrow, document-first reading surface. |
-| [ExcaliBrain](https://github.com/zsviczian/excalibrain) | A structured mind map from metadata and inferred roles | Show only inspectable authored links and optional typed relations. |
-| [Breadcrumbs](https://github.com/michaelpporter/breadcrumbs) | Typed hierarchy, sequence, matrix, and trail views | Make ordinary links sufficient and read their source in place. |
+### 3. Read complete Markdown without losing the map
 
-## What appears in a graph
+![Obsidian Reading rendered inside a card while neighbouring notes remain visible](docs/assets/linked-canvas-03-reading.png)
 
-The initial graph contains the current Markdown note and one hop of resolved
-links in both directions:
+The open card uses Obsidian's native Markdown renderer. Headings, lists,
+callouts, links, embeds, images, PDFs, code, tables, math, supported HTML,
+themes, and registered Markdown post-processors keep their normal behaviour.
+Long content scrolls inside the card; the map and neighbouring notes do not
+reflow.
 
-- ordinary wikilinks and Markdown links from the current note;
-- backlinks from other Markdown notes to the current note; and
-- optional typed relationships stored in `context_tree_links`.
+### 4. Edit the same source file in place
 
-Expanding a visible card makes that card another one-hop seed. It does not set a
-global depth or unfold every branch. A card with no new neighbours does not show
-an expansion action. Collapsing removes only the range introduced through that
-seed; the seed itself and paths still reachable from another seed remain.
+![The complete source Markdown edited inside the same card footprint](docs/assets/linked-canvas-04-edit.png)
 
-Missing files, unresolved links, non-Markdown files, and notes explicitly
-removed from this graph are not added. Context Graph follows Obsidian's resolved
-link index rather than guessing relationships from similar text.
+Source mode shows the complete file, including frontmatter. Returning to
+Reading updates the same card element at the same graph coordinate. For editor
+commands or properties UI, **Open source in the right editor** reuses one normal
+Obsidian pane without changing map scope or layout.
 
-## Read and edit without losing the map
+## What Linked Canvas keeps in sync
 
-Selecting a card opens Reading at the card's current graph coordinates without
-moving the camera. Below 72%, the open document alone keeps that minimum screen
-scale while the surrounding canvas remains freely zoomable. Reading
-uses Obsidian's `MarkdownRenderer` inside the same public Reading View class
-boundary used by themes, snippets, and registered Markdown post-processors.
+When a Linked Canvas is active:
 
-The pencil opens the complete source of that note inside the same card,
-including frontmatter. Reading and Source keep one bounded outer footprint, so
-long content scrolls inside the card instead of pushing the map around. Returning
-to Reading updates that same card element; it does not delete and recreate the
-card or run a new layout.
+- its explicit Markdown roots and manually dropped Markdown seeds are expanded
+  by a bounded depth (one hop by default, never an unbounded Vault crawl);
+- resolved outgoing links and backlinks become file cards and directed visual
+  edges;
+- linked PDFs and images can become independent Canvas cards;
+- moving, resizing, recolouring, or grouping a card remains user-owned;
+- text cards, link cards, groups, backgrounds, and manual visual edges are
+  preserved byte-for-byte in meaning;
+- deleting an automatically discovered card records an exclusion, so the next
+  sync does not recreate it; and
+- dropping that Markdown file again removes the exclusion and makes it an
+  explicit seed.
 
-**Open source in the right editor** reuses one vertical split and opens the same
-file in a normal Obsidian editor. Use it when you need editor commands,
-properties UI, plugin integrations, or more room than the in-card Source editor.
-Opening that editor does not change graph scope, layout, or camera position.
+Renaming a source note updates the active profiles and Canvas file-card paths.
+Renaming a Canvas moves its sidecar and updates the sidecar's `canvasPath`.
+Malformed Canvas or profile JSON fails closed: the plugin does not widen scope
+or overwrite an unreadable file.
 
-Edits are autosaved with an optimistic revision check. If the file changes in
-another editor after Source mode starts, Context Graph stops before overwriting
-it, keeps the draft in local plugin data, and offers actions to select the draft
-for manual copying, open the source, or explicitly reload the newer file.
+### Existing Canvas adoption
 
-### Markdown support
+**Enable link-aware sync for the current Canvas** requires at least one
+Markdown file card. Every Markdown card already on the Canvas becomes an
+explicit root. Existing coordinates, sizes, colours, groups, text cards, media,
+and manual connections remain in place; only missing linked cards and managed
+edges are added.
 
-Context Graph does not maintain a second Markdown parser for Reading. Obsidian
-handles headings, paragraphs, emphasis, lists, tasks, callouts, internal links,
-embeds, images, audio, video, math, inline and fenced code, tables, footnotes,
-supported HTML, theme styling, and registered Markdown post-processors.
+### Optional Canvas-to-Markdown relationship writing
 
-There are two intentional projections:
+Canvas connections are visual-only by default. Run **Toggle note-link sync for
+current Canvas connections** to opt in for that Canvas. After opt-in, a new
+directed manual edge between two Markdown cards adds one relationship to the
+source note's `linked_canvas_links` frontmatter. The write is additive and
+idempotent; it does not delete ordinary links or rewrite the target note.
 
-- the first H1 is used as the card title and is not repeated in the open body;
-- a visible `[!summary]` callout is used as the compact card summary and is not
-  repeated in the open body.
-
-Source mode always shows the complete document without those Reading
-projections, including both elements and frontmatter. An optional summary looks
-like this:
-
-```md
-> [!summary] Card summary
-> Why this note matters in the current context.
+```yaml
+linked_canvas_links:
+  - target: "[[Evidence]]"
+    type: supports
 ```
 
-## Interaction reference
+Supported authored relation types are `related`, `prerequisite`, `supports`,
+`contrasts`, and `follow-up`. Unknown types are preserved in Markdown and are
+not silently relabelled. A Canvas edge with another label remains visual-only;
+an unlabeled edge maps to `related`. Earlier `context_tree_links` values remain
+readable for compatibility; new relationship writes use `linked_canvas_links`.
+
+## Linked Map interaction contract
 
 | Gesture or action | Result |
 | --- | --- |
-| Select a card title | Open or close Reading in place without moving the camera. Below 72%, only the open document keeps a readable screen scale. A pinned card stays open. |
-| Drag a title, summary, or non-interactive card frame at least 5 px | Move only that card in compact, Reading, Source, or keep-open state. |
-| Select or scroll Reading content | Keep native text, link, and scroll behaviour; it does not drag the card. |
-| Drag empty graph space | Pan the canvas. |
-| Wheel over an open card, including its header | Scroll that card under the pointer. |
-| Wheel over graph space | Smoothly zoom around the pane centre. A previously focused editor does not steal the gesture. |
-| **Keep card open** | Keep that Reading or Source card available while another card opens. It does not lock card position. |
-| **Show/Collapse _n_ neighbouring notes** | Preview the size of the change, then expand or collapse that card's meaningful one-hop range without moving existing cards. |
-| **Open source in the right editor** | Open the same note in a reusable Obsidian split on the right. |
-| Hover a compact card | Emphasize its direct relationships without changing layout. Open cards keep the whole visible context readable. |
-| Search | Match title, compact summary, and body; retain direct graph context around matches. |
-| Relation filter | Hide or show relationship lines by type without re-running the layout. |
-| Drag a card's perimeter point to another card | Add one `related` relationship to the source card's frontmatter. |
-| Fit graph | Close open cards and fit the current graph into the pane. This explicit overview action clears keep-open state. |
+| Select a compact card | Open or close native Reading at the same graph coordinate. |
+| Drag a title, summary, or non-interactive frame at least 5 px | Move only that card, whether compact, open, editing, or kept open. |
+| Select or scroll Reading content | Preserve native text, link, embed, and scroll behaviour. |
+| Wheel over an open card, including its header | Scroll the card under the pointer. |
+| Wheel over graph background | Smoothly zoom around the pane centre; stale editor focus never steals the wheel. |
+| Drag empty graph background | Pan the map. |
+| Keep card open | Keep that card visible while one additional document is explored; it never locks position. |
+| Show/Collapse neighbouring notes | Preview and change only that card's meaningful one-hop branch. Existing cards do not re-layout. |
+| Open source in the right editor | Open the same Markdown file in one reusable right-hand Obsidian pane. |
+| Fit graph | Close open cards and fit the current range into the pane. |
 
-Quick actions appear on card hover and keyboard focus. At low graph zoom they
-receive a limited inverse scale so their hit targets remain usable without
-covering the title or Source text. The graph toolbar stays at the lower right. New
-cards are created there; there is no duplicate `+` action on every card.
+Quick actions appear on hover and keyboard focus. At overview zoom they receive
+a bounded inverse scale so hit targets stay usable without covering titles. The
+single graph toolbar remains fixed at the lower right; there is no duplicate
+`+` button on every card.
 
-## What each write action changes
+## File and ownership contract
 
-Context Graph distinguishes graph composition from source-file changes.
+Linked Canvas deliberately uses three small authorities:
 
-| Action | What is written | What is not changed | Recovery or guard |
+| Data | Owner | Portable | What the plugin may do |
 | --- | --- | --- | --- |
-| Save this graph | A definition under `maps/context-graph/*.context-graph` and device-local view state | Markdown note content | The temporary graph remains unsaved if the write fails. |
-| Move a card | Device-local coordinates for a saved graph | Markdown and portable graph scope | Drag again or use **Fit graph** for an overview. |
-| Edit Markdown in a card | The complete source `.md` file | Card identity, camera, and deliberate coordinates | Revision check, recoverable local draft, and conflict UI. |
-| Create a card | A new `.md` note beside the root note in a current-note graph, or in the saved graph's configured note folder | Existing notes | A unique filename is selected before creation. |
-| Connect two cards | One `related` item in the drag-source note's `context_tree_links` | Ordinary wikilinks and the target note | Duplicate and reciprocal symmetric relations are not added. |
-| Disconnect a relationship | The single unambiguous authored item represented by that edge | Derived wikilinks and multi-relation edges | Requires selecting an endpoint, then dragging it to blank canvas. Other drops cancel. |
-| Remove from graph | Only this graph's include/exclude scope | The source note and every other graph | There is no in-app undo yet. Edit the saved `.context-graph` definition to remove the exclusion. |
-| Move source note to trash | The Markdown file through Obsidian's configured trash | Nothing that depends on that file can keep rendering it | Separate destructive wording and explicit confirmation. |
+| Markdown, PDF, image, and other source content | Original Vault files | Yes | Read; edit Markdown only through an explicit editor action or opt-in additive relation write |
+| Positions, sizes, colours, groups, text/link cards, and visual connections | Standard `.canvas` | Yes | Preserve existing objects; add or remove only tracked projections |
+| Roots, seeds, depth, exclusions, sync policy, and generated-object provenance | Adjacent `.linked-canvas.json` | Yes | Validate, update, and follow source/Canvas renames |
+| Map camera, kept-open state, deliberate legacy-map positions, and recoverable drafts | Plugin `data.json` | Device-local | Persist only UI state and conflict recovery |
 
-The root of a current-note graph cannot be removed from that graph. Relationship
-deletion is deliberately unavailable when one visual line represents multiple
-authored meanings; edit the source frontmatter in that case.
+The sidecar never contains copied note bodies. If profile creation fails after a
+Canvas is created, the standard Canvas is kept instead of being deleted.
 
-## Optional typed relationships
+## Safe editing and failure behaviour
 
-Ordinary links and backlinks are enough for the main workflow. If a small,
-authored vocabulary is useful, add `context_tree_links` to frontmatter:
+In-card Source autosaves through Obsidian's Vault API with an optimistic
+revision check. If another editor changes the file after Source mode opens,
+Linked Canvas stops before overwriting it, keeps the draft in local plugin data,
+and offers explicit recovery actions. A content-only refresh updates the same
+card; it does not recreate the node or run a new layout.
 
-```yaml
-context_tree_links:
-  - target: "[[Virtual memory]]"
-    type: prerequisite
-  - target: "[[Priority inversion#Donation]]"
-    type: follow-up
-```
+Graph-only removal and source deletion are separate actions. **Remove from
+graph** changes only the current scope. **Move source note to trash** uses
+Obsidian's configured trash and requires distinct destructive wording and
+confirmation.
 
-Supported types are:
+## How it differs from other visual tools
 
-| Type | Meaning in the graph |
-| --- | --- |
-| `related` | Symmetric peer relationship |
-| `prerequisite` | Directional prerequisite |
-| `supports` | Directional supporting evidence |
-| `contrasts` | Symmetric comparison or counterexample |
-| `follow-up` | Directional next question or continuation |
+These tools can coexist. Linked Canvas is intentionally narrow: it starts from
+inspectable Markdown links, lets you read before arranging, and saves the useful
+result as native Canvas.
 
-Unknown types remain untouched in Markdown and are not silently relabelled.
-`related` and `contrasts` are visually symmetric; navigation labels retain
-direction for the other types.
-
-Earlier releases required `context_tree: true` and understood
-`context_tree_parent`, `context_tree_id`, and `context_tree_summary`. These are
-still read so existing graphs remain usable. New current-note graphs do not
-require them, and Context Graph does not rewrite old notes in the background.
-
-## Saved graphs, local state, and privacy
-
-The storage boundary is intentionally small:
-
-| Data | Owner | Portable with the vault? |
+| Tool | Primary strength | Linked Canvas is different because… |
 | --- | --- | --- |
-| Note content, ordinary links, and typed relationships | Original Markdown files | Yes |
-| Saved root, expanded paths, exclusions, and graph physics | `maps/context-graph/*.context-graph` | Yes |
-| Camera, keep-open cards, and deliberate card coordinates | Obsidian plugin data | Device-local |
-| Recoverable in-card edit drafts | Obsidian plugin data | Device-local |
+| **Obsidian Local Graph** | Fast neighbourhood topology | Its cards become readable/editable documents and can graduate into a durable Canvas. |
+| **Obsidian Canvas** | General-purpose spatial authoring | The first board can be derived from a note's live link neighbourhood, then kept synchronized without losing native Canvas ownership. |
+| [Heptabase](https://heptabase.com/) | A complete card-and-whiteboard knowledge environment | Linked Canvas stays inside Obsidian, keeps existing files authoritative, and does not introduce another account or card database. |
+| [Excalidraw](https://github.com/zsviczian/obsidian-excalidraw-plugin) | Drawing, sketching, and media-rich visual thinking | Linked Canvas focuses on file-backed document neighbourhoods rather than a drawing model. |
+| [Juggl](https://github.com/HEmile/juggl) | Stylable graph workspaces and layouts | Linked Canvas offers a deliberately bounded reader-to-native-Canvas path. |
+| [ExcaliBrain](https://github.com/zsviczian/excalibrain) | Structured inferential mind maps | Linked Canvas uses resolved authored links and optional explicit relation types; no semantic inference is required. |
+| [Breadcrumbs](https://github.com/SkepticMystic/breadcrumbs) | Typed hierarchies and trail views | Ordinary wikilinks are sufficient, and the linked source can be read in place. |
 
-Note content is never copied into a graph definition or card database. Context
-Graph has no network client, telemetry, analytics, advertisements, remote-code
-loader, or external account integration. It uses Obsidian's vault APIs and does
-not read files outside the vault.
+Linked Canvas is not a Heptabase clone and does not copy another product's
+trade dress. It adopts the useful product principle—spatial context should help
+people understand real notes—while using Obsidian's files, renderer, Canvas
+format, theme tokens, and interaction conventions.
 
-### Why Context Graph inspects Vault paths
+## Privacy and permissions
 
-Obsidian's plugin review reports Vault enumeration because Context Graph can ask
-Obsidian for the Markdown file list. This retains compatibility with saved
-folder, curated, and all-note graph scopes, and verifies that optional authored
-card IDs remain unique beyond a visible neighbourhood. The boundary is narrower
-than a full-content scan:
+Linked Canvas has no account, telemetry, analytics, advertisements, external
+API, semantic AI, remote-code loader, or network client. It reads files through
+Obsidian's Vault APIs and does not access files outside the Vault.
 
-- the ordinary current-note workflow resolves visible files from Obsidian's
-  cached link map without enumerating the Vault;
-- a current-note graph requests the Markdown list only when a visible note uses
-  an optional authored ID, and then reads cached frontmatter only to verify ID
-  uniqueness;
-- Markdown content is read only for notes included in the active graph;
-- saved graph discovery lists only `maps/context-graph/`;
-- no path, metadata, or content leaves Obsidian.
-
-Clipboard access is not requested. During an edit conflict, **Select my edit**
-selects the preserved Source text so the user can decide whether to copy it with
-the operating system shortcut.
+The ordinary current-note Map resolves its visible neighbourhood from
+Obsidian's cached link index. Legacy broad graph scopes and optional authored-ID
+uniqueness checks may enumerate Markdown paths, but content is read only for
+notes included in the active view. Saved-map discovery is limited to the
+plugin-owned map folder. Nothing is transmitted.
 
 See [SECURITY.md](SECURITY.md) for the security boundary and reporting process.
-The implementation and release interaction rules live in one place:
-[docs/ux-contract.md](docs/ux-contract.md). Third-party terms for the bundled
-force-layout library are recorded in
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and preserved in `main.js`.
+The single interaction and persistence contract is
+[docs/ux-contract.md](docs/ux-contract.md).
 
-## Current limits and non-goals
+## Commands
 
-- Desktop Obsidian is the supported target. Mobile and touch interaction are
-  not enabled until they receive their own device and accessibility test pass.
-- Context Graph renders Markdown notes. Attachments may appear through native
-  Markdown embeds, but non-Markdown files do not become independent graph cards.
-- Relationships come from explicit links and optional typed frontmatter. There
-  is no semantic similarity, embedding, recommendation model, or AI-generated
-  relationship inference.
-- The initial view is deliberately one hop. Selective expansion is a reading
-  tool, not an attempt to render an unbounded vault all at once.
-- It is not a free-form drawing, shape, group, or presentation editor. Use
-  Canvas for those jobs.
-- The in-card Source editor is intentionally small and autosaving. It is not a
-  replacement for every feature of Obsidian's full editor.
-- Card-to-card relationship authoring and endpoint disconnection are pointer
-  gestures. Keyboard users can open, read, edit, search, filter, and use card
-  actions, but those two authoring gestures do not yet have keyboard equivalents.
-- Legacy all, folder, curated, and hybrid graph definitions continue to load,
-  but the primary creation flow starts from the current note.
+| Command | When to use it |
+| --- | --- |
+| **Open current note's linked map** | Inspect the active Markdown note and its direct neighbourhood. |
+| **Create a Linked Canvas from the current note** | Skip Map and create a durable native Canvas immediately. |
+| **Enable link-aware sync for the current Canvas** | Adopt an existing Canvas that already contains Markdown cards. |
+| **Sync the current Linked Canvas** | Request an immediate reconciliation; automatic sync also follows relevant Vault changes. |
+| **Toggle note-link sync for current Canvas connections** | Explicitly opt in or out of additive Canvas-to-Markdown relationship writes. |
+| **Open saved graphs** | Open legacy `.context-graph` workspaces retained for compatibility. |
+| **Refresh graph** | Refresh an open Linked Map or legacy saved map. |
 
-## Troubleshooting
+The Markdown file menu provides **Open current note's linked map** and **Create
+a Linked Canvas from the current note** for the selected file.
 
-### A card does not move
+## Current scope and non-goals
 
-Drag its title, compact summary, or empty frame beyond the 5 px click threshold.
-Reading text, links, inputs, Source text, and scroll areas keep their native
-selection or editing behaviour and intentionally do not start a card drag. The
-keep-open pin controls whether a card closes; it never locks position.
+- Desktop Obsidian is supported. Mobile and touch remain disabled until they
+  receive their own interaction and accessibility test pass.
+- Linked Canvas follows explicit resolved links. It does not infer semantic
+  similarity, generate relationships, or unfold an unbounded Vault.
+- The plugin enhances standard Canvas; it does not replace Canvas drawing,
+  shapes, presentations, or every full-editor command.
+- Canvas-to-Markdown relationship writing is opt-in, additive, and directional.
+  Visual connections remain visual-only by default.
+- In-card Source is a focused autosaving editor. Use the right-hand native pane
+  when you need the complete Obsidian editing ecosystem.
+- Pointer relationship authoring does not yet have a keyboard-equivalent edge
+  drawing gesture. Reading, editing, search, filters, and card actions remain
+  keyboard accessible.
 
-### The wheel affects the wrong surface
+## Compatibility with Context Graph releases
 
-Wheel ownership follows the pointer, not keyboard focus. Hover an open card to
-scroll it, or move the pointer to graph space to zoom. The search panel retains
-its own native wheel behaviour.
+The plugin ID remains `context-graph` so existing Community installations and
+local settings update in place. The visible product name is now **Linked
+Canvas**. Existing `.context-graph` definitions, `context_tree_links`, and
+legacy metadata remain readable; the plugin does not rewrite old notes in the
+background. New durable whiteboards use standard `.canvas` files and adjacent
+`.linked-canvas.json` profiles under `maps/linked-canvas/`.
 
-### An expected neighbour is missing
-
-Confirm that both files are Markdown notes and that Obsidian resolves the link.
-The link may also have been excluded from this saved graph. Text similarity and
-unresolved link labels do not create cards.
-
-### Source mode reports a conflict
-
-Another editor changed the file after the in-card editor opened. Context Graph
-has not overwritten that change. Copy the draft or open the source on the right,
-then explicitly reload the card when it is safe to discard the draft.
-
-### A saved graph does not open
-
-Open its `.context-graph` file as text and check for an unresolved merge conflict
-or malformed JSON. Invalid definitions are ignored rather than widened to a
-different scope.
+Users of the pre-0.4.0 local build should move `data.json`, `main.js`,
+`manifest.json`, and `styles.css` from `.obsidian/plugins/context-tree/` to
+`.obsidian/plugins/context-graph/`, then replace `context-tree` with
+`context-graph` in `.obsidian/community-plugins.json` before reloading.
 
 ## Installation
 
-When Context Graph is available in the Community directory:
+From Obsidian Community plugins:
 
 1. Open **Settings → Community plugins → Browse**.
-2. Search for **Context Graph**.
+2. Search for **Linked Canvas**.
 3. Select **Install**, then **Enable**.
-4. Open a Markdown note and run **Context Graph: Open linked-note reading map**.
+4. Open a Markdown note and select the Linked Canvas ribbon icon.
 
 For a manual release install, download `main.js`, `manifest.json`, and
 `styles.css` from the same GitHub release and place them in:
@@ -351,13 +303,8 @@ For a manual release install, download `main.js`, `manifest.json`, and
 <vault>/.obsidian/plugins/context-graph/
 ```
 
-Reload Obsidian and enable **Context Graph** under **Settings → Community
+Reload Obsidian and enable **Linked Canvas** under **Settings → Community
 plugins**.
-
-Users of the pre-0.4.0 local build should move `data.json` and the three plugin
-files from `.obsidian/plugins/context-tree/` to
-`.obsidian/plugins/context-graph/`, then replace `context-tree` with
-`context-graph` in `.obsidian/community-plugins.json` before reloading.
 
 ## Development and verification
 
@@ -369,25 +316,28 @@ npm run check
 npm audit --omit=dev --audit-level=high
 ```
 
-`npm run check` runs ESLint, strict TypeScript checking, CSS validation, a
-production esbuild bundle, and the unit suite. Pure interaction, graph scope,
-parsing, persistence decisions, and geometry have focused regression tests.
-Obsidian DOM integration and pointer behaviour additionally follow the desktop
-smoke sequence in [docs/ux-contract.md](docs/ux-contract.md); a successful build
-alone is not treated as runtime proof.
+`npm run check` runs ESLint, strict TypeScript checking, CSS validation, release
+media verification, a production esbuild bundle, and the unit suite. The 0.5.8
+release additionally follows the desktop checklist in
+[docs/ux-contract.md](docs/ux-contract.md): real Map and Canvas creation,
+Markdown rendering/editing, pointer-owned scroll and zoom, card movement,
+geometry preservation, manual seed expansion, deletion exclusion and restore,
+existing Canvas adoption, opt-in relation writing, source/Canvas rename, and
+plugin-disable portability. A build alone is not treated as runtime proof.
 
 Repository boundaries:
 
 ```text
-src/domain/  pure interaction, scope, persistence, and migration rules
-src/graph/   graph projection, force simulation, and geometry
-src/ui/      card rendering, native Markdown frame, and user-facing copy
-src/parser.ts        Vault Markdown to graph nodes
-src/topic-store.ts   explicit note and relationship writes
-src/graph-definition-store.ts   saved-graph Vault I/O and optimistic writes
-src/main.ts          plugin lifecycle, migration, and settings coordination
-src/view.ts          Obsidian view state and direct-manipulation coordinator
-tests/               focused domain and regression tests
+src/domain/                  pure interaction, graph, JSON Canvas, and profile rules
+src/graph/                   force simulation and map geometry
+src/ui/                      card rendering, native Markdown frame, and copy
+src/linked-canvas-service.ts Vault/Canvas reconciliation and rename coordination
+src/parser.ts                Vault Markdown to Linked Map nodes
+src/topic-store.ts           explicit Markdown and relationship writes
+src/graph-definition-store.ts legacy saved-map Vault I/O
+src/main.ts                  plugin lifecycle, commands, and event routing
+src/view.ts                  Linked Map view and direct manipulation
+tests/                       focused unit/regression tests and public-safe fixtures
 ```
 
 Contributors should read [CONTRIBUTING.md](CONTRIBUTING.md). Maintainers use the

@@ -61,7 +61,7 @@ export class GraphDefinitionStore {
 			await this.app.vault.process(existing, (currentSource) => {
 				const expectedSource = this.sources.get(graph.id);
 				if (expectedSource !== undefined && currentSource !== expectedSource) {
-					throw new Error(`Graph definition changed outside Context Graph: ${existing.path}`);
+					throw new Error(`Map definition changed outside Linked Canvas: ${existing.path}`);
 				}
 				return nextSource;
 			});
@@ -79,7 +79,7 @@ export class GraphDefinitionStore {
 				const nextSource = serializeGraphDefinition(graph);
 				await this.app.vault.process(preferred, (currentSource) => {
 					if (currentSource !== existingSource) {
-						throw new Error(`Graph definition changed outside Context Graph: ${preferred.path}`);
+						throw new Error(`Map definition changed outside Linked Canvas: ${preferred.path}`);
 					}
 					return nextSource;
 				});

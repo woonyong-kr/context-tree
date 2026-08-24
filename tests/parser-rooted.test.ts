@@ -80,6 +80,26 @@ test("does not silently coerce an unknown typed relation to related", async () =
 	assert.deepEqual(roots.find((node) => node.path === "A.md")?.links, []);
 });
 
+test("reads new Linked Canvas relations and legacy relations without duplicating an edge", async () => {
+	const app = fakeApp([
+		{
+			path: "A.md",
+			content: "# A",
+			frontmatter: {
+				linked_canvas_links: [{ target: "[[B]]", type: "supports" }],
+				context_tree_links: [{ target: "[[B]]", type: "supports" }],
+			},
+		},
+		{ path: "B.md", content: "# B" },
+	], { "A.md": { "B.md": 1 } });
+	const graph = createCurrentNoteGraph("A.md", "A");
+
+	const roots = await loadContextTree(app, graph);
+	assert.deepEqual(roots.find((node) => node.path === "A.md")?.links, [
+		{ targetPath: "B.md", type: "supports" },
+	]);
+});
+
 test("uses a unique authored graph id across note renames but disambiguates duplicates", async () => {
 	const app = fakeApp([
 		{ path: "A.md", content: "# A", frontmatter: { context_tree: true, context_tree_id: "stable-a" } },

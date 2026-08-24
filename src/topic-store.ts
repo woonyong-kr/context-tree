@@ -1,6 +1,12 @@
 import { App, normalizePath, TFile } from "obsidian";
 import { noteLinkTarget } from "./domain/note-link";
-import { isSymmetricRelation, relationItems } from "./domain/relations";
+import {
+	isSymmetricRelation,
+	LINKED_CANVAS_RELATION_PROPERTY,
+	RELATION_PROPERTIES,
+	relationItems,
+	storedRelationItems,
+} from "./domain/relations";
 import { ContextRelationType, ContextTreeLink } from "./types";
 import { newTopicContent } from "./topic-content";
 
@@ -74,7 +80,7 @@ export async function addRelation(
 		? app.metadataCache.getFileCache(target)?.frontmatter
 		: undefined;
 	const reciprocalExists = isSymmetricRelation(type)
-		&& relationItems(reciprocalFrontmatter?.context_tree_links).some((item) =>
+		&& storedRelationItems(reciprocalFrontmatter).some((item) =>
 			isStoredRelationFor(app, to.path, item, from.path, type),
 		);
 	if (reciprocalExists) return false;
@@ -84,13 +90,13 @@ export async function addRelation(
 		// Keep a pre-existing scalar relation when an authored relation is added.
 		// YAML permits both a scalar and a sequence; normalising only here would
 		// silently discard the scalar even though the parser rendered it.
-		const current = relationItems(data.context_tree_links).slice();
-		const exists = current.some((item) => isStoredRelationFor(app, from.path, item, to.path, type));
+		const current = relationItems(data[LINKED_CANVAS_RELATION_PROPERTY]).slice();
+		const exists = storedRelationItems(data).some((item) => isStoredRelationFor(app, from.path, item, to.path, type));
 		if (!exists) {
 			current.push({ target: noteLink(to.path), type });
 			added = true;
 		}
-		data.context_tree_links = current;
+		data[LINKED_CANVAS_RELATION_PROPERTY] = current;
 	});
 	return added;
 }
@@ -104,8 +110,11 @@ export async function removeRelation(
 	if (!(file instanceof TFile)) throw new Error("The source note no longer exists.");
 	await app.fileManager.processFrontMatter(file, (frontmatter) => {
 		const data = frontmatter as Record<string, unknown>;
-		const current = relationItems(data.context_tree_links);
-		data.context_tree_links = current.filter((item) => !isStoredRelationFor(app, from.path, item, link.targetPath, link.type));
+		for (const property of RELATION_PROPERTIES) {
+			const current = relationItems(data[property]);
+			if (!current.length) continue;
+			data[property] = current.filter((item) => !isStoredRelationFor(app, from.path, item, link.targetPath, link.type));
+		}
 	});
 }
 

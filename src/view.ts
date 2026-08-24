@@ -11,6 +11,7 @@ import { type PositionLock, syncContentProjectionLayout } from "./domain/content
 import { canDisconnectAtDrop } from "./domain/disconnect-drop-action";
 import { connectionDropAction } from "./domain/connection-drop-action";
 import { normalizePinnedCardIds, openCardAlongsidePins, retainPinnedCards } from "./domain/card-pin-state";
+import { openCardViewportWidth } from "./domain/open-card-viewport";
 import ContextTreePlugin from "./main";
 import { graphHoverNodeIds, graphSearchVisibility, isGraphEdgeVisible } from "./domain/graph-filter";
 import type { GraphSearchVisibility } from "./domain/graph-filter";
@@ -215,7 +216,7 @@ export class ContextTreeView extends FileView {
 
 	private get graph(): GraphWorkspace {
 		const graph = this.plugin.getGraph(this.graphId);
-		if (!graph) throw new Error("Context Graph requires at least one graph workspace.");
+		if (!graph) throw new Error("Linked Canvas requires at least one Map workspace.");
 		return graph;
 	}
 
@@ -429,50 +430,12 @@ export class ContextTreeView extends FileView {
 			cls: "context-tree-zoom-button context-tree-control-button",
 			attr: { "aria-label": COPY.actions.saveGraph, title: COPY.actions.saveGraph },
 		});
-		setIcon(save, "bookmark-plus");
+		setIcon(save, "layout-dashboard");
 		save.addEventListener("click", (event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			save.addClass("is-hidden");
-			const input = controls.createEl("input", {
-				type: "text",
-				cls: "context-tree-save-graph-input",
-				attr: { "aria-label": COPY.labels.graphName, placeholder: COPY.labels.graphName },
-			});
-			const cancelSave = (): void => {
-				if (!input.isConnected || input.disabled) return;
-				input.remove();
-				save.removeClass("is-hidden");
-			};
-			input.addEventListener("blur", cancelSave);
-			input.addEventListener("keydown", (keyEvent) => {
-				if (keyEvent.key === "Escape") {
-					keyEvent.preventDefault();
-					keyEvent.stopPropagation();
-					cancelSave();
-					return;
-				}
-				if (keyEvent.key !== "Enter" || !input.value.trim()) return;
-				input.disabled = true;
-				const transientGraphId = this.getGraphId();
-				void this.plugin.saveTransientGraph(
-					transientGraphId,
-					input.value.trim(),
-					this.graphViewState(),
-				)
-					.then((graph) => {
-						new Notice(COPY.notice.graphSaved);
-						this.replaceGraphId(transientGraphId, graph.id);
-						this.plugin.releaseTransientGraph(transientGraphId);
-						return this.refresh();
-					})
-					.catch((error: unknown) => {
-						console.error("Context Graph: failed to save current-note graph", error);
-						input.disabled = false;
-						new Notice(COPY.notice.graphSaveFailed);
-					});
-			});
-			input.focus();
+			if (this.graph.scope.kind !== "rooted") return;
+			void this.plugin.createLinkedCanvasFromPath(this.graph.scope.rootPath);
 		});
 	}
 
@@ -847,7 +810,7 @@ export class ContextTreeView extends FileView {
 			if (recovery.kind === "conflict") this.showInlineMarkdownConflict(this.inlineEdit);
 			this.scheduleMeasure();
 		} catch (error) {
-			console.error("Context Graph: failed to open inline Markdown editor", error);
+			console.error("Linked Canvas: failed to open inline Markdown editor", error);
 			this.inlineEdit = undefined;
 			new Notice(COPY.notice.openMarkdownFailed);
 		}
@@ -902,7 +865,7 @@ export class ContextTreeView extends FileView {
 			})
 			.catch((error: unknown) => {
 				edit.saveFailed = true;
-				console.error("Context Graph: failed to save inline Markdown", error);
+				console.error("Linked Canvas: failed to save inline Markdown", error);
 				new Notice(COPY.notice.inlineSaveFailed);
 			})
 			.finally(() => {
@@ -989,7 +952,7 @@ export class ContextTreeView extends FileView {
 			const element = this.nodeElements.get(edit.nodeId);
 			if (element) this.cards.replaceInlineMarkdownSource(element, source);
 		} catch (error) {
-			console.error("Context Graph: failed to reload inline Markdown source", error);
+			console.error("Linked Canvas: failed to reload inline Markdown source", error);
 			new Notice(COPY.notice.sourceMissing);
 		}
 	}
@@ -1030,7 +993,7 @@ export class ContextTreeView extends FileView {
 			});
 			await this.app.workspace.revealLeaf(leaf);
 		} catch (error) {
-			console.error("Context Graph: failed to open source beside graph", error);
+			console.error("Linked Canvas: failed to open source beside the Map", error);
 			new Notice(COPY.notice.openSourceFailed);
 		}
 	}
@@ -1127,7 +1090,7 @@ export class ContextTreeView extends FileView {
 				await this.plugin.includePathInGraph(this.getGraphId(), node.path);
 			}
 		} catch (error) {
-			console.error("Context Graph: failed to change a rooted neighbourhood", error);
+			console.error("Linked Canvas: failed to change a rooted neighbourhood", error);
 		}
 	}
 
@@ -1136,7 +1099,7 @@ export class ContextTreeView extends FileView {
 			await this.plugin.removePathFromGraph(this.getGraphId(), node.path);
 			new Notice(COPY.notice.removedFromGraph);
 		} catch (error) {
-			console.error("Context Graph: failed to remove a card from this graph", error);
+			console.error("Linked Canvas: failed to remove a card from this Map", error);
 			new Notice(COPY.notice.removeFromGraphFailed);
 		}
 	}
@@ -1207,7 +1170,7 @@ export class ContextTreeView extends FileView {
 				this.setViewTimeout(() => this.plugin.refreshOpenViews(), 180);
 			})
 			.catch((error: unknown) => {
-				console.error("Context Graph: failed to create inline topic", error);
+				console.error("Linked Canvas: failed to create an inline topic", error);
 				new Notice(COPY.notice.createFailed);
 			});
 	}
@@ -1331,7 +1294,7 @@ export class ContextTreeView extends FileView {
 			// relationships, but this preserves a predictable Markdown source.
 			if (await addRelation(this.app, first, second, DIRECT_RELATION)) this.plugin.refreshOpenViews();
 		} catch (error) {
-			console.error("Context Graph: failed to connect cards", error);
+			console.error("Linked Canvas: failed to connect cards", error);
 			new Notice(COPY.notice.connectFailed);
 		}
 	}
@@ -1487,7 +1450,7 @@ export class ContextTreeView extends FileView {
 					this.plugin.refreshOpenViews();
 				})
 				.catch((error: unknown) => {
-					console.error("Context Graph: failed to move topic to trash", error);
+					console.error("Linked Canvas: failed to move a topic to trash", error);
 					new Notice(COPY.notice.trashFailed);
 				});
 		}).open();
@@ -1507,7 +1470,7 @@ export class ContextTreeView extends FileView {
 			new Notice(COPY.notice.connectionRemoved);
 			this.plugin.refreshOpenViews();
 		} catch (error) {
-			console.error("Context Graph: failed to disconnect cards", error);
+			console.error("Linked Canvas: failed to disconnect cards", error);
 			new Notice(COPY.notice.connectionRemoveFailed);
 		}
 	}
@@ -1553,6 +1516,18 @@ export class ContextTreeView extends FileView {
 			if (!element) continue;
 			element.style.left = `${centerX + (node.x ?? 0)}px`;
 			element.style.top = `${centerY + (node.y ?? 0)}px`;
+			const card = element.querySelector<HTMLElement>(".context-tree-card");
+			if (card?.hasClass("is-detail-open")) {
+				const detailScale = cardActionLayout(this.zoom).detailScale;
+				const screenCenterX = centerX + this.pan.x + (node.x ?? 0) * this.zoom;
+				card.style.setProperty("--ct-open-card-max-width", `${openCardViewportWidth({
+					viewportWidth: width,
+					screenCenterX,
+					screenScale: this.zoom * detailScale,
+				})}px`);
+			} else {
+				card?.style.removeProperty("--ct-open-card-max-width");
+			}
 		}
 		this.paintEdges(centerX, centerY, width, height);
 	}

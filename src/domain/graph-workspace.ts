@@ -337,7 +337,7 @@ export function rootedGraphPaths(
 	return [...visible].sort((left, right) => left.localeCompare(right));
 }
 
-export type RootedNeighbourhoodAction = "expand" | "collapse" | "none";
+type RootedNeighbourhoodAction = "expand" | "collapse" | "none";
 
 export interface RootedNeighbourhoodState {
 	action: RootedNeighbourhoodAction;

@@ -3,10 +3,10 @@ import process from 'process';
 import { builtinModules } from 'node:module';
 
 const banner = `/*
-Context Graph production bundle.
-Source: https://github.com/woonyong-kr/context-tree
+Linked Canvas production bundle.
+Source: https://github.com/woonyong-kr/linked-canvas
 
-Context Graph includes d3-force, d3-dispatch, d3-quadtree, and d3-timer.
+Linked Canvas includes d3-force, d3-dispatch, d3-quadtree, and d3-timer.
 Copyright 2010-2021 Mike Bostock
 Permission to use, copy, modify, and/or distribute this software for any purpose
 with or without fee is hereby granted, provided that the above copyright notice
