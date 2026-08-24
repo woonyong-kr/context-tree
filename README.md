@@ -1,74 +1,58 @@
 # Context Graph
 
-**Read linked notes without losing the map.**
+**Read linked Markdown in place, expand one branch at a time, and keep your
+map.**
 
-Context Graph turns the Markdown note you are reading into a temporary,
-one-hop reading map. Open a card to read the actual note, expand only the
-branch you need, and edit the same Markdown without leaving the map.
+Context Graph opens the current Markdown note and its direct links as one quiet
+workspace. Read a linked note in place, expand only the branch that matters,
+and keep editing the original Markdown without losing the surrounding context.
 
-There is no drawing step, folder setup, graph database, account, semantic AI,
-or plugin-specific frontmatter required to begin. The graph grows only where
-you ask it to, and it becomes a saved artifact only when you choose to keep it.
+![Obsidian Markdown rendered in a document-like card without leaving the graph](docs/assets/context-graph-02-reading.png)
 
-![A Context Graph overview derived from one Markdown note](docs/assets/context-graph-01-overview.png)
+The centre card above is the actual note, rendered by Obsidian. Its neighbours
+stay visible while the document scrolls, and opening or editing the card does
+not move the map.
 
-The map above was opened from one Markdown note. It is a quiet, temporary index:
-the centre is the starting note and every surrounding title comes from an
-inspectable authored link.
+- **Start with a note, not a blank canvas.** One command resolves the current
+  note and its direct links. There is no workspace or drawing step to maintain.
+- **Read the real Markdown.** Headings, lists, callouts, embeds, code, tables,
+  math, and plugin post-processors use Obsidian's Reading renderer.
+- **Expand with intent.** Open one useful branch, collapse it again, or save the
+  map only when the reading trail is worth keeping.
 
-## When Context Graph is useful
+Markdown remains the only source of truth. Context Graph adds no account,
+telemetry, remote service, graph database, semantic AI, or required frontmatter.
 
-Obsidian already has several good spatial views. Context Graph has a narrower
-job: follow explicit Markdown links while reading the linked notes in place.
-
-- Use **Global Graph** for the shape of a whole vault.
-- Use **Local Graph** for a compact link map around the active note.
-- Use **Canvas** for a freely arranged diagram or presentation that you author
-  directly.
-- Use **Context Graph** to read through one linked neighbourhood, expand only
-  selected branches without rearranging what you already read, and optionally
-  save that exploration for later.
-
-Context Graph is not a drawing surface, a full-vault analytics dashboard, or a
-semantic recommendation engine. It does not infer that two notes are related:
-every visible relationship comes from an authored Markdown link, backlink, or
-optional typed relationship that you can inspect in the source.
-
-Typical uses include tracing the notes produced by a long research or Q&A
-session, reviewing the evidence around a decision, following prerequisite and
-follow-up notes while learning, or keeping a root document and its changing
-context visible without maintaining a second set of cards.
-
-### How it differs from adjacent tools
-
-These tools can coexist in the same Vault; they optimize for different jobs.
-
-| Tool | Its centre of gravity | Context Graph's different job |
-| --- | --- | --- |
-| [Excalidraw](https://github.com/zsviczian/obsidian-excalidraw-plugin) | Authoring drawings, visual thinking, and media-rich canvases | Derive a temporary reading map from existing Markdown links without drawing or maintaining another visual document. |
-| [Juggl](https://github.com/HEmile/juggl) | A stylable, expandable graph workspace with multiple layouts | Keep the surface deliberately narrow: read Obsidian-rendered Markdown in each card, expand one branch, and preserve the current map. |
-| [ExcaliBrain](https://github.com/zsviczian/excalibrain) | A structured mind map generated from Vault metadata and inferred parent, child, friend, and sibling roles | Show only inspectable authored links and optional typed relations, with no Dataview or Excalidraw dependency and no inferred ontology. |
-| [Breadcrumbs](https://github.com/michaelpporter/breadcrumbs) | Defining and navigating typed hierarchy, sequence, tree, matrix, and trail views | Make ordinary links sufficient and optimize the graph itself for reading and editing the linked source notes in place. |
-
-Use one of those tools when its primary job is the job you need. Use Context
-Graph when opening each linked note in separate tabs would make you lose the
-question, evidence trail, or document neighbourhood you are following.
-
-## Start in one action
+## Start with one note
 
 1. Open a Markdown note.
 2. Right-click the note and choose **Open linked-note reading map**, or run the
    same Context Graph command from the command palette.
 3. Select a card to read it in place.
-4. Use **Show _n_ neighbouring notes** when you want to continue beyond the
-   initial neighbourhood. Use the same action again to collapse that branch.
+4. Use **Show _n_ neighbouring notes** to continue through one branch. Use the
+   same action again to collapse that branch.
 5. Choose **Save this graph** only if the exploration is worth keeping.
 
 The first view is temporary. Closing it creates no graph file. Saving creates a
 small `.context-graph` definition, while every card continues to read from its
 Markdown source.
 
-## The complete reading loop
+## A reading surface, not another knowledge store
+
+Context Graph is useful when opening every linked note in a separate tab would
+make you lose the question or evidence trail you are following. Typical uses
+include:
+
+- tracing notes produced by a long research or Q&A session;
+- reviewing the evidence and follow-up around a decision;
+- following prerequisites while learning; and
+- keeping a root document and its changing neighbourhood visible.
+
+Every visible relationship comes from an inspectable Markdown link, backlink,
+or optional typed relationship. Context Graph does not infer that two notes are
+related, and it does not turn the Vault into a second visual database.
+
+## See the complete reading loop
 
 These captures come from the real Obsidian desktop plugin using public-safe
 sample notes. Context Graph does not replace the editor with a separate visual
@@ -85,12 +69,9 @@ titles describe the map instead of decorated containers.
 
 ### 2. Read the actual note in place
 
-![Obsidian Markdown rendered in a document-like card without leaving the graph](docs/assets/context-graph-02-reading.png)
-
-Select a title and that same card becomes a document surface. Headings, lists,
-links, callouts, embeds, code, tables, math, and post-processed Markdown are
-rendered by Obsidian. The card and camera stay where the reader put them; long
-documents scroll inside the card while neighbouring notes remain visible.
+Select a title and that same card becomes the document surface shown at the top
+of this page. The card and camera stay where the reader put them; long documents
+scroll inside the card while neighbouring notes remain visible.
 
 ### 3. Inspect or edit the complete Markdown source
 
@@ -101,6 +82,20 @@ Markdown syntax projected into the compact title and summary. Returning to
 Reading updates the same card element and footprint. For properties UI, editor
 commands, or more room, the adjacent panel action opens the same file in one
 reused right-hand Obsidian editor without changing graph scope or layout.
+
+## Choosing the right spatial tool
+
+Obsidian's spatial tools can coexist; they optimize for different jobs.
+
+| Tool | Best at | Use Context Graph when you need to... |
+| --- | --- | --- |
+| **Global Graph** | Seeing the shape of a whole Vault | Read one explicit neighbourhood instead of analysing the whole Vault. |
+| **Local Graph** | A compact link map around the active note | Read and edit the linked notes inside the map. |
+| **Canvas** | Authoring a freely arranged diagram or presentation | Derive the map from existing Markdown without maintaining duplicate cards. |
+| [Excalidraw](https://github.com/zsviczian/obsidian-excalidraw-plugin) | Drawings, visual thinking, and media-rich canvases | Follow authored links without creating a drawing. |
+| [Juggl](https://github.com/HEmile/juggl) | A stylable graph workspace with multiple layouts | Keep a deliberately narrow, document-first reading surface. |
+| [ExcaliBrain](https://github.com/zsviczian/excalibrain) | A structured mind map from metadata and inferred roles | Show only inspectable authored links and optional typed relations. |
+| [Breadcrumbs](https://github.com/michaelpporter/breadcrumbs) | Typed hierarchy, sequence, matrix, and trail views | Make ordinary links sufficient and read their source in place. |
 
 ## What appears in a graph
 
