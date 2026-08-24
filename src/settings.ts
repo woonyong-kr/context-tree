@@ -30,6 +30,8 @@ export class ContextTreeSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
+		this.renderHelp(new Setting(containerEl));
+
 		if (!this.plugin.settings.graphs.length) return;
 		containerEl.createEl("p", {
 			cls: "setting-item-description",
@@ -45,11 +47,27 @@ export class ContextTreeSettingTab extends PluginSettingTab {
 	 * Each render callback reuses the exact same controls as the legacy path.
 	 */
 	getSettingDefinitions(): unknown[] {
-		return this.plugin.settings.graphs.flatMap((graph) => [
-			this.physicsDefinition(graph, COPY.settings.linkStrengthName, COPY.settings.linkStrengthDescription, "linkStrength", true),
-			this.physicsDefinition(graph, COPY.settings.repulsionName, COPY.settings.repulsionDescription, "repulsion", true),
-			this.physicsDefinition(graph, COPY.settings.linkGapName, COPY.settings.linkGapDescription, "linkGap", true),
-		]);
+		return [
+			{
+				name: COPY.settings.helpName,
+				desc: COPY.settings.helpDescription,
+				render: (setting: Setting) => this.renderHelp(setting),
+			},
+			...this.plugin.settings.graphs.flatMap((graph) => [
+				this.physicsDefinition(graph, COPY.settings.linkStrengthName, COPY.settings.linkStrengthDescription, "linkStrength", true),
+				this.physicsDefinition(graph, COPY.settings.repulsionName, COPY.settings.repulsionDescription, "repulsion", true),
+				this.physicsDefinition(graph, COPY.settings.linkGapName, COPY.settings.linkGapDescription, "linkGap", true),
+			]),
+		];
+	}
+
+	private renderHelp(setting: Setting): void {
+		setting
+			.setName(COPY.settings.helpName)
+			.setDesc(COPY.settings.helpDescription)
+			.addButton((button) => button
+				.setButtonText(COPY.settings.helpButton)
+				.onClick(() => this.plugin.openHelp()));
 	}
 
 	private renderGraphPhysics(container: HTMLElement, graph: GraphWorkspace): void {

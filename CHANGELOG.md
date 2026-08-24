@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.11
+
+- Add a task-first in-app guide that distinguishes durable Linked Canvas work,
+  temporary Linked Map exploration, and adoption of an existing Canvas.
+- Surface the guide in the Command palette and Settings even when no legacy
+  saved graph exists, with direct Canvas and Map entry actions.
+- Adapt Cupertino's MIT-licensed colour, elevation, motion, and rounded-control
+  foundation into one plugin-scoped token layer without requiring or modifying
+  the global theme.
+- Rewrite the public introduction around a three-step first board, explicit
+  surface selection, file ownership, and the exact design-license boundary.
+
 ## 0.5.10
 
 - Replace the generated Canvas graph ring with a readable root anchor and a

@@ -25,6 +25,7 @@ import { ContextTreeView, VIEW_TYPE_CONTEXT_TREE } from "./view";
 import type { InlineEditorDraft } from "./domain/inline-editor-draft";
 import { migrateInlineDrafts, persistedSettings } from "./domain/settings-storage";
 import { LinkedCanvasService } from "./linked-canvas-service";
+import { LinkedCanvasHelpModal } from "./ui/help-modal";
 
 export default class ContextTreePlugin extends Plugin {
 	settings!: ContextTreeSettings;
@@ -69,6 +70,11 @@ export default class ContextTreePlugin extends Plugin {
 			id: "open-linked-canvas",
 			name: COPY.view.openCanvasCommand,
 			callback: () => void this.openCurrentNoteInLinkedCanvas(),
+		});
+		this.addCommand({
+			id: "show-linked-canvas-help",
+			name: COPY.view.helpCommand,
+			callback: () => this.openHelp(),
 		});
 		this.addCommand({
 			id: "open-tree",
@@ -124,6 +130,13 @@ export default class ContextTreePlugin extends Plugin {
 		});
 
 		this.addSettingTab(new ContextTreeSettingTab(this.app, this));
+	}
+
+	openHelp(): void {
+		new LinkedCanvasHelpModal(this.app, {
+			openCanvas: () => this.openCurrentNoteInLinkedCanvas(),
+			openMap: () => this.activateCurrentNote(),
+		}).open();
 	}
 
 	async loadSettings(): Promise<void> {

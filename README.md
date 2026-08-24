@@ -3,19 +3,30 @@
 **Turn the note you are reading into a useful visual workspace—without copying
 its content into another database.**
 
-Linked Canvas connects two Obsidian workflows that normally stop short of each
-other:
+Open a Markdown note, select one ribbon icon, and get a standard Obsidian Canvas
+containing that note plus its directly linked Markdown, PDFs, and images. Move,
+resize, group, colour, and edit the cards with normal Canvas tools; Linked
+Canvas keeps their file-backed relationships available without taking ownership
+of the board.
 
-- **Linked Canvas** opens the current note in a reusable standard `.canvas`
-  workspace with its direct links, durable layout, groups, text cards, images,
-  PDFs, and manual connections.
-- **Linked Map** is the optional temporary reader for inspecting one linked
-  neighbourhood before deciding what belongs on a board.
+![Linked Canvas: map, in-place Reading, Source editing, and a native Obsidian Canvas](docs/assets/linked-canvas-tour.gif)
+
+## Choose the surface by the job
+
+| You want to… | Start here | What you get |
+| --- | --- | --- |
+| arrange notes and references for later | **Linked Canvas** — the default | A reusable standard `.canvas` whose layout remains yours |
+| inspect one note's immediate context, then leave | **Linked Map** — optional | A temporary one-hop reader with search, Reading, and Source mode |
+| add link awareness to a Canvas you already made | **Enable link-aware sync** | Existing geometry stays untouched; missing linked file cards are added |
 
 The files stay the source of truth. The Canvas owns space. A small sidecar owns
 only the bounded link automation that you explicitly enable.
 
-![Linked Canvas: map, in-place Reading, Source editing, and a native Obsidian Canvas](docs/assets/linked-canvas-tour.gif)
+If the distinction is unclear after installation, run **Show how to use Linked
+Canvas** from the Command palette or open **Settings → Linked Canvas → How it
+works**. The same task-first guide offers direct buttons for Canvas and Map.
+
+![The in-app guide distinguishes durable Canvas work, temporary Map exploration, existing Canvas adoption, and file ownership](docs/assets/linked-canvas-00-help.png)
 
 ## Why this plugin exists
 
@@ -40,7 +51,7 @@ It is most useful for:
 - building a learning map from prerequisites and follow-up notes; and
 - collecting Markdown, PDF, and image references on one portable whiteboard.
 
-## Your first useful board in 60 seconds
+## Your first useful board in three steps
 
 1. Open any Markdown note.
 2. Select the **Linked Canvas** ribbon icon. The plugin reopens a Linked Canvas
@@ -48,12 +59,13 @@ It is most useful for:
    dialog, folder convention, or required frontmatter.
 3. Use native Obsidian Canvas to move and resize file cards, edit the Markdown,
    add groups or text, and drop PDFs, images, or another Markdown note.
-4. Linked Markdown and backlinks appear as nearby file cards. Your manual
-   positions, sizes, colours, groups, media, text, and connections stay yours.
-5. When you only need to inspect context, run **Explore around the current note
-   in Linked Map**. Read or edit there, then choose **Continue in Canvas** when
-   it deserves a durable spatial arrangement. An existing Canvas is reused;
-   a new one is created only when the note has none.
+
+Linked Markdown and backlinks appear as nearby file cards. Your manual
+positions, sizes, colours, groups, media, text, and connections stay yours.
+When you only need to inspect context, run **Explore around the current note in
+Linked Map**. Read or edit there, then choose **Continue in Canvas** when it
+deserves a durable spatial arrangement. An existing Canvas is reused; a new one
+is created only when the note has none.
 
 To add automation to a Canvas you already made, open it and run **Linked
 Canvas: Enable link-aware sync for the current Canvas**. A note may appear on
@@ -73,7 +85,7 @@ board, and it does not hide a proprietary card database behind the Canvas.
 
 ## See the real desktop workflow
 
-These captures were made in Obsidian 1.13.7 with the exact 0.5.10 build and a
+These captures were made in Obsidian 1.13.7 with the exact 0.5.11 build and a
 public-safe fixture. Their version, dimensions, and hashes are checked during
 every release build.
 
@@ -230,17 +242,20 @@ result as native Canvas.
 | [ExcaliBrain](https://github.com/zsviczian/excalibrain) | Structured inferential mind maps | Linked Canvas uses resolved authored links and optional explicit relation types; no semantic inference is required. |
 | [Breadcrumbs](https://github.com/SkepticMystic/breadcrumbs) | Typed hierarchies and trail views | Ordinary wikilinks are sufficient, and the linked source can be read in place. |
 
-Linked Canvas is not a Heptabase clone and does not copy another product's
-trade dress. It adopts the useful product principle—spatial context should help
-people understand real notes—while using Obsidian's files, renderer, Canvas
-format, theme tokens, and interaction conventions.
+Linked Canvas is not a Heptabase clone and does not copy its trade dress. It
+adopts the useful product principle—spatial context should help people
+understand real notes—while using Obsidian's files, renderer, Canvas format,
+and interaction conventions.
 
 The design intentionally combines two independent references: Cupertino's
 native, quiet visual hierarchy and Heptabase's card/whiteboard ownership model.
-In Linked Canvas, Cupertino-compatible theme tokens control appearance while
-the original Vault file remains the reusable card and standard Canvas remains
-the spatial context. See [the design system](docs/design-system.md) for the
-component and token contract.
+Linked Canvas adapts Cupertino's MIT-licensed colour, elevation, motion, and
+rounded-control values into one plugin-scoped token layer. It neither imports
+global theme selectors nor requires Cupertino to be installed, so other themes
+retain their global UI while the plugin keeps a coherent visual hierarchy. The
+original Vault file remains the reusable card and standard Canvas remains the
+spatial context. See [the design system](docs/design-system.md) and
+[third-party notices](THIRD_PARTY_NOTICES.md) for the exact boundary.
 
 ## Privacy and permissions
 
@@ -265,6 +280,7 @@ theme-compatibility rules are documented in
 | Command | When to use it |
 | --- | --- |
 | **Open current note in Linked Canvas** | Reuse a Canvas containing the active note, or create its first board. |
+| **Show how to use Linked Canvas** | Reopen the task-first Canvas/Map guide and ownership explanation. |
 | **Explore around the current note in Linked Map** | Temporarily inspect the active Markdown note and its direct neighbourhood. |
 | **Create a Linked Canvas from the current note** | Deliberately create an additional native Canvas for the same note. |
 | **Enable link-aware sync for the current Canvas** | Adopt an existing Canvas that already contains Markdown cards. |
@@ -336,7 +352,7 @@ npm audit --omit=dev --audit-level=high
 ```
 
 `npm run check` runs ESLint, strict TypeScript checking, CSS validation, release
-media verification, a production esbuild bundle, and the unit suite. The 0.5.10
+media verification, a production esbuild bundle, and the unit suite. The 0.5.11
 release additionally follows the desktop checklist in
 [docs/ux-contract.md](docs/ux-contract.md): real Map and Canvas creation,
 Markdown rendering/editing, pointer-owned scroll and zoom, card movement,

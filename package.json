@@ -1,6 +1,6 @@
 {
 	"name": "linked-canvas",
-	"version": "0.5.10",
+	"version": "0.5.11",
 	"description": "Turn Markdown links into a living Canvas while preserving every Vault file as the source of truth.",
 	"main": "main.js",
 	"type": "module",
@@ -41,7 +41,7 @@
 		"@types/node": "^22.15.17",
 		"esbuild": "0.25.5",
 		"eslint": "^9.39.4",
-		"eslint-plugin-obsidianmd": "^0.4.0",
+		"eslint-plugin-obsidianmd": "^0.4.1",
 		"globals": "^17.6.0",
 		"jiti": "^2.6.1",
 		"obsidian": "latest",

@@ -1,17 +1,24 @@
 /* linked-canvas-design-tokens:start */
-.context-tree-view {
-	/* Linked Canvas owns one semantic token layer. Components below consume
-	   these values and never identify a theme by name. Obsidian themes remain
-	   free to provide their native surface, radius, shadow and motion tokens. */
+:where(.context-tree-view, .linked-canvas-help-modal) {
+	/* Scoped visual foundation adapted from Cupertino at commit 080cea8 under
+	   the MIT license. Components consume only this semantic layer, so the
+	   plugin keeps the same hierarchy without changing global Obsidian styles. */
 	--ct-font-scale: 1.2;
+	--ct-accent: rgb(0 136 255);
+	--ct-on-accent: #fff;
+	--ct-accent-hover: color-mix(in srgb, var(--ct-accent) 88%, black);
+	--ct-red: rgb(255 56 60);
+	--ct-orange: rgb(255 141 40);
+	--ct-green: rgb(52 199 89);
+	--ct-purple: rgb(203 48 224);
 
 	/* Surfaces and authored relation colour. Light and dark modes only change
 	   the surface ordering below; components share this vocabulary. */
 	--ct-canvas: var(--background-secondary);
 	--ct-card: color-mix(in srgb, var(--background-primary) 97%, var(--text-normal) 3%);
-	--ct-card-open: color-mix(in srgb, var(--background-primary) 96%, var(--interactive-accent) 4%);
+	--ct-card-open: color-mix(in srgb, var(--background-primary) 96%, var(--ct-accent) 4%);
 	--ct-card-hover: color-mix(in srgb, var(--ct-card) 94%, var(--text-normal) 6%);
-	--ct-card-focus: color-mix(in srgb, var(--ct-card) 92%, var(--interactive-accent) 8%);
+	--ct-card-focus: color-mix(in srgb, var(--ct-card) 92%, var(--ct-accent) 8%);
 	--ct-control: color-mix(in srgb, var(--background-primary) 96%, var(--background-secondary) 4%);
 	--ct-field: color-mix(in srgb, var(--background-primary) 96%, var(--background-secondary) 4%);
 	--ct-control-hover: var(--background-modifier-hover);
@@ -19,25 +26,25 @@
 	--ct-border-strong: color-mix(in srgb, var(--background-modifier-border-hover, var(--background-modifier-border)) 38%, var(--text-muted) 62%);
 	--ct-edge: color-mix(in srgb, var(--text-muted) 76%, transparent);
 	--ct-dot: color-mix(in srgb, var(--text-muted) 52%, transparent);
-	--ct-related: color-mix(in srgb, var(--interactive-accent) 82%, var(--text-muted));
-	--ct-prerequisite: color-mix(in srgb, var(--color-orange) 82%, var(--text-muted));
-	--ct-supports: color-mix(in srgb, var(--color-green) 82%, var(--text-muted));
-	--ct-contrasts: color-mix(in srgb, var(--color-red) 82%, var(--text-muted));
-	--ct-follow-up: color-mix(in srgb, var(--color-purple) 82%, var(--text-muted));
+	--ct-related: color-mix(in srgb, var(--ct-accent) 82%, var(--text-muted));
+	--ct-prerequisite: color-mix(in srgb, var(--ct-orange) 82%, var(--text-muted));
+	--ct-supports: color-mix(in srgb, var(--ct-green) 82%, var(--text-muted));
+	--ct-contrasts: color-mix(in srgb, var(--ct-red) 82%, var(--text-muted));
+	--ct-follow-up: color-mix(in srgb, var(--ct-purple) 82%, var(--text-muted));
 	--ct-muted: var(--text-muted);
-	--ct-edge-focus: color-mix(in srgb, var(--interactive-accent) 58%, var(--text-muted));
-	--ct-edge-open: color-mix(in srgb, var(--interactive-accent) 72%, var(--text-normal));
+	--ct-edge-focus: color-mix(in srgb, var(--ct-accent) 58%, var(--text-muted));
+	--ct-edge-open: color-mix(in srgb, var(--ct-accent) 72%, var(--text-normal));
 	--ct-endpoint-halo-color: color-mix(in srgb, var(--background-primary) 70%, transparent);
-	--ct-accent-halo-soft: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
-	--ct-accent-halo: color-mix(in srgb, var(--interactive-accent) 14%, transparent);
-	--ct-accent-halo-strong: color-mix(in srgb, var(--interactive-accent) 18%, transparent);
+	--ct-accent-halo-soft: color-mix(in srgb, var(--ct-accent) 12%, transparent);
+	--ct-accent-halo: color-mix(in srgb, var(--ct-accent) 14%, transparent);
+	--ct-accent-halo-strong: color-mix(in srgb, var(--ct-accent) 18%, transparent);
 	--ct-neutral-halo: color-mix(in srgb, var(--text-muted) 14%, transparent);
 	--ct-text-halo: color-mix(in srgb, var(--text-normal) 10%, transparent);
-	--ct-focus-border: color-mix(in srgb, var(--interactive-accent) 58%, var(--ct-border));
-	--ct-open-border: color-mix(in srgb, var(--interactive-accent) 34%, var(--ct-border));
-	--ct-pinned-border: color-mix(in srgb, var(--interactive-accent) 44%, var(--ct-border));
-	--ct-card-boundary-open: color-mix(in srgb, var(--interactive-accent) 46%, var(--ct-border));
-	--ct-pin-active: color-mix(in srgb, var(--interactive-accent) 18%, var(--ct-control));
+	--ct-focus-border: color-mix(in srgb, var(--ct-accent) 58%, var(--ct-border));
+	--ct-open-border: color-mix(in srgb, var(--ct-accent) 34%, var(--ct-border));
+	--ct-pinned-border: color-mix(in srgb, var(--ct-accent) 44%, var(--ct-border));
+	--ct-card-boundary-open: color-mix(in srgb, var(--ct-accent) 46%, var(--ct-border));
+	--ct-pin-active: color-mix(in srgb, var(--ct-accent) 18%, var(--ct-control));
 	--ct-port-border: color-mix(in srgb, var(--text-muted) 78%, var(--ct-border));
 	--ct-scroll-thumb: color-mix(in srgb, var(--text-faint) 62%, transparent);
 	--ct-warning-border: color-mix(in srgb, var(--text-warning) 56%, var(--ct-border));
@@ -45,23 +52,28 @@
 	--ct-section-rule: color-mix(in srgb, var(--ct-border) 72%, transparent);
 	--ct-chip-surface: color-mix(in srgb, var(--background-secondary) 72%, transparent);
 
-	/* Shape, elevation and motion resolve to the active Obsidian theme first. */
-	--ct-radius-card: var(--radius-m, 12px);
-	--ct-radius-open-card: var(--radius-l, 16px);
-	--ct-radius-control: var(--radius-m, 10px);
-	--ct-radius-panel: var(--radius-l, 16px);
-	--ct-radius-round: 999px;
-	--ct-card-shadow: var(--shadow-surface, 0 1px 2px rgb(0 0 0 / 8%));
-	--ct-card-shadow-hover: var(--shadow-xs, 0 6px 20px rgb(0 0 0 / 13%));
-	--ct-card-shadow-drag: var(--shadow-s, 0 14px 36px rgb(0 0 0 / 20%));
-	--ct-open-card-shadow: var(--shadow-l, 0 20px 56px rgb(0 0 0 / 24%));
-	--ct-control-shadow: var(--shadow-xs, 0 4px 14px rgb(0 0 0 / 10%));
-	--ct-popover-shadow: var(--shadow-s, 0 8px 24px rgb(0 0 0 / 14%));
-	--ct-motion-standard: var(--anim-motion-baseline, cubic-bezier(0.2, 0.8, 0.2, 1));
-	--ct-duration-instant: var(--anim-duration-superfast, 120ms);
-	--ct-duration-fast: var(--anim-duration-fast, 160ms);
-	--ct-duration-moderate: var(--anim-duration-moderate, 320ms);
+	/* Cupertino shape, elevation and motion are local fallbacks rather than a
+	   dependency on the theme being installed. */
+	--ct-corner-shape: var(--corner-shape, superellipse(1.1));
+	--ct-radius-card: 12px;
+	--ct-radius-open-card: 16px;
+	--ct-radius-control: 10px;
+	--ct-radius-panel: 16px;
+	--ct-radius-round: 100vh;
+	--ct-card-shadow: 0 2px 8px -2px rgb(0 0 0 / 4%), 0 2px 4px -2px rgb(0 0 0 / 4%);
+	--ct-card-shadow-hover: 0 12px 24px -4px rgb(0 0 0 / 8%), 0 8px 16px -4px rgb(0 0 0 / 4%);
+	--ct-card-shadow-drag: 0 14px 36px rgb(0 0 0 / 20%);
+	--ct-open-card-shadow: 0 14px 62px rgb(0 0 0 / 25%);
+	--ct-control-shadow: 0 2px 8px -2px rgb(0 0 0 / 4%), 0 2px 4px -2px rgb(0 0 0 / 4%);
+	--ct-popover-shadow: 0 12px 24px -4px rgb(0 0 0 / 8%), 0 8px 16px -4px rgb(0 0 0 / 4%);
+	--ct-motion-standard: cubic-bezier(0.32, 0.72, 0, 1);
+	--ct-duration-instant: 80ms;
+	--ct-duration-fast: 160ms;
+	--ct-duration-moderate: 320ms;
 	--ct-duration-none: 0s;
+	--ct-pressed-scale: 0.75;
+	--ct-control-opacity-idle: 0.82;
+	--ct-control-opacity-active: 1;
 
 	/* Type and state hierarchy are tokens too. This prevents a component from
 	   inventing a private scale that drifts from the rest of the product. */
@@ -142,7 +154,7 @@
 	--ct-card-action-size: 28px;
 	--ct-card-action-gap: 2px;
 	--ct-card-action-padding: 3px;
-	--ct-card-action-radius: var(--radius-m, 10px);
+	--ct-card-action-radius: var(--ct-radius-control);
 	--ct-card-menu-offset: 6px;
 	--ct-card-menu-width: 132px;
 	--ct-open-card-min-size: 180px;
@@ -242,28 +254,74 @@
 	--ct-search-input-padding-inline: 8px;
 	--ct-compact-card-width: 258px;
 	--ct-compact-open-card-width: 520px;
+	--ct-help-width: 760px;
+	--ct-help-pane-gap: 48px;
+	--ct-help-section-gap: 12px;
+	--ct-help-choice-padding: 16px;
+	--ct-help-ownership-margin: 18px;
+	--ct-help-ownership-padding: 16px;
+	--ct-help-list-gap: 6px;
+	--ct-help-actions-margin: 16px;
+	--ct-help-eyebrow-size: 0.72rem;
+	--ct-help-body-size: 0.88rem;
+	--ct-help-lead-leading: 1.55;
+	--ct-help-body-leading: 1.5;
+	--ct-help-choice-grow: 1;
+	--ct-help-choice-basis: 190px;
+	--ct-help-heading-margin: 4px;
+	--ct-help-body-margin: 0;
+	--ct-help-list-margin: 8px;
+	--ct-help-list-padding: 20px;
+	--ct-help-title-margin: 0;
+	--ct-help-lead-margin: 8px;
+	--ct-help-letter-spacing: 0.02em;
+	--ct-help-modal-padding: 24px;
+	--ct-help-modal-max-height: 82vh;
+	--ct-help-modal-scrollbar: auto;
+}
+
+.theme-light :where(.context-tree-view, .linked-canvas-help-modal) {
+	--ct-accent: rgb(0 136 255);
+	--ct-red: rgb(255 56 60);
+	--ct-orange: rgb(255 141 40);
+	--ct-green: rgb(52 199 89);
+	--ct-purple: rgb(203 48 224);
+	--ct-canvas: color-mix(in srgb, #fff, black 5%);
+	--ct-card: #fff;
+	--ct-card-open: color-mix(in srgb, #fff 96%, var(--ct-accent) 4%);
+	--ct-control: color-mix(in srgb, #fff, black 3%);
+	--ct-field: #fff;
+	--ct-control-hover: hsl(0 0% 0% / 5%);
+	--ct-border: hsl(0 0% 0% / 12%);
+	--ct-border-strong: hsl(0 0% 0% / 24%);
+	--ct-dot: hsl(0 0% 0% / 18%);
+}
+
+.theme-dark :where(.context-tree-view, .linked-canvas-help-modal) {
+	--ct-accent: rgb(0 145 255);
+	--ct-red: rgb(255 66 69);
+	--ct-orange: rgb(255 146 48);
+	--ct-green: rgb(48 209 88);
+	--ct-purple: rgb(107 52 242);
+	--ct-canvas: #1e1e1e;
+	--ct-card: color-mix(in srgb, #1e1e1e, white 5%);
+	--ct-card-open: color-mix(in srgb, #1e1e1e 92%, var(--ct-accent) 8%);
+	--ct-control: color-mix(in srgb, #1e1e1e, white 8%);
+	--ct-field: color-mix(in srgb, #1e1e1e, white 5%);
+	--ct-control-hover: hsl(0 0% 100% / 8%);
+	--ct-border: hsl(0 0% 100% / 13%);
+	--ct-border-strong: hsl(0 0% 100% / 26%);
+	--ct-dot: hsl(0 0% 100% / 22%);
+}
+/* linked-canvas-design-tokens:end */
+
+.context-tree-view {
 	display: flex;
 	height: 100%;
 	min-height: 0;
 	flex-direction: column;
 	overflow: hidden;
 }
-
-.theme-light .context-tree-view {
-	--ct-canvas: color-mix(in srgb, var(--background-secondary) 96%, var(--background-primary) 4%);
-	--ct-card: var(--background-primary);
-	--ct-card-open: color-mix(in srgb, var(--background-primary) 97%, var(--interactive-accent) 3%);
-	--ct-control: color-mix(in srgb, var(--background-primary) 98%, var(--background-secondary) 2%);
-}
-
-.theme-dark .context-tree-view {
-	--ct-canvas: color-mix(in srgb, var(--background-primary) 97%, var(--background-secondary) 3%);
-	--ct-card: color-mix(in srgb, var(--background-secondary) 96%, var(--text-normal) 4%);
-	--ct-card-open: color-mix(in srgb, var(--background-secondary-alt, var(--background-secondary)) 94%, var(--interactive-accent) 6%);
-	--ct-control: color-mix(in srgb, var(--background-secondary-alt, var(--background-secondary)) 88%, var(--background-primary) 12%);
-	--ct-field: color-mix(in srgb, var(--background-primary) 92%, var(--background-secondary) 8%);
-}
-/* linked-canvas-design-tokens:end */
 
 .context-tree-action,
 .context-tree-zoom-button {
@@ -273,6 +331,7 @@
 	color: var(--text-muted);
 	font-size: calc(var(--ct-type-action) * var(--ct-font-scale));
 	cursor: pointer;
+	corner-shape: var(--ct-corner-shape);
 }
 
 .context-tree-action { padding: var(--ct-action-padding-block) var(--ct-action-padding-inline); }
@@ -398,7 +457,7 @@
 .context-tree-edge-endpoint.is-selected::before {
 	width: var(--ct-edge-endpoint-active-size);
 	height: var(--ct-edge-endpoint-active-size);
-	border-color: var(--interactive-accent);
+	border-color: var(--ct-accent);
 	background: var(--background-primary);
 	box-shadow: 0 0 0 var(--ct-edge-endpoint-active-halo) var(--ct-accent-halo-strong);
 }
@@ -437,7 +496,7 @@
 }
 
 .context-tree-edge.is-selected {
-	stroke: var(--interactive-accent);
+	stroke: var(--ct-accent);
 	stroke-width: var(--ct-edge-active-width);
 	opacity: 1;
 }
@@ -458,7 +517,7 @@
 .context-tree-node.is-search-hidden { display: none; }
 .context-tree-node.is-search-context .context-tree-card { opacity: var(--ct-opacity-search-context); }
 .context-tree-node.is-search-match .context-tree-card {
-	border-color: var(--interactive-accent);
+	border-color: var(--ct-accent);
 	box-shadow: 0 0 0 var(--ct-ring-emphasis-size) var(--ct-accent-halo), var(--ct-card-shadow-hover);
 }
 .context-tree-node.is-focused .context-tree-card:not(.is-detail-open) {
@@ -467,7 +526,7 @@
 	box-shadow: 0 0 0 var(--ct-ring-subtle-size) var(--ct-accent-halo);
 }
 .context-tree-node.is-focused .context-tree-card:not(.is-detail-open) .context-tree-title {
-	color: var(--text-accent);
+	color: var(--ct-accent);
 }
 .context-tree-node.is-hover-origin .context-tree-card {
 	border-color: var(--ct-border-strong);
@@ -500,6 +559,7 @@
 	background-image: none;
 	box-shadow: var(--ct-card-shadow);
 	font-family: var(--font-interface);
+	corner-shape: var(--ct-corner-shape);
 	transition:
 		width var(--ct-duration-moderate) var(--ct-motion-standard),
 		box-shadow var(--ct-duration-fast) var(--ct-motion-standard),
@@ -521,6 +581,7 @@
 	border-radius: var(--ct-card-action-radius);
 	background: var(--ct-control);
 	box-shadow: var(--ct-control-shadow);
+	corner-shape: var(--ct-corner-shape);
 	opacity: 0;
 	visibility: hidden;
 	transform: translateY(var(--ct-card-control-shift)) scale(var(--ct-card-control-scale, 1));
@@ -541,7 +602,7 @@
 
 .context-tree-card-pin[aria-pressed="true"] {
 	background: var(--ct-pin-active);
-	color: var(--text-accent);
+	color: var(--ct-accent);
 }
 
 .context-tree-card-expand[aria-pressed="true"] {
@@ -574,6 +635,7 @@
 	border-radius: var(--ct-radius-panel);
 	background: var(--ct-control);
 	box-shadow: var(--ct-popover-shadow);
+	corner-shape: var(--ct-corner-shape);
 	opacity: 0;
 	pointer-events: none;
 	transform: translateY(var(--ct-card-menu-motion-shift)) scale(var(--ct-card-menu-scale));
@@ -606,7 +668,7 @@
 
 .context-tree-view .context-tree-card-menu-item:hover,
 .context-tree-view .context-tree-card-menu-item:focus-visible {
-	background: var(--background-modifier-hover);
+	background: var(--ct-control-hover);
 	color: var(--text-normal);
 	outline: none;
 }
@@ -625,9 +687,9 @@
 
 .context-tree-graph-list-item {
 	padding: var(--ct-graph-list-item-padding-block) var(--ct-graph-list-item-padding-inline);
-	border: var(--ct-border-width) solid var(--background-modifier-border);
+	border: var(--ct-border-width) solid var(--ct-border);
 	border-radius: var(--ct-radius-control);
-	background: var(--background-primary);
+	background: var(--ct-card);
 	color: var(--text-normal);
 	text-align: left;
 	cursor: pointer;
@@ -636,7 +698,7 @@
 .context-tree-graph-list-item:hover,
 .context-tree-graph-list-item.is-active {
 	border-color: var(--ct-border-strong);
-	background: var(--background-modifier-hover);
+	background: var(--ct-control-hover);
 }
 
 .context-tree-card:hover .context-tree-card-quick-actions,
@@ -678,6 +740,7 @@
 	background: transparent;
 	color: var(--text-muted);
 	cursor: pointer;
+	corner-shape: var(--ct-corner-shape);
 }
 
 /* A single magnetic perimeter anchor appears where the pointer is closest to
@@ -737,7 +800,7 @@
 .context-tree-connect-port.is-drag-target-port::before {
 	width: var(--ct-connect-port-active-size);
 	height: var(--ct-connect-port-active-size);
-	border-color: var(--text-accent);
+	border-color: var(--ct-accent);
 	background: var(--background-primary);
 	box-shadow: 0 0 0 var(--ct-connect-port-active-halo) var(--ct-accent-halo-strong);
 }
@@ -787,7 +850,7 @@
 
 .context-tree-card-trigger:focus-visible {
 	border-radius: var(--ct-radius-control);
-	outline: var(--ct-focus-ring-width) solid var(--interactive-accent);
+	outline: var(--ct-focus-ring-width) solid var(--ct-accent);
 	outline-offset: var(--ct-focus-ring-offset);
 }
 
@@ -1206,7 +1269,7 @@
 	text-overflow: ellipsis;
 	cursor: pointer;
 }
-.context-tree-connection-jump:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
+.context-tree-connection-jump:hover { background: var(--ct-control-hover); color: var(--text-normal); }
 
 .context-tree-root-only-hint {
 	position: absolute;
@@ -1237,7 +1300,13 @@
 	border-radius: var(--ct-radius-panel);
 	background: var(--ct-control);
 	box-shadow: var(--ct-control-shadow);
+	corner-shape: var(--ct-corner-shape);
+	opacity: var(--ct-control-opacity-idle);
+	transition: opacity var(--ct-duration-fast) var(--ct-motion-standard);
 }
+
+.context-tree-graph-controls:hover,
+.context-tree-graph-controls:focus-within { opacity: var(--ct-control-opacity-active); }
 
 .context-tree-search-panel {
 	position: absolute;
@@ -1252,6 +1321,7 @@
 	border-radius: var(--ct-radius-panel);
 	background: var(--ct-control);
 	box-shadow: var(--ct-popover-shadow);
+	corner-shape: var(--ct-corner-shape);
 }
 
 .context-tree-search-panel.is-open { display: block; }
@@ -1353,6 +1423,117 @@
 	background: var(--ct-card);
 	box-shadow: var(--ct-card-shadow);
 	color: var(--text-muted);
+	corner-shape: var(--ct-corner-shape);
+}
+
+.context-tree-action:active,
+.context-tree-zoom-button:active,
+.context-tree-card-quick-action:active {
+	transform: scale(var(--ct-pressed-scale));
+}
+
+.linked-canvas-help-modal {
+	width: min(var(--ct-help-width), calc(100% - var(--ct-help-pane-gap)));
+	max-height: var(--ct-help-modal-max-height);
+	padding: var(--ct-help-modal-padding);
+	border: var(--ct-border-width) solid var(--ct-border);
+	border-radius: var(--ct-radius-panel);
+	background: var(--ct-card);
+	box-shadow: var(--ct-open-card-shadow);
+	corner-shape: var(--ct-corner-shape);
+	overflow-y: var(--ct-help-modal-scrollbar);
+}
+
+.linked-canvas-help-modal h2 { margin: var(--ct-help-title-margin); }
+
+.linked-canvas-help-lead {
+	margin: var(--ct-help-lead-margin) 0 var(--ct-help-ownership-margin);
+	color: var(--text-muted);
+	line-height: var(--ct-help-lead-leading);
+}
+
+.linked-canvas-help-choices {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ct-help-section-gap);
+}
+
+.linked-canvas-help-choice {
+	flex: var(--ct-help-choice-grow) var(--ct-help-choice-grow) var(--ct-help-choice-basis);
+	padding: var(--ct-help-choice-padding);
+	border: var(--ct-border-width) solid var(--ct-border);
+	border-radius: var(--ct-radius-card);
+	background: var(--ct-control);
+	corner-shape: var(--ct-corner-shape);
+}
+
+.linked-canvas-help-choice h3 {
+	margin: var(--ct-help-heading-margin) 0;
+	font-size: var(--ct-type-title);
+}
+
+.linked-canvas-help-choice p {
+	margin: var(--ct-help-body-margin);
+	color: var(--text-muted);
+	font-size: var(--ct-help-body-size);
+	line-height: var(--ct-help-body-leading);
+}
+
+.linked-canvas-help-eyebrow {
+	color: var(--ct-accent);
+	font-size: var(--ct-help-eyebrow-size);
+	font-weight: var(--ct-weight-semibold);
+	letter-spacing: var(--ct-help-letter-spacing);
+}
+
+.linked-canvas-help-ownership {
+	margin-top: var(--ct-help-ownership-margin);
+	padding: var(--ct-help-ownership-padding);
+	border-radius: var(--ct-radius-card);
+	background: var(--ct-accent-halo-soft);
+	corner-shape: var(--ct-corner-shape);
+}
+
+.linked-canvas-help-ownership h3 { margin: var(--ct-help-body-margin); }
+
+.linked-canvas-help-ownership ul {
+	display: grid;
+	gap: var(--ct-help-list-gap);
+	margin: var(--ct-help-list-margin) 0 var(--ct-help-body-margin);
+	padding-left: var(--ct-help-list-padding);
+	color: var(--text-muted);
+	font-size: var(--ct-help-body-size);
+	line-height: var(--ct-help-body-leading);
+}
+
+.linked-canvas-help-actions { margin-top: var(--ct-help-actions-margin); }
+
+.linked-canvas-help-modal .linked-canvas-help-actions button {
+	border-color: var(--ct-border);
+	border-radius: var(--ct-radius-control);
+	background: var(--ct-control);
+	color: var(--text-normal);
+	box-shadow: var(--ct-control-shadow);
+	corner-shape: var(--ct-corner-shape);
+}
+
+.linked-canvas-help-modal .linked-canvas-help-actions button:hover {
+	background: var(--ct-control-hover);
+}
+
+.linked-canvas-help-modal .linked-canvas-help-actions button:focus-visible {
+	outline: var(--ct-focus-ring-width) solid var(--ct-accent);
+	outline-offset: var(--ct-ring-subtle-size);
+}
+
+.linked-canvas-help-modal .linked-canvas-help-actions button.mod-cta {
+	border-color: var(--ct-accent);
+	background: var(--ct-accent);
+	color: var(--ct-on-accent);
+}
+
+.linked-canvas-help-modal .linked-canvas-help-actions button.mod-cta:hover {
+	background: var(--ct-accent-hover);
 }
 
 .context-tree-empty-eyebrow {
@@ -1378,7 +1559,7 @@
 .context-tree-empty-status { margin: var(--ct-empty-status-gap) 0 0; color: var(--text-muted); font-size: calc(var(--ct-type-empty-status) * var(--ct-font-scale)); line-height: var(--ct-leading-empty-status); }
 .context-tree-empty-next { margin: var(--ct-empty-next-gap) 0 0; color: var(--text-faint); font-size: calc(var(--ct-type-empty-next) * var(--ct-font-scale)); line-height: var(--ct-leading-empty-next); }
 .context-tree-empty-actions { display: flex; flex-wrap: wrap; gap: var(--ct-empty-action-gap); margin-top: var(--ct-empty-action-margin); }
-.context-tree-empty-actions .context-tree-action:first-child { background: var(--background-modifier-hover); }
+.context-tree-empty-actions .context-tree-action:first-child { background: var(--ct-control-hover); }
 
 /* Theme CSS is loaded beside plugin CSS and may style a generic card class
    after this file. Keep Linked Canvas's neutral document boundary scoped and

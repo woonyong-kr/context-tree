@@ -16,7 +16,7 @@
 1. 현재 노트를 Linked Canvas에서 열기, 연결된 노트 읽기 지도 열기, 카드 읽기, 인접 노트 펼치기·접기, 오른쪽 원문 편집기 열기, 검색과 필터는 한 번의 직접 동작으로 끝난다. 인접 노트와 원문 편집기는 카드의 직접 동작으로 제공하며 더보기 메뉴를 거치지 않는다. 새 이웃이 없는 카드는 무효한 펼치기 동작을 노출하지 않고, 유효한 동작은 실행 전에 바뀔 노트 수를 이름으로 알려 준다.
 2. 현재 노트의 기존 Canvas 재사용 또는 최초 생성, 현재 Map을 Canvas로 전환, 기존 Canvas 활성화, 원문 편집은 각각 한 단계로 끝난다. 같은 노트가 여러 Canvas에 놓인 경우의 공간 선택만 두 번째 단계로 허용한다. 일상 동작에서 이름 입력 modal이나 modal 위 modal을 열지 않는다.
 3. 그래프에서 카드 제거는 두 단계 이내로 끝나되 Markdown 원문을 변경하지 않는다. 원본 노트를 휴지통으로 보내는 작업만 명시적 경고와 확인을 포함한 세 단계까지 허용한다.
-4. 첫 실행은 설정 wizard 대신 현재 노트 주변 그래프와 한 줄 도움말을 보여 준다. 빈 상태의 주 동작은 하나만 제공한다.
+4. 설정 wizard나 강제 onboarding은 두지 않는다. Command Palette의 **Linked Canvas 사용 방법 보기**와 설정 첫 항목은 언제든 같은 task-first 도움말을 연다. 도움말은 **기본 정리 Canvas**, **보조 탐색 Map**, **기존 Canvas 활성화**를 구분하고 Markdown·Canvas·sidecar의 소유권을 실행 전에 설명한다. 현재 Markdown이 있을 때 Canvas와 Map을 각각 한 번에 여는 직접 동작을 제공한다.
 
 ## 공간과 카드
 
@@ -57,7 +57,7 @@ Heptabase의 card/whiteboard 분리 원칙을 Obsidian 정본에 맞게 적용�
 
 ## 도구와 가독성
 
-1. 시각 언어는 **문서 우선의 조용한 작업면**이다. Cupertino의 fresh·familiar·focused 철학과 native Obsidian component 원칙을 따르되 테마 CSS·selector·trade dress를 복제하지 않는다. Linked Map의 카드와 도구는 중앙 디자인 토큰 계층을 통해 Obsidian 테마의 surface·text·radius·shadow·motion 변수를 사용하고, 특정 테마 이름을 감지하지 않는다. 강한 색상·큰 그림자·항상 보이는 버튼 테두리로 내용과 경쟁하지 않는다. Map의 Obsidian 강조색은 시작·중심 카드, 열린 문서와 그 직접 관계, 검색 결과, 선택된 관계, keyboard focus처럼 의미가 있는 상태에만 사용한다. 새 Linked Canvas는 표준 JSON Canvas 색상으로 root·일반 Markdown·PDF·이미지를 절제되게 구분하되 사용자가 정한 기존 카드 색을 덮어쓰거나 카드마다 무작위 색을 배정하지 않는다.
+1. 시각 언어는 **문서 우선의 조용한 작업면**이다. Cupertino의 MIT-licensed colour·elevation·motion·control-shape 값을 plugin-scoped 단일 토큰 계층에 적용하되, Cupertino의 global selector·asset·trade dress를 복제하거나 특정 theme 이름을 감지하지 않는다. Obsidian은 본문 text·font·Reading·editor 의미를 계속 소유하며, 다른 theme의 전역 UI는 변경하지 않는다. 강한 색상·큰 그림자·항상 보이는 버튼 테두리로 내용과 경쟁하지 않는다. Map의 Cupertino blue 강조색은 시작·중심 카드, 열린 문서와 그 직접 관계, 검색 결과, 선택된 관계, keyboard focus처럼 의미가 있는 상태에만 사용한다. 새 Linked Canvas는 표준 JSON Canvas 색상으로 root·일반 Markdown·PDF·이미지를 절제되게 구분하되 사용자가 정한 기존 카드 색을 덮어쓰거나 카드마다 무작위 색을 배정하지 않는다.
 2. 일반 상태의 카드는 얇은 중성 경계와 낮은 그림자만 가진다. hover·focus·drag는 같은 카드 표면의 경계와 높이감만 단계적으로 바꾸며 폭·높이·좌표를 바꾸지 않는다. 카드 동작은 작은 단일 도구 묶음으로 드러나고 각 아이콘을 독립된 장식 상자로 보이게 만들지 않는다.
 3. 캔버스는 이동과 배율을 인지할 수 있는 20px 중성 도트 작업면이다. 도트는 텍스트보다 충분히 낮은 대비를 유지한다. 배경, compact 카드, 열린 문서는 서로 다른 세 단계의 중성 surface를 사용하고 열린 문서는 compact 카드보다 위 z-depth와 shadow를 가진다. 관계선은 카드 본문보다 한 단계 낮은 대비를 사용하되 기본 상태에서도 경로를 식별할 수 있고 카드 경계에서 끝나야 한다. hover는 직접 관계를 선명하게 만들 수 있지만 Reading·Source가 열린 동안 다른 카드와 관계를 흐리게 만들지 않는다. 우하단 도구 모음과 검색 패널은 같은 surface·radius 체계를 공유한다.
 4. Reading 카드는 Obsidian의 본문 글꼴과 Markdown 계층을, compact 카드와 도구는 interface 글꼴을 사용한다. 플러그인 장식이 Markdown 제목·목록·callout·표의 의미 계층을 덮어쓰지 않는다.
@@ -87,6 +87,7 @@ Heptabase의 card/whiteboard 분리 원칙을 Obsidian 정본에 맞게 적용�
 | Markdown Reading 의미 | `TopicCardRenderer.ensureDetails()`, `createReadingMarkdownFrame()`, `topicDisplayContent()`, `styles.css` | `reading-markdown-frame.test.ts`, `topic-display.test.ts`, Desktop UI 검증 |
 | 관계 삭제 드롭 안전성 | `disconnect-drop-action.ts` | `disconnect-drop-action.test.ts` |
 | 기본 Canvas 진입과 기존 공간 재사용 | `linked-canvas-profile.ts`, `LinkedCanvasService.canvasesForSource()`, `ContextTreePlugin.openCurrentNoteInLinkedCanvas()`, ribbon·Markdown file menu | `linked-canvas-profile.test.ts`, copy regression, Desktop UI 검증 |
+| 사용 방법과 표면 선택 | `LinkedCanvasHelpModal`, `ContextTreePlugin.openHelp()`, Command Palette·Settings | `copy.test.ts`, Desktop UI 검증 |
 | 현재 노트와 1-hop 보조 탐색 | `graph-workspace.ts`, `parser.ts`, `ContextTreePlugin.activateCurrentNote()`, Command Palette·Markdown file menu | `graph-workspace.test.ts`, `parser-rooted.test.ts`, copy regression, Desktop UI 검증 |
 | 새 카드 저장 위치 | `graphNoteFolder()`, `ContextTreeView.createInlineTopic()` | `graph-workspace.test.ts` |
 | 편집 draft 복구 | `inline-editor-draft.ts`, `ContextTreeView` lifecycle, plugin settings | `inline-editor-draft.test.ts`, lifecycle regression |
@@ -107,7 +108,7 @@ Obsidian에서 플러그인을 다시 활성화한다. 짧은 카드와 화면�
 같이 준비해, 아래 순서를 같은 그래프에서 확인한다. 이 절차의 결과는 릴리스 후보
 검토 기록에 남긴다.
 
-1. **기본 Canvas 진입:** Markdown 노트를 연 뒤 왼쪽 ribbon의 Linked Canvas 아이콘을 한 번 눌러 해당 노트를 포함한 기존 표준 Canvas가 열리는지 확인한다. 기존 Canvas가 없을 때만 새 Canvas와 sidecar가 생기고, 같은 노트를 다시 실행하면 중복 생성 없이 그 Canvas를 재사용해야 한다. 같은 노트가 둘 이상의 Canvas에 있을 때만 한 번의 native 선택기를 보여 준다. Canvas 안에서는 native drag·resize·group·text·image·PDF와 Markdown 편집이 그대로 동작해야 한다. 활성 Markdown 노트가 없으면 다음 행동을 알리고 임의 Canvas로 fallback하지 않는다.
+1. **도움말과 기본 Canvas 진입:** Command Palette와 설정 첫 항목에서 같은 도움말이 열리고, 기본 Canvas·보조 Map·기존 Canvas 활성화와 세 저장소의 소유권이 modal 안에서 구분되는지 확인한다. keyboard Tab으로 두 직접 동작에 접근할 수 있고 200% interface zoom에서도 내용과 버튼이 modal 내부에서 스크롤되어 잘리지 않아야 한다. Markdown 노트를 연 뒤 도움말의 Canvas 동작과 왼쪽 ribbon 아이콘이 각각 해당 노트를 포함한 기존 표준 Canvas를 한 번에 여는지 확인한다. 기존 Canvas가 없을 때만 새 Canvas와 sidecar가 생기고, 같은 노트를 다시 실행하면 중복 생성 없이 그 Canvas를 재사용해야 한다. 같은 노트가 둘 이상의 Canvas에 있을 때만 한 번의 native 선택기를 보여 준다. Canvas 안에서는 native drag·resize·group·text·image·PDF와 Markdown 편집이 그대로 동작해야 한다. 활성 Markdown 노트가 없으면 다음 행동을 알리고 임의 Canvas로 fallback하지 않는다.
 2. **보조 Map 열기:** Command Palette와 Markdown 파일 메뉴의 **주변을 Linked Map으로 탐색**을 한 번 실행해 같은 노트의 임시 Map이 나타나는지 확인한다. Map을 열었을 때 도구 모음은 우하단에 있고 카드 내부에는
    `+`가 없으며 레이어 아이콘과 좌상단 텍스트 버튼도 없다. 그래프 이름은 탭 제목에만 보이고, 넓은 pane에서는 **Canvas에서 계속**이 아이콘과 텍스트로 같은 도구 모음에 보인다.
    어떤 배율에서도 카드를 열면 카메라와 카드 중심 좌표가 바뀌지 않는다. 72% 미만에서는
@@ -151,4 +152,4 @@ Obsidian에서 플러그인을 다시 활성화한다. 짧은 카드와 화면�
 15. **제외·재시작:** 자동 card를 삭제한 뒤 sync·plugin 재활성화·Obsidian 재시작을 거쳐도 다시 생기지 않아야 한다. 같은 파일을 직접 다시 놓으면 복원된다. Canvas·source rename도 끊기지 않아야 한다.
 16. **관계 쓰기 안전:** 기본 모드에서 수동 Canvas edge가 Markdown을 바꾸지 않는지 확인한다. opt-in 뒤 새 방향성 edge는 `linked_canvas_links`에 한 번만 추가되고, edge 삭제는 원문 관계를 삭제하지 않아야 한다.
 17. **비활성 호환성:** 플러그인을 끈 상태에서도 생성·활성화한 `.canvas`를 Obsidian Canvas로 열어 Markdown·PDF·이미지·그룹·text와 수동 edge를 읽고 이동할 수 있어야 한다. `.linked-canvas.json`은 렌더링 필수 파일이 아니다. 확인 뒤 플러그인을 다시 켜고 같은 Canvas를 열었을 때 자동 범위가 이어져야 한다.
-18. **공개 미디어:** 같은 릴리스 후보로 Linked Map overview, native Reading, Source, 색상 역할이 보이는 표준 Canvas를 캡처하고 4단계 GIF를 만든다. `docs/release-media.json`의 version·Obsidian version·날짜·크기·SHA-256과 README 참조가 `npm run check:media`를 통과해야 한다.
+18. **공개 미디어:** 같은 릴리스 후보로 사용 방법 안내, Linked Map overview, native Reading, Source, 색상 역할이 보이는 표준 Canvas를 캡처하고 5단계 GIF를 만든다. `docs/release-media.json`의 version·Obsidian version·날짜·크기·SHA-256과 README 참조가 `npm run check:media`를 통과해야 한다.

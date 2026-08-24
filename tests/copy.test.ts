@@ -33,6 +33,17 @@ test("makes Linked Canvas primary while keeping Linked Map as a secondary explor
 	assert.equal(COPY_EN.labels.noVisibleLinks, "No linked notes are visible yet. Add a wikilink or backlink to grow this map.");
 });
 
+test("the in-app guide explains the choice and file ownership before acting", () => {
+	assert.match(COPY_KO.help.canvasEyebrow, /기본/);
+	assert.match(COPY_KO.help.mapEyebrow, /보조/);
+	assert.match(COPY_KO.help.canvasDescription, /표준 Obsidian Canvas/);
+	assert.match(COPY_KO.help.ownershipItems[0]!, /원본 Markdown/);
+	assert.match(COPY_EN.help.canvasEyebrow, /Primary/);
+	assert.match(COPY_EN.help.mapEyebrow, /Secondary/);
+	assert.match(COPY_EN.help.ownershipItems[1]!, /standard \.canvas/);
+	assert.equal(COPY_EN.view.helpCommand, "Show how to use Linked Canvas");
+});
+
 test("explains that Canvas connection sync writes real note relations only when enabled", () => {
 	assert.match(COPY_KO.notice.canvasRelationSyncEnabled, /실제 노트 관계/);
 	assert.match(COPY_EN.notice.canvasRelationSyncDisabled, /visual only/);

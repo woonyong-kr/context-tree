@@ -4,9 +4,13 @@ Linked Canvas should feel like a native Obsidian workspace, not a second
 application embedded inside it. Its visual direction follows the
 [Cupertino theme](https://github.com/aaaaalexis/obsidian-cupertino) principles:
 fresh, familiar, focused, with quiet secondary UI and clear document
-hierarchy. It does not copy Cupertino selectors or CSS. It consumes Obsidian's
-public theme variables so the same components remain coherent in Cupertino,
-the default theme, and other conforming themes.
+hierarchy. It does not copy Cupertino's global selectors or assets. It consumes
+Obsidian's public text and editor variables, while a plugin-scoped foundation
+adapts Cupertino's MIT-licensed colour, elevation, motion, and control-shape
+values.
+The plugin therefore remains coherent when Cupertino is absent without
+overriding any global Obsidian or third-party theme selector. The exact source
+revision and license are recorded in `THIRD_PARTY_NOTICES.md`.
 
 Its spatial interaction model borrows a separate principle from
 [Heptabase](https://wiki.heptabase.com/fundamental-elements): the card is the
@@ -37,9 +41,10 @@ Linked Map is a secondary inspection tool rather than a competing whiteboard.
 1. **Content is primary.** Markdown, card titles, and relationships are easier
    to scan than the controls around them. Secondary actions appear on hover,
    keyboard focus, or a state that needs explanation.
-2. **Native tokens come first.** Surfaces, text, accent, radii, shadows, fonts,
-   and motion resolve from Obsidian variables. Linked Canvas supplies a
-   conservative fallback only in its token layer.
+2. **Scoped platform foundation.** Text, fonts, Reading content, and editor
+   semantics remain native Obsidian. Plugin surfaces, accent, radii, shadows,
+   and motion resolve from the one Cupertino-derived token layer and never
+   escape the plugin boundary.
 3. **One visual vocabulary.** Canvas, compact cards, opened documents, controls,
    fields, and popovers have named semantic tokens. A component cannot invent
    a private colour, radius, shadow, duration, type size, or pixel dimension.
@@ -64,8 +69,8 @@ The block between `linked-canvas-design-tokens:start` and
 `linked-canvas-design-tokens:end` at the top of `styles.css` is the only
 place where Linked Canvas design values are declared.
 
-- Platform aliases map Obsidian variables to Linked Canvas surfaces, borders,
-  relation colours, radii, shadows, motion, and fonts.
+- Platform aliases map Cupertino-derived surface, relation, radius, shadow, and
+  motion values plus Obsidian text/font semantics to Linked Canvas roles.
 - Semantic state tokens describe focus, open, pin, warning, and relationship
   states.
 - Geometry and typography tokens describe component dimensions and hierarchy.
@@ -96,8 +101,9 @@ the card dimensions inside that query still use semantic tokens.
 | Open Reading or Source | primary + restrained accent | raised secondary + restrained accent | strongest native elevation; fixed graph footprint |
 | HUD, menu, search | primary control surface | raised secondary control surface | one shared radius and shadow vocabulary |
 
-The exact colours and elevations remain owned by the active theme. Linked
-Canvas only preserves the ordering and semantic role.
+The exact Linked Canvas surfaces and elevations are owned by the scoped token
+layer. The active theme continues to own the rest of Obsidian and the semantic
+Markdown rendered inside each card.
 
 ## Component boundaries
 
