@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.7
+
+- Restore a restrained spatial dot grid and define three theme-aware surface
+  levels for the canvas, compact cards, and the open document.
+- Use the active Obsidian accent only for meaningful state: the focused start
+  card, an open Reading or Source card, and their direct relationship lines.
+- Keep an open document at a readable screen size while the surrounding graph
+  continues to zoom, without moving the card's graph centre or the camera.
+- Reserve the complete inverse-scaled action footprint so low-zoom controls no
+  longer cover titles or Source text, and keep open cards above compact context.
+- Preserve the complete visible context while Reading or Source is open instead
+  of dimming unrelated cards and edges through a stale hover state.
+
 ## 0.5.6
 
 - Replace partially supported advanced text-decoration properties with a

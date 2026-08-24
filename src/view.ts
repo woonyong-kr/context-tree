@@ -5,6 +5,7 @@ import { canvasWheelSurface } from "./domain/canvas-wheel-target";
 import { canvasPointerAction } from "./domain/canvas-pointer-action";
 import { isCanvasControlTarget } from "./domain/canvas-pointer-target";
 import { cardOpenEffects, type CardOpenIntent } from "./domain/card-open-action";
+import { cardActionLayout } from "./domain/card-action-layout";
 import { hasCardDragExceededClickThreshold } from "./domain/card-pointer-action";
 import { type PositionLock, syncContentProjectionLayout } from "./domain/content-projection-layout";
 import { canDisconnectAtDrop } from "./domain/disconnect-drop-action";
@@ -740,6 +741,7 @@ export class ContextTreeView extends FileView {
 	}
 
 	private setHoveredNode(nodeId?: string): void {
+		if (this.openDetails.size) nodeId = undefined;
 		if (this.hoveredNodeId === nodeId) return;
 		this.hoveredNodeId = nodeId;
 		this.refreshHoverNodeIds();
@@ -1078,11 +1080,14 @@ export class ContextTreeView extends FileView {
 		this.openNode(nodeId, "navigate-to-card");
 	}
 
-	/** Opening beneath the pointer preserves the camera; relationship navigation does not. */
+	/** Opening preserves both graph coordinates and camera state. */
 	private openNode(nodeId: string, intent: CardOpenIntent = "open-in-place"): void {
+		const effects = cardOpenEffects(intent);
+		// Reading mode keeps every visible note legible. Hover highlighting still
+		// outlines the card, but it must not erase the surrounding context.
+		this.setHoveredNode();
 		this.replaceOpenDetails(openCardAlongsidePins(this.pinnedOpenNodeIds, nodeId));
 		this.syncCards();
-		const effects = cardOpenEffects(intent);
 		if (effects.cancelsPendingOverviewFit) this.fitWhenMeasured = false;
 		if (effects.movesCamera) this.focusNode(nodeId);
 		this.setViewTimeout(() => this.scheduleMeasure(), 220);
@@ -1587,6 +1592,8 @@ export class ContextTreeView extends FileView {
 			const connectedToHovered = !!this.hoveredNodeId
 				&& this.hoverNodeIds.has(edge.nodeA)
 				&& this.hoverNodeIds.has(edge.nodeB);
+			const connectedToFocused = edge.nodeA === this.focusedNodeId || edge.nodeB === this.focusedNodeId;
+			const connectedToOpen = this.openDetails.has(edge.nodeA) || this.openDetails.has(edge.nodeB);
 			const endpointsVisible = edgeVisible && !this.inlineEdit && (selected || connectedToHovered);
 			visual.firstEndpoint.toggleClass("is-visible", endpointsVisible);
 			visual.secondEndpoint.toggleClass("is-visible", endpointsVisible);
@@ -1594,6 +1601,8 @@ export class ContextTreeView extends FileView {
 			visual.secondEndpoint.toggleClass("is-selected", selected);
 			visual.path.toggleClass("is-highlighted", selected);
 			visual.path.toggleClass("is-selected", selected);
+			visual.path.toggleClass("is-focus-related", connectedToFocused);
+			visual.path.toggleClass("is-open-related", connectedToOpen);
 			visual.path.toggleClass("is-hover-related", connectedToHovered);
 			visual.path.toggleClass("is-hover-muted", !!this.hoveredNodeId && !connectedToHovered);
 			visual.path.toggleClass("is-muted", !this.hoveredNodeId && !!this.selectedEdgeId && !selected);
@@ -1671,7 +1680,8 @@ export class ContextTreeView extends FileView {
 			for (const node of this.simNodes) {
 				const card = this.nodeElements.get(node.id)?.querySelector<HTMLElement>(".context-tree-card");
 				if (!card) continue;
-				const size = { width: card.offsetWidth, height: card.offsetHeight };
+				const detailScale = card.hasClass("is-detail-open") ? cardActionLayout(this.zoom).detailScale : 1;
+				const size = { width: card.offsetWidth * detailScale, height: card.offsetHeight * detailScale };
 				if (Math.abs(node.size.width - size.width) <= 2 && Math.abs(node.size.height - size.height) <= 2) continue;
 				node.size = size;
 				changed = true;
@@ -1888,10 +1898,16 @@ export class ContextTreeView extends FileView {
 	private applyTransform(): void {
 		if (!this.scene || !this.viewport) return;
 		this.scene.style.transform = `translate(${this.pan.x}px, ${this.pan.y}px) scale(${this.zoom})`;
-		// Card actions remain usable while the graph is zoomed out, without
-		// becoming larger than the compact card that owns them.
-		const cardControlScale = Math.min(2.4, Math.max(1, 0.72 / this.zoom));
-		this.viewport.style.setProperty("--ct-card-control-scale", String(cardControlScale));
+		const actions = cardActionLayout(this.zoom);
+		this.viewport.style.setProperty("--ct-card-control-scale", String(actions.controlScale));
+		this.viewport.style.setProperty("--ct-card-detail-scale", String(actions.detailScale));
+		this.viewport.style.setProperty("--ct-card-compact-action-reserve", `${actions.compactReserve}px`);
+		this.viewport.style.setProperty("--ct-card-compact-expanded-action-reserve", `${actions.compactExpandedReserve}px`);
+		this.viewport.style.setProperty("--ct-card-open-action-reserve", `${actions.openReserve}px`);
+		this.viewport.style.setProperty("--ct-card-open-expanded-action-reserve", `${actions.openExpandedReserve}px`);
+		this.viewport.style.setProperty("--ct-card-open-padding-top", `${actions.openPaddingTop}px`);
+		this.viewport.style.setProperty("--ct-card-editor-toolbar-spacer", `${actions.editorToolbarSpacer}px`);
+		if (this.openDetails.size) this.scheduleMeasure();
 	}
 
 	private openInternalLink(event: MouseEvent, sourcePath: string): void {

@@ -1,6 +1,6 @@
 {
 	"name": "context-graph",
-	"version": "0.5.6",
+	"version": "0.5.7",
 	"description": "A linked-note reading map for Obsidian that preserves Markdown and context.",
 	"main": "main.js",
 	"type": "module",

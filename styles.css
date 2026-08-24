@@ -2,18 +2,21 @@
 	/* Keep the graph readable at the same 1.2× scale in Reading and Source
 	   modes. Explicit rem-based text below uses this variable as well. */
 	--ct-font-scale: 1.2;
-	/* A quiet document surface: content carries the hierarchy, while chrome is
-	   neutral and only becomes visible on hover, focus, or an explicit state. */
-	--ct-canvas: var(--background-primary);
-	--ct-card: var(--background-primary);
-	--ct-card-hover: var(--background-primary);
+	/* Three neutral surfaces keep spatial depth visible in every Obsidian theme:
+	   workspace, compact index card, and opened document. */
+	--ct-canvas: var(--background-secondary);
+	--ct-card: color-mix(in srgb, var(--background-primary) 94%, var(--text-normal) 6%);
+	--ct-card-open: color-mix(in srgb, var(--background-primary) 92%, var(--interactive-accent) 8%);
+	--ct-card-hover: color-mix(in srgb, var(--background-primary) 90%, var(--text-normal) 10%);
+	--ct-card-focus: color-mix(in srgb, var(--ct-card) 88%, var(--interactive-accent) 12%);
 	--ct-control: color-mix(in srgb, var(--background-primary) 96%, var(--background-secondary));
 	--ct-control-hover: var(--background-modifier-hover);
 	/* Neutral alpha greys prevent a theme's tinted text tokens from turning
 	   ordinary card boundaries into an unintended accent state. */
-	--ct-border: rgb(128 128 128 / 24%);
-	--ct-border-strong: rgb(128 128 128 / 46%);
-	--ct-edge: rgb(128 128 128 / 18%);
+	--ct-border: rgb(128 128 128 / 34%);
+	--ct-border-strong: rgb(128 128 128 / 58%);
+	--ct-edge: color-mix(in srgb, var(--text-muted) 52%, transparent);
+	--ct-dot: color-mix(in srgb, var(--text-faint) 46%, transparent);
 	--ct-muted: var(--text-muted);
 	--ct-card-radius: 6px;
 	--ct-card-shadow: none;
@@ -53,7 +56,9 @@
 	overflow: hidden;
 	cursor: grab;
 	background-color: var(--ct-canvas);
-	background-image: none;
+	background-image: radial-gradient(circle at center, var(--ct-dot) 1px, transparent 1.2px);
+	background-position: 0 0;
+	background-size: 20px 20px;
 	outline: none;
 }
 
@@ -152,16 +157,16 @@
 .context-tree-edge-endpoint.is-disconnecting { cursor: grabbing; }
 .context-tree-edge-endpoint.is-disconnecting::before { border-color: var(--text-error); }
 
-.context-tree-edge.is-highlighted {
-	stroke: var(--text-normal);
-	stroke-width: 1.8;
-	opacity: 1;
+.context-tree-edge.is-focus-related {
+	stroke: color-mix(in srgb, var(--interactive-accent) 58%, var(--text-muted));
+	stroke-width: 1.45;
+	opacity: 0.78;
 }
 
-.context-tree-edge.is-selected {
-	stroke: var(--interactive-accent);
-	stroke-width: 1.8;
-	opacity: 1;
+.context-tree-edge.is-open-related {
+	stroke: color-mix(in srgb, var(--interactive-accent) 72%, var(--text-normal));
+	stroke-width: 1.65;
+	opacity: 0.92;
 }
 
 .context-tree-edge.is-muted {
@@ -176,7 +181,19 @@
 	opacity: 1;
 }
 
-.context-tree-edge.is-hover-muted { opacity: 0.14; }
+.context-tree-edge.is-hover-muted { opacity: 0.32; }
+
+.context-tree-edge.is-highlighted {
+	stroke: var(--text-normal);
+	stroke-width: 1.8;
+	opacity: 1;
+}
+
+.context-tree-edge.is-selected {
+	stroke: var(--interactive-accent);
+	stroke-width: 1.8;
+	opacity: 1;
+}
 
 /* Filtering changes visibility, never graph geometry. Keeping the force model
    stable avoids a disorienting re-layout for every keystroke or checkbox. */
@@ -190,11 +207,20 @@
 }
 
 .context-tree-node.is-node-dragging { z-index: 4; }
+.context-tree-node.is-detail-open { z-index: 2; }
 .context-tree-node.is-search-hidden { display: none; }
 .context-tree-node.is-search-context .context-tree-card { opacity: 0.5; }
 .context-tree-node.is-search-match .context-tree-card {
 	border-color: var(--interactive-accent);
 	box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 14%, transparent), var(--ct-card-shadow-hover);
+}
+.context-tree-node.is-focused .context-tree-card:not(.is-detail-open) {
+	border-color: color-mix(in srgb, var(--interactive-accent) 58%, var(--ct-border));
+	background: var(--ct-card-focus);
+	box-shadow: 0 0 0 1px color-mix(in srgb, var(--interactive-accent) 14%, transparent);
+}
+.context-tree-node.is-focused .context-tree-card:not(.is-detail-open) .context-tree-title {
+	color: var(--text-accent);
 }
 .context-tree-node.is-hover-origin .context-tree-card {
 	border-color: var(--ct-border-strong);
@@ -205,7 +231,7 @@
 	   every adjacent card as selected creates a noisy ring around the reader. */
 	border-color: transparent;
 }
-.context-tree-node.is-hover-muted .context-tree-card { opacity: 0.24; }
+.context-tree-node.is-hover-muted .context-tree-card { opacity: 0.52; }
 
 .context-tree-node.is-node-dragging .context-tree-card {
 	cursor: grabbing;
@@ -222,7 +248,7 @@
 	border: 1px solid transparent;
 	border-radius: var(--ct-card-radius);
 	cursor: grab;
-	background: color-mix(in srgb, var(--ct-card) 96%, var(--background-secondary));
+	background: var(--ct-card);
 	background-image: none;
 	box-shadow: var(--ct-card-shadow);
 	font-family: var(--font-interface);
@@ -376,6 +402,12 @@
 	transition-delay: 0s;
 }
 
+.context-tree-card.is-detail-open:hover .context-tree-card-quick-actions,
+.context-tree-card.is-detail-open:focus-within .context-tree-card-quick-actions,
+.context-tree-card.is-detail-open.is-pinned .context-tree-card-quick-actions {
+	transform: translateY(0) scale(1);
+}
+
 .context-tree-card:hover .context-tree-card-more,
 .context-tree-card:focus-within .context-tree-card-more,
 .context-tree-card.is-pinned .context-tree-card-more,
@@ -477,7 +509,7 @@
 	min-width: 0;
 	width: 100%;
 	margin: 0;
-	padding: 0 74px 0 0;
+	padding: 0 var(--ct-card-compact-action-reserve, 74px) 0 0;
 	border: 0;
 	border-radius: 0;
 	background: transparent;
@@ -538,13 +570,23 @@
 	flex-direction: column;
 	width: min(680px, max(180px, calc(var(--ct-viewport-width, 100vw) - 40px)));
 	max-height: max(180px, calc(var(--ct-viewport-height, 760px) - 72px));
-	padding: 30px 34px 32px;
+	padding: var(--ct-card-open-padding-top, 32px) 34px 32px;
 	border-color: rgb(128 128 128 / 24%);
 	border-radius: 4px;
 	background: var(--ct-card);
-	box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
+	box-shadow: 0 12px 36px rgb(0 0 0 / 18%), 0 1px 2px rgb(0 0 0 / 10%);
 	cursor: grab;
+	transform: scale(var(--ct-card-detail-scale, 1));
+	transform-origin: center;
 }
+
+/* Empty canvas may keep zooming while Reading stays open. Preserve the
+   document's minimum screen size without moving its graph centre or camera. */
+.context-tree-card.is-detail-open .context-tree-card-quick-actions {
+	transform: translateY(-2px) scale(1);
+}
+
+.context-tree-card.is-detail-open .context-tree-card-more { transform: scale(1); }
 
 .context-tree-card.is-panning { cursor: grabbing; }
 
@@ -605,7 +647,7 @@
 .context-tree-card.is-editing .context-tree-card-quick-actions {
 	opacity: 1;
 	visibility: visible;
-	transform: translateY(0) scale(var(--ct-card-control-scale, 1));
+	transform: translateY(0) scale(1);
 	pointer-events: auto;
 }
 
@@ -632,7 +674,7 @@
 /* The toolbar spacer is outside the scrollport, so source text can never
    travel underneath the card's fixed pin, edit, and overflow controls. */
 .context-tree-editor-toolbar-spacer {
-	flex: 0 0 62px;
+	flex: 0 0 var(--ct-card-editor-toolbar-spacer, 62px);
 }
 
 .context-tree-markdown-editor-scroll {
@@ -696,13 +738,13 @@
    prevents long titles or summaries from painting under controls that remain
    visible for a pinned working card. */
 .context-tree-card:not(.is-detail-open).has-expand-action .context-tree-card-trigger {
-	padding-right: 104px;
+	padding-right: var(--ct-card-compact-expanded-action-reserve, 104px);
 }
 .context-tree-card.is-detail-open .context-tree-card-trigger {
-	padding-right: 96px;
+	padding-right: var(--ct-card-open-action-reserve, 96px);
 }
 .context-tree-card.is-detail-open.has-expand-action .context-tree-card-trigger {
-	padding-right: 126px;
+	padding-right: var(--ct-card-open-expanded-action-reserve, 126px);
 }
 .context-tree-view .context-tree-card.has-wrapped-title .context-tree-title { white-space: normal; }
 .context-tree-view .context-tree-card:not(.is-detail-open):not(.has-wrapped-title) .context-tree-title { white-space: nowrap; }
@@ -1088,13 +1130,16 @@
    after this file. Keep Context Graph's neutral document boundary scoped and
    specific without resorting to global overrides or priority flags. */
 .context-tree-view .context-tree-node .context-tree-card {
-	border-color: transparent;
+	border-color: var(--ct-border);
 	box-shadow: none;
 }
 
 .context-tree-view .context-tree-node .context-tree-card.is-detail-open {
-	border-color: rgb(128 128 128 / 24%);
-	box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
+	border-color: color-mix(in srgb, var(--interactive-accent) 46%, var(--ct-border));
+	background: var(--ct-card-open);
+	box-shadow:
+		0 12px 36px rgb(0 0 0 / 20%),
+		0 0 0 1px color-mix(in srgb, var(--interactive-accent) 12%, transparent);
 }
 
 .context-tree-view .context-tree-node:is(.is-focused, .is-hover-origin) .context-tree-card,
@@ -1119,6 +1164,7 @@
 	.context-tree-card-quick-actions {
 		transform: translateY(0) scale(var(--ct-card-control-scale, 1));
 	}
+	.context-tree-card.is-detail-open .context-tree-card-quick-actions { transform: translateY(0) scale(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {

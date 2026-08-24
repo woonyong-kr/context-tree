@@ -64,14 +64,16 @@ database; each step stays on the same Markdown and the same graph coordinates.
 
 Run one command from the note you are already reading. The first view shows the
 resolved one-hop neighbourhood without asking for a workspace, layout, schema,
-or drawing step. Compact cards are deliberately quiet so relationship lines and
-titles describe the map instead of decorated containers.
+or drawing step. A restrained dot grid makes pan and zoom visible; canvas,
+compact cards, and the open document use three neutral surface levels so titles
+and relationship lines remain identifiable without decorative colour.
 
 ### 2. Read the actual note in place
 
 Select a title and that same card becomes the document surface shown at the top
-of this page. The card and camera stay where the reader put them; long documents
-scroll inside the card while neighbouring notes remain visible.
+of this page. The card and camera keep their graph coordinates; at an unreadable
+overview zoom, the open document alone keeps a minimum readable screen size.
+Long documents scroll inside the card while neighbouring notes remain visible.
 
 ### 3. Inspect or edit the complete Markdown source
 
@@ -117,10 +119,11 @@ link index rather than guessing relationships from similar text.
 
 ## Read and edit without losing the map
 
-Selecting a card opens Reading in the card's current position. The camera and
-card coordinates do not move. Reading uses Obsidian's `MarkdownRenderer` inside
-the same public Reading View class boundary used by themes, snippets, and
-registered Markdown post-processors.
+Selecting a card opens Reading at the card's current graph coordinates without
+moving the camera. Below 72%, the open document alone keeps that minimum screen
+scale while the surrounding canvas remains freely zoomable. Reading
+uses Obsidian's `MarkdownRenderer` inside the same public Reading View class
+boundary used by themes, snippets, and registered Markdown post-processors.
 
 The pencil opens the complete source of that note inside the same card,
 including frontmatter. Reading and Source keep one bounded outer footprint, so
@@ -164,7 +167,7 @@ like this:
 
 | Gesture or action | Result |
 | --- | --- |
-| Select a card title | Open or close Reading in place. A pinned card stays open. |
+| Select a card title | Open or close Reading in place without moving the camera. Below 72%, only the open document keeps a readable screen scale. A pinned card stays open. |
 | Drag a title, summary, or non-interactive card frame at least 5 px | Move only that card in compact, Reading, Source, or keep-open state. |
 | Select or scroll Reading content | Keep native text, link, and scroll behaviour; it does not drag the card. |
 | Drag empty graph space | Pan the canvas. |
@@ -173,7 +176,7 @@ like this:
 | **Keep card open** | Keep that Reading or Source card available while another card opens. It does not lock card position. |
 | **Show/Collapse _n_ neighbouring notes** | Preview the size of the change, then expand or collapse that card's meaningful one-hop range without moving existing cards. |
 | **Open source in the right editor** | Open the same note in a reusable Obsidian split on the right. |
-| Hover a card | Emphasize that card and its visible direct relationships without changing layout. |
+| Hover a compact card | Emphasize its direct relationships without changing layout. Open cards keep the whole visible context readable. |
 | Search | Match title, compact summary, and body; retain direct graph context around matches. |
 | Relation filter | Hide or show relationship lines by type without re-running the layout. |
 | Drag a card's perimeter point to another card | Add one `related` relationship to the source card's frontmatter. |
@@ -181,7 +184,7 @@ like this:
 
 Quick actions appear on card hover and keyboard focus. At low graph zoom they
 receive a limited inverse scale so their hit targets remain usable without
-growing larger than the card. The graph toolbar stays at the lower right. New
+covering the title or Source text. The graph toolbar stays at the lower right. New
 cards are created there; there is no duplicate `+` action on every card.
 
 ## What each write action changes

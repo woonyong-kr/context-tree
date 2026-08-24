@@ -214,6 +214,7 @@ export class TopicCardRenderer {
 		// visible heading before measuring it so the card tracks the Markdown title.
 		this.updateHeader(card, node);
 		this.syncInteraction(element, state);
+		element.toggleClass("is-detail-open", state.isOpen);
 		card.toggleClass("is-detail-open", state.isOpen);
 		card.toggleClass("is-editing", state.isEditing);
 		card.toggleClass("is-pinned", state.isPinned);
