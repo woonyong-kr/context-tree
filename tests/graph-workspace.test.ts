@@ -326,7 +326,7 @@ test("malformed persisted scope and physics fall back without breaking graph sta
 		includePaths: [],
 		excludePaths: [],
 	});
-	assert.deepEqual(graph?.physics, { linkStrength: 0.42, repulsion: 980, linkGap: 100 });
+	assert.deepEqual(graph?.physics, { linkStrength: 0.42, repulsion: 720, linkGap: 72 });
 });
 
 test("persisted physics stays within the same bounds exposed by settings", () => {

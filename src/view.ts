@@ -1877,12 +1877,6 @@ export class ContextTreeView extends FileView {
 		const actions = cardActionLayout(this.zoom);
 		this.viewport.style.setProperty("--ct-card-control-scale", String(actions.controlScale));
 		this.viewport.style.setProperty("--ct-card-detail-scale", String(actions.detailScale));
-		this.viewport.style.setProperty("--ct-card-compact-action-reserve", `${actions.compactReserve}px`);
-		this.viewport.style.setProperty("--ct-card-compact-expanded-action-reserve", `${actions.compactExpandedReserve}px`);
-		this.viewport.style.setProperty("--ct-card-open-action-reserve", `${actions.openReserve}px`);
-		this.viewport.style.setProperty("--ct-card-open-expanded-action-reserve", `${actions.openExpandedReserve}px`);
-		this.viewport.style.setProperty("--ct-card-open-padding-top", `${actions.openPaddingTop}px`);
-		this.viewport.style.setProperty("--ct-card-editor-toolbar-spacer", `${actions.editorToolbarSpacer}px`);
 		if (this.openDetails.size) this.scheduleMeasure();
 	}
 

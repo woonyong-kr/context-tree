@@ -30,8 +30,8 @@ export interface GraphPhysics {
 
 export const DEFAULT_GRAPH_PHYSICS: GraphPhysics = {
 	linkStrength: 0.42,
-	repulsion: 980,
-	linkGap: 100,
+	repulsion: 720,
+	linkGap: 72,
 };
 
 /** One source of truth for the persisted values and Settings slider limits. */
@@ -81,7 +81,7 @@ export interface GraphSimulation {
 export function initialGraphPosition(index: number, total: number, isFocus: boolean): { x: number; y: number } {
 	if (isFocus) return { x: 0, y: 0 };
 	const angle = (index / Math.max(total, 1)) * Math.PI * 2 - Math.PI / 2;
-	const radius = 360 + (index % 3) * 78;
+	const radius = 300 + (index % 3) * 52;
 	return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
 }
 
@@ -138,7 +138,7 @@ export function createGraphSimulation(
 		.distance((link) => linkDistance(link, physics.linkGap))
 		.strength(physics.linkStrength);
 	const collideForce = forceCollide<SimNode>()
-		.radius((node) => cardRadius(node) + 30)
+		.radius((node) => cardRadius(node) + 24)
 		.strength(1)
 		.iterations(3);
 	const simulation = forceSimulation(nodes)

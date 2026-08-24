@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.10
+
+- Replace the generated Canvas graph ring with a readable root anchor and a
+  compact two-column reference board while preserving every existing Canvas
+  coordinate, size, colour, group, and manual object.
+- Tighten the optional Linked Map's default spacing so a one-hop neighbourhood
+  remains legible without shrinking the whole view to an overview thumbnail.
+- Refine the theme-native visual hierarchy with clearer workspace/card/document
+  surfaces, visible but quiet dots and edges, larger unified controls, and stable
+  action-rail spacing that does not cover card titles.
+- Verify the release in Obsidian 1.13.7 with Cupertino active and refresh the
+  native Canvas, Map, Reading, Source, and animated README evidence.
+
 ## 0.5.9
 
 - Make standard Obsidian Canvas the primary entry: the ribbon opens an existing

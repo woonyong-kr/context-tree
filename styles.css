@@ -8,17 +8,17 @@
 	/* Surfaces and authored relation colour. Light and dark modes only change
 	   the surface ordering below; components share this vocabulary. */
 	--ct-canvas: var(--background-secondary);
-	--ct-card: var(--background-primary);
-	--ct-card-open: color-mix(in srgb, var(--background-primary) 94%, var(--interactive-accent) 6%);
-	--ct-card-hover: color-mix(in srgb, var(--ct-card) 92%, var(--text-normal) 8%);
-	--ct-card-focus: color-mix(in srgb, var(--ct-card) 88%, var(--interactive-accent) 12%);
-	--ct-control: color-mix(in srgb, var(--background-primary) 92%, var(--background-secondary) 8%);
+	--ct-card: color-mix(in srgb, var(--background-primary) 97%, var(--text-normal) 3%);
+	--ct-card-open: color-mix(in srgb, var(--background-primary) 96%, var(--interactive-accent) 4%);
+	--ct-card-hover: color-mix(in srgb, var(--ct-card) 94%, var(--text-normal) 6%);
+	--ct-card-focus: color-mix(in srgb, var(--ct-card) 92%, var(--interactive-accent) 8%);
+	--ct-control: color-mix(in srgb, var(--background-primary) 96%, var(--background-secondary) 4%);
 	--ct-field: color-mix(in srgb, var(--background-primary) 96%, var(--background-secondary) 4%);
 	--ct-control-hover: var(--background-modifier-hover);
-	--ct-border: color-mix(in srgb, var(--background-modifier-border) 72%, var(--text-faint) 28%);
-	--ct-border-strong: color-mix(in srgb, var(--background-modifier-border-hover, var(--background-modifier-border)) 48%, var(--text-faint) 52%);
-	--ct-edge: color-mix(in srgb, var(--text-muted) 68%, transparent);
-	--ct-dot: color-mix(in srgb, var(--text-muted) 38%, transparent);
+	--ct-border: color-mix(in srgb, var(--background-modifier-border) 62%, var(--text-faint) 38%);
+	--ct-border-strong: color-mix(in srgb, var(--background-modifier-border-hover, var(--background-modifier-border)) 38%, var(--text-muted) 62%);
+	--ct-edge: color-mix(in srgb, var(--text-muted) 76%, transparent);
+	--ct-dot: color-mix(in srgb, var(--text-muted) 52%, transparent);
 	--ct-related: color-mix(in srgb, var(--interactive-accent) 82%, var(--text-muted));
 	--ct-prerequisite: color-mix(in srgb, var(--color-orange) 82%, var(--text-muted));
 	--ct-supports: color-mix(in srgb, var(--color-green) 82%, var(--text-muted));
@@ -46,16 +46,16 @@
 	--ct-chip-surface: color-mix(in srgb, var(--background-secondary) 72%, transparent);
 
 	/* Shape, elevation and motion resolve to the active Obsidian theme first. */
-	--ct-radius-card: var(--radius-s, 8px);
-	--ct-radius-open-card: var(--radius-m, 12px);
-	--ct-radius-control: var(--radius-s, 8px);
-	--ct-radius-panel: var(--radius-m, 12px);
+	--ct-radius-card: var(--radius-m, 12px);
+	--ct-radius-open-card: var(--radius-l, 16px);
+	--ct-radius-control: var(--radius-m, 10px);
+	--ct-radius-panel: var(--radius-l, 16px);
 	--ct-radius-round: 999px;
-	--ct-card-shadow: var(--shadow-surface, 0 1px 2px rgb(0 0 0 / 10%));
-	--ct-card-shadow-hover: var(--shadow-xs, 0 4px 14px rgb(0 0 0 / 12%));
-	--ct-card-shadow-drag: var(--shadow-s, 0 12px 32px rgb(0 0 0 / 18%));
-	--ct-open-card-shadow: var(--shadow-l, 0 16px 48px rgb(0 0 0 / 22%));
-	--ct-control-shadow: var(--shadow-xs, 0 2px 8px rgb(0 0 0 / 8%));
+	--ct-card-shadow: var(--shadow-surface, 0 1px 2px rgb(0 0 0 / 8%));
+	--ct-card-shadow-hover: var(--shadow-xs, 0 6px 20px rgb(0 0 0 / 13%));
+	--ct-card-shadow-drag: var(--shadow-s, 0 14px 36px rgb(0 0 0 / 20%));
+	--ct-open-card-shadow: var(--shadow-l, 0 20px 56px rgb(0 0 0 / 24%));
+	--ct-control-shadow: var(--shadow-xs, 0 4px 14px rgb(0 0 0 / 10%));
 	--ct-popover-shadow: var(--shadow-s, 0 8px 24px rgb(0 0 0 / 14%));
 	--ct-motion-standard: var(--anim-motion-baseline, cubic-bezier(0.2, 0.8, 0.2, 1));
 	--ct-duration-instant: var(--anim-duration-superfast, 120ms);
@@ -125,24 +125,24 @@
 	--ct-edge-open-opacity: 0.92;
 	--ct-edge-muted-opacity: 0.18;
 	--ct-edge-hover-muted-opacity: 0.32;
-	--ct-card-width: 276px;
+	--ct-card-width: 288px;
 	--ct-viewport-fallback-width: 100vw;
 	--ct-card-min-width: 160px;
-	--ct-card-min-height: 82px;
+	--ct-card-min-height: 88px;
 	--ct-card-pane-gap: 32px;
-	--ct-card-padding-block-start: 14px;
-	--ct-card-padding-inline: 16px;
-	--ct-card-padding-block-end: 15px;
+	--ct-card-padding-block-start: 16px;
+	--ct-card-padding-inline: 18px;
+	--ct-card-padding-block-end: 17px;
 	--ct-card-compact-action-reserve: 74px;
-	--ct-card-compact-expanded-action-reserve: 104px;
-	--ct-card-open-action-reserve: 96px;
-	--ct-card-open-expanded-action-reserve: 126px;
+	--ct-card-compact-expanded-action-reserve: 112px;
+	--ct-card-open-action-reserve: 138px;
+	--ct-card-open-expanded-action-reserve: 168px;
 	--ct-card-action-inset: 7px;
 	--ct-card-action-rail-offset: 40px;
-	--ct-card-action-size: 26px;
-	--ct-card-action-gap: 1px;
-	--ct-card-action-padding: 2px;
-	--ct-card-action-radius: var(--radius-s, 8px);
+	--ct-card-action-size: 28px;
+	--ct-card-action-gap: 2px;
+	--ct-card-action-padding: 3px;
+	--ct-card-action-radius: var(--radius-m, 10px);
 	--ct-card-menu-offset: 6px;
 	--ct-card-menu-width: 132px;
 	--ct-open-card-min-size: 180px;
@@ -156,10 +156,10 @@
 	--ct-card-editor-toolbar-spacer: 62px;
 	--ct-control-inset-inline: 16px;
 	--ct-control-inset-block: 15px;
-	--ct-control-padding: 3px;
-	--ct-control-gap: 1px;
-	--ct-control-button-width: 27px;
-	--ct-control-button-height: 26px;
+	--ct-control-padding: 4px;
+	--ct-control-gap: 2px;
+	--ct-control-button-width: 32px;
+	--ct-control-button-height: 32px;
 	--ct-panel-width: 304px;
 	--ct-panel-pane-gap: 32px;
 	--ct-panel-padding: 10px;
@@ -250,17 +250,17 @@
 }
 
 .theme-light .context-tree-view {
-	--ct-canvas: color-mix(in srgb, var(--background-secondary) 94%, var(--background-primary) 6%);
+	--ct-canvas: color-mix(in srgb, var(--background-secondary) 96%, var(--background-primary) 4%);
 	--ct-card: var(--background-primary);
-	--ct-card-open: color-mix(in srgb, var(--background-primary) 94%, var(--interactive-accent) 6%);
-	--ct-control: color-mix(in srgb, var(--background-primary) 96%, var(--background-secondary) 4%);
+	--ct-card-open: color-mix(in srgb, var(--background-primary) 97%, var(--interactive-accent) 3%);
+	--ct-control: color-mix(in srgb, var(--background-primary) 98%, var(--background-secondary) 2%);
 }
 
 .theme-dark .context-tree-view {
-	--ct-canvas: color-mix(in srgb, var(--background-primary) 94%, var(--background-secondary) 6%);
-	--ct-card: color-mix(in srgb, var(--background-secondary) 88%, var(--background-primary) 12%);
-	--ct-card-open: color-mix(in srgb, var(--background-secondary-alt, var(--background-secondary)) 92%, var(--interactive-accent) 8%);
-	--ct-control: color-mix(in srgb, var(--background-secondary-alt, var(--background-secondary)) 76%, var(--background-primary) 24%);
+	--ct-canvas: color-mix(in srgb, var(--background-primary) 97%, var(--background-secondary) 3%);
+	--ct-card: color-mix(in srgb, var(--background-secondary) 96%, var(--text-normal) 4%);
+	--ct-card-open: color-mix(in srgb, var(--background-secondary-alt, var(--background-secondary)) 94%, var(--interactive-accent) 6%);
+	--ct-control: color-mix(in srgb, var(--background-secondary-alt, var(--background-secondary)) 88%, var(--background-primary) 12%);
 	--ct-field: color-mix(in srgb, var(--background-primary) 92%, var(--background-secondary) 8%);
 }
 /* linked-canvas-design-tokens:end */
@@ -757,7 +757,7 @@
 	min-width: 0;
 	width: 100%;
 	margin: 0;
-	padding: 0 var(--ct-card-compact-action-reserve) 0 0;
+	padding: 0 calc(var(--ct-card-compact-action-reserve) * var(--ct-card-control-scale, 1)) 0 0;
 	border: 0;
 	border-radius: 0;
 	background: transparent;
@@ -990,7 +990,7 @@
    prevents long titles or summaries from painting under controls that remain
    visible for a pinned working card. */
 .context-tree-card:not(.is-detail-open).has-expand-action .context-tree-card-trigger {
-	padding-right: var(--ct-card-compact-expanded-action-reserve);
+	padding-right: calc(var(--ct-card-compact-expanded-action-reserve) * var(--ct-card-control-scale, 1));
 }
 .context-tree-card.is-detail-open .context-tree-card-trigger {
 	padding-right: var(--ct-card-open-action-reserve);
@@ -1234,7 +1234,7 @@
 	gap: var(--ct-control-gap);
 	padding: var(--ct-control-padding);
 	border: var(--ct-border-width) solid var(--ct-border);
-	border-radius: var(--ct-radius-control);
+	border-radius: var(--ct-radius-panel);
 	background: var(--ct-control);
 	box-shadow: var(--ct-control-shadow);
 }
@@ -1312,6 +1312,10 @@
 	padding: 0;
 	font-size: calc(var(--ct-type-control) * var(--ct-font-scale));
 	line-height: var(--ct-leading-control);
+}
+
+.context-tree-graph-controls .context-tree-zoom-button {
+	border-color: transparent;
 }
 
 .context-tree-canvas-handoff {

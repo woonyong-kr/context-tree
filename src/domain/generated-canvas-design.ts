@@ -6,21 +6,22 @@ interface GeneratedCanvasRoleDesign {
 	color: string;
 }
 
-/** Standard JSON Canvas role palette and layout rhythm for generated cards. */
+/** Standard JSON Canvas role palette and editorial board rhythm for generated cards. */
 export const GENERATED_CANVAS_DESIGN = {
 	roles: {
-		root: { width: 380, height: 240, color: "6" },
-		markdown: { width: 380, height: 240, color: "5" },
-		image: { width: 400, height: 300, color: "4" },
-		pdf: { width: 460, height: 560, color: "3" },
+		root: { width: 440, height: 300, color: "6" },
+		markdown: { width: 360, height: 240, color: "5" },
+		image: { width: 400, height: 320, color: "4" },
+		pdf: { width: 420, height: 440, color: "3" },
 	} satisfies Record<GeneratedCanvasRole, GeneratedCanvasRoleDesign>,
 	placement: {
-		rootX: -190,
-		rootY: -120,
-		cardsPerRing: 8,
-		firstRingRadius: 540,
-		ringStep: 460,
-		startAngle: -Math.PI / 2,
+		rootX: 0,
+		rootY: 0,
+		boardX: 560,
+		boardY: -220,
+		columns: 2,
+		columnStride: 460,
+		rowStride: 500,
 	},
 } as const;
 
@@ -41,13 +42,11 @@ export function generatedCanvasNodeDesign(path: string, isRoot: boolean): Genera
 export function generatedCanvasNodePosition(index: number): { x: number; y: number } {
 	const placement = GENERATED_CANVAS_DESIGN.placement;
 	if (index === 0) return { x: placement.rootX, y: placement.rootY };
-	const ringIndex = index - 1;
-	const ring = Math.floor(ringIndex / placement.cardsPerRing);
-	const slot = ringIndex % placement.cardsPerRing;
-	const angle = placement.startAngle + slot * (Math.PI * 2 / placement.cardsPerRing);
-	const radius = placement.firstRingRadius + ring * placement.ringStep;
+	const boardIndex = index - 1;
+	const column = boardIndex % placement.columns;
+	const row = Math.floor(boardIndex / placement.columns);
 	return {
-		x: Math.round(Math.cos(angle) * radius + placement.rootX),
-		y: Math.round(Math.sin(angle) * radius + placement.rootY),
+		x: placement.boardX + column * placement.columnStride,
+		y: placement.boardY + row * placement.rowStride,
 	};
 }

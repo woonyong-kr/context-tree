@@ -47,7 +47,7 @@
 
 Heptabase의 card/whiteboard 분리 원칙을 Obsidian 정본에 맞게 적용한다. Card Library를 새로 만들지 않고 Vault 파일을 재사용 가능한 card authority로, 표준 Canvas를 spatial context로 본다. 같은 Markdown은 여러 Canvas에 놓일 수 있고 각 Canvas의 위치·크기·색상은 독립적이지만 편집 내용은 항상 하나의 원본 파일에 반영된다. Obsidian File Explorer·Search·Canvas와 중복되는 전용 탐색 계층은 추가하지 않는다.
 
-1. 생성 직후 root Markdown, outgoing link·embed, backlink의 1-hop만 표준 file card와 방향성 edge로 투영한다. 기본 depth는 1이고 profile parser가 허용하는 최대치는 3이다. 존재하지 않는 파일과 제외한 파일은 범위를 넓히지 않는다.
+1. 생성 직후 root Markdown, outgoing link·embed, backlink의 1-hop만 표준 file card와 방향성 edge로 투영한다. 새 Canvas는 root를 큰 기준 카드로 두고 연결 자료를 오른쪽 2열 보드에 배치하며 방사형·force graph 초기 배치를 사용하지 않는다. 이 초기 배치는 새 카드에만 적용되고 사용자가 정한 기존 Canvas geometry를 다시 계산하지 않는다. 기본 depth는 1이고 profile parser가 허용하는 최대치는 3이다. 존재하지 않는 파일과 제외한 파일은 범위를 넓히지 않는다.
 2. 사용자가 옮기거나 크기를 바꾼 카드, 직접 만든 text·link·group·file card, 수동 연결선과 알 수 없는 JSON Canvas 확장 필드는 그대로 보존한다. 동기화는 자동 생성 edge만 교체하고 카드의 geometry나 수동 개체를 삭제하지 않는다.
 3. Canvas에 Markdown file card를 직접 놓으면 그 카드는 추가 seed가 되고 주변 1-hop이 자동으로 나타난다. PDF·이미지는 자체 file card로 유지되지만 탐색 seed가 되지 않는다.
 4. 자동 추적 중인 카드를 사용자가 Canvas에서 삭제하면 해당 경로를 제외 목록에 기록해 다시 만들지 않는다. 같은 Markdown을 직접 다시 놓으면 제외를 해제하고 seed로 복원한다.
@@ -93,6 +93,7 @@ Heptabase의 card/whiteboard 분리 원칙을 Obsidian 정본에 맞게 적용�
 | 그래프 제거와 원문 휴지통 구분 | `graph-workspace.ts`, card menu callbacks | `graph-workspace.test.ts`, copy regression, Desktop UI 검증 |
 | 저장된 그래프 단일 정본 | graph definition adapter, plugin settings migration | graph definition integration regression |
 | 표준 Canvas parse·보존·reconcile | `json-canvas.ts` | `json-canvas.test.ts` |
+| 새 Canvas의 root + 2열 초기 보드 | `generated-canvas-design.ts`, `json-canvas.ts` | `json-canvas.test.ts` |
 | root·seed·제외·수동 관계 계약 | `linked-canvas-profile.ts` | `linked-canvas-profile.test.ts` |
 | bounded link projection | `linked-canvas-projection.ts` | `linked-canvas-projection.test.ts` |
 | Vault event·rename·optimistic write 조정 | `linked-canvas-service.ts` | pure contracts + Desktop UI 검증 |

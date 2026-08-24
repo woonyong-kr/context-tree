@@ -23,6 +23,22 @@ test("keeps generated Canvas role visuals and placement in one design contract",
 		x: GENERATED_CANVAS_DESIGN.placement.rootX,
 		y: GENERATED_CANVAS_DESIGN.placement.rootY,
 	});
+	assert.deepEqual(generatedCanvasNodePosition(1), {
+		x: GENERATED_CANVAS_DESIGN.placement.boardX,
+		y: GENERATED_CANVAS_DESIGN.placement.boardY,
+	});
+	assert.deepEqual(generatedCanvasNodePosition(3), {
+		x: GENERATED_CANVAS_DESIGN.placement.boardX,
+		y: GENERATED_CANVAS_DESIGN.placement.boardY + GENERATED_CANVAS_DESIGN.placement.rowStride,
+	});
+});
+
+test("places generated Canvas cards in a compact non-overlapping board instead of a graph ring", () => {
+	const positions = Array.from({ length: 9 }, (_, index) => generatedCanvasNodePosition(index));
+	assert.equal(new Set(positions.map(({ x, y }) => `${x}:${y}`)).size, positions.length);
+	assert.ok(positions.slice(1).every(({ x }) => x >= GENERATED_CANVAS_DESIGN.placement.boardX));
+	assert.ok(GENERATED_CANVAS_DESIGN.placement.columnStride > GENERATED_CANVAS_DESIGN.roles.pdf.width);
+	assert.ok(GENERATED_CANVAS_DESIGN.placement.rowStride > GENERATED_CANVAS_DESIGN.roles.pdf.height);
 });
 
 test("parses and serializes standard file, media, text, link and group cards", () => {

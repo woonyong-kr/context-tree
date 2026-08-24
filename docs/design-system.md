@@ -53,6 +53,10 @@ Linked Map is a secondary inspection tool rather than a competing whiteboard.
 6. **Geometry is stable.** Hover, focus, Reading, Source, and pin state cannot
    move or resize a card. Visual polish must not change the interaction
    contract.
+7. **A board is not a graph screenshot.** A newly generated standard Canvas
+   starts with one generous root card and a compact two-column reference board.
+   It never uses radial or force-directed placement. This affects only first
+   placement; after creation, the user's Canvas geometry is authoritative.
 
 ## Single source of truth
 
@@ -74,6 +78,10 @@ place where Linked Canvas design values are declared.
 - raw component lengths, type sizes, and animation durations;
 - raw numeric typography values; and
 - declared but unused Linked Canvas tokens.
+
+Low-zoom TypeScript computes only the bounded visual scale. Action width,
+padding, and toolbar clearance remain CSS tokens and are multiplied with that
+scale in CSS; runtime code must not carry a second copy of those dimensions.
 
 The responsive `700px` media-query condition is the only compile-time
 exception. CSS custom properties cannot parameterise media-query conditions;
@@ -111,6 +119,10 @@ Generated JSON Canvas cards use the same rule at the protocol boundary:
 `src/domain/generated-canvas-design.ts` is the single source for standard
 Canvas role colours, default dimensions, and initial placement rhythm.
 `json-canvas.ts` consumes that contract and never carries visual constants.
+The root acts as the reading anchor. Linked Markdown and media begin in a
+two-column board beside it with enough room for the widest PDF card. This keeps
+the initial fit readable and leaves native Canvas drag, resize, group, and
+colour controls as the long-term layout authority.
 
 ## Visual release gate
 

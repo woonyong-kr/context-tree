@@ -73,7 +73,7 @@ board, and it does not hide a proprietary card database behind the Canvas.
 
 ## See the real desktop workflow
 
-These captures were made in Obsidian 1.13.7 with the exact 0.5.9 build and a
+These captures were made in Obsidian 1.13.7 with the exact 0.5.10 build and a
 public-safe fixture. Their version, dimensions, and hashes are checked during
 every release build.
 
@@ -81,10 +81,12 @@ every release build.
 
 ![A standard Obsidian Canvas with colour-coded Markdown, PDF, and image cards](docs/assets/linked-canvas-01-canvas.png)
 
-New cards receive restrained role colours: the starting note, other Markdown
-notes, PDFs, and images are distinguishable at a glance. These are standard
-JSON Canvas colours. After creation, the user owns every card's position, size,
-group, and colour.
+The starting note is a generous anchor on the left; linked Markdown and media
+start in a compact two-column board beside it instead of a graph ring. New cards
+also receive restrained standard JSON Canvas role colours, so the root, notes,
+PDFs, and images remain distinguishable at a glance. This is first-placement
+help only: after creation, the user owns every card's position, size, group, and
+colour.
 
 ### 2. Inspect links before you commit to a board
 
@@ -334,7 +336,7 @@ npm audit --omit=dev --audit-level=high
 ```
 
 `npm run check` runs ESLint, strict TypeScript checking, CSS validation, release
-media verification, a production esbuild bundle, and the unit suite. The 0.5.9
+media verification, a production esbuild bundle, and the unit suite. The 0.5.10
 release additionally follows the desktop checklist in
 [docs/ux-contract.md](docs/ux-contract.md): real Map and Canvas creation,
 Markdown rendering/editing, pointer-owned scroll and zoom, card movement,
