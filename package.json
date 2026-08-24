@@ -1,6 +1,6 @@
 {
 	"name": "linked-canvas",
-	"version": "0.5.8",
+	"version": "0.5.9",
 	"description": "Turn Markdown links into a living Canvas while preserving every Vault file as the source of truth.",
 	"main": "main.js",
 	"type": "module",

@@ -1,8 +1,9 @@
 export const COPY_KO = {
 	view: {
 		title: "Linked Canvas",
-		openRibbon: "현재 노트를 Linked Map으로 열기",
-		openCommand: "현재 노트의 연결 지도 열기",
+		openRibbon: "현재 노트를 Linked Canvas에서 열기",
+		openCanvasCommand: "현재 노트를 Linked Canvas에서 열기",
+		openCommand: "현재 노트 주변을 Linked Map으로 탐색",
 		createCanvasCommand: "현재 노트로 Linked Canvas 만들기",
 		enableCanvasCommand: "현재 Canvas에 연결 동기화 켜기",
 		refreshCanvasCommand: "현재 Linked Canvas 동기화",
@@ -14,7 +15,7 @@ export const COPY_KO = {
 	actions: {
 		searchGraph: "그래프 검색",
 		filterRelations: "관계 표시 설정",
-		saveGraph: "Linked Canvas로 저장",
+		continueInCanvas: "Canvas에서 계속",
 		expandNeighbours: "주변 노트 펼치기",
 		collapseNeighbours: "주변 노트 접기",
 		expandNeighboursCount: (count: number) => `주변 노트 ${count}개 펼치기`,
@@ -73,6 +74,7 @@ export const COPY_KO = {
 		linkGapDescription: "연결된 카드 테두리 사이의 기본 여백입니다. 높을수록 관계선이 길어집니다.",
 	},
 	modal: {
+		canvasPickerPlaceholder: "이 노트를 배치한 Linked Canvas 선택…",
 		graphsTitle: "저장된 그래프",
 		graphsDescription: "저장된 그래프는 Markdown을 복제하지 않고 탐색 범위와 배치만 보관합니다.",
 		noSavedGraphs: "저장된 그래프가 없습니다. Markdown 노트에서 ‘연결된 노트 읽기 지도 열기’를 실행한 뒤 현재 탐색을 저장하세요.",
@@ -84,6 +86,8 @@ export const COPY_KO = {
 		notice: {
 		openMarkdownFirst: "먼저 Markdown 노트를 여세요.",
 		canvasCreated: "Linked Canvas를 만들었습니다.",
+		canvasOpened: "기존 Linked Canvas를 열었습니다.",
+		canvasOpenFailed: "이 노트의 Linked Canvas를 열지 못했습니다.",
 		canvasCreateFailed: "Linked Canvas를 만들지 못했습니다.",
 		openCanvasFirst: "먼저 Obsidian Canvas를 여세요.",
 		canvasEnabled: "현재 Canvas에 연결 동기화를 켰습니다.",

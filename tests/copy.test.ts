@@ -18,14 +18,15 @@ test("describes card retention instead of implying a position lock", () => {
 	assert.equal(COPY_EN.actions.pinCard, "Keep this card open while exploring");
 });
 
-test("describes the reading-map entry point and neighbourhood size before acting", () => {
-	assert.equal(COPY_KO.view.openRibbon, "현재 노트를 Linked Map으로 열기");
-	assert.equal(COPY_EN.view.openRibbon, "Open current note as a Linked Map");
-	assert.equal(COPY_KO.view.openCommand, "현재 노트의 연결 지도 열기");
-	assert.equal(COPY_EN.view.openCommand, "Open current note's linked map");
+test("makes Linked Canvas primary while keeping Linked Map as a secondary exploration", () => {
+	assert.equal(COPY_KO.view.openRibbon, "현재 노트를 Linked Canvas에서 열기");
+	assert.equal(COPY_EN.view.openRibbon, "Open current note in Linked Canvas");
+	assert.equal(COPY_KO.view.openCommand, "현재 노트 주변을 Linked Map으로 탐색");
+	assert.equal(COPY_EN.view.openCommand, "Explore around the current note in Linked Map");
 	assert.equal(COPY_KO.view.createCanvasCommand, "현재 노트로 Linked Canvas 만들기");
 	assert.equal(COPY_KO.view.enableCanvasCommand, "현재 Canvas에 연결 동기화 켜기");
-	assert.equal(COPY_EN.actions.saveGraph, "Save as a Linked Canvas");
+	assert.equal(COPY_KO.actions.continueInCanvas, "Canvas에서 계속");
+	assert.equal(COPY_EN.actions.continueInCanvas, "Continue in Canvas");
 	assert.equal(COPY_KO.actions.expandNeighboursCount(3), "주변 노트 3개 펼치기");
 	assert.equal(COPY_EN.actions.collapseNeighboursCount(2), "Collapse 2 neighbouring notes");
 	assert.equal(COPY_EN.actions.collapseNeighboursCount(0), "Reset branch expansion (no notes hidden)");

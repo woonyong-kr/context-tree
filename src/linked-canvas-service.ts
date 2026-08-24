@@ -10,6 +10,7 @@ import {
 	createLinkedCanvasProfile,
 	createLinkedCanvasProfileForExistingCanvas,
 	LINKED_CANVAS_FOLDER,
+	linkedCanvasIncludesSource,
 	linkedCanvasProfileFileName,
 	linkedCanvasProfilePath,
 	manualCanvasRelations,
@@ -53,10 +54,19 @@ export class LinkedCanvasService {
 	private profileReloadTimer?: number;
 	private syncing = false;
 	private syncAgain = false;
+	private initialization?: Promise<void>;
 
 	constructor(private readonly app: App) {}
 
-	async initialize(): Promise<void> {
+	initialize(): Promise<void> {
+		this.initialization ??= this.initializeOnce().catch((error: unknown) => {
+			this.initialization = undefined;
+			throw error;
+		});
+		return this.initialization;
+	}
+
+	private async initializeOnce(): Promise<void> {
 		await this.reloadProfiles();
 		await this.syncAll();
 	}
@@ -68,6 +78,14 @@ export class LinkedCanvasService {
 
 	hasProfile(canvasPath: string): boolean {
 		return this.profilesByCanvasPath.has(canvasPath);
+	}
+
+	canvasesForSource(sourcePath: string): TFile[] {
+		return [...this.profilesByCanvasPath.values()]
+			.filter((profile) => linkedCanvasIncludesSource(profile, sourcePath))
+			.map((profile) => this.app.vault.getAbstractFileByPath(profile.canvasPath))
+			.filter((file): file is TFile => file instanceof TFile && file.extension === "canvas")
+			.sort((left, right) => left.basename.localeCompare(right.basename));
 	}
 
 	async createFromRoot(root: TFile, suggestedName = `${root.basename} Canvas`): Promise<TFile> {

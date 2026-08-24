@@ -117,6 +117,19 @@ export function serializeLinkedCanvasProfile(profile: LinkedCanvasProfile): stri
 	return `${JSON.stringify(profile, null, "\t")}\n`;
 }
 
+/**
+ * A source belongs to a Linked Canvas when it is an authored root, a manually
+ * added seed, or a currently managed linked card. This lets the primary entry
+ * point reopen spatial context instead of creating duplicate canvases.
+ */
+export function linkedCanvasIncludesSource(profile: LinkedCanvasProfile, sourcePath: string): boolean {
+	const normalized = path(sourcePath);
+	if (!normalized) return false;
+	return profile.rootPaths.includes(normalized)
+		|| profile.seedPaths.includes(normalized)
+		|| Object.values(profile.managed.filesByNodeId).includes(normalized);
+}
+
 export function linkedCanvasProfilePath(canvasPath: string): string {
 	return canvasPath.replace(/\.canvas$/i, LINKED_CANVAS_PROFILE_SUFFIX);
 }

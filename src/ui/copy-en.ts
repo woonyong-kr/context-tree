@@ -3,8 +3,9 @@ import type { COPY_KO } from "./copy-ko";
 export const COPY_EN: typeof COPY_KO = {
 	view: {
 		title: "Linked Canvas",
-		openRibbon: "Open current note as a Linked Map",
-		openCommand: "Open current note's linked map",
+		openRibbon: "Open current note in Linked Canvas",
+		openCanvasCommand: "Open current note in Linked Canvas",
+		openCommand: "Explore around the current note in Linked Map",
 		createCanvasCommand: "Create a Linked Canvas from the current note",
 		enableCanvasCommand: "Enable link-aware sync for the current Canvas",
 		refreshCanvasCommand: "Sync the current Linked Canvas",
@@ -16,7 +17,7 @@ export const COPY_EN: typeof COPY_KO = {
 	actions: {
 		searchGraph: "Search graph",
 		filterRelations: "Choose visible relations",
-		saveGraph: "Save as a Linked Canvas",
+		continueInCanvas: "Continue in Canvas",
 		expandNeighbours: "Show neighbouring notes",
 		collapseNeighbours: "Collapse neighbouring notes",
 		expandNeighboursCount: (count: number) => `Show ${count} neighbouring ${count === 1 ? "note" : "notes"}`,
@@ -75,6 +76,7 @@ export const COPY_EN: typeof COPY_KO = {
 		linkGapDescription: "The preferred space between the edges of connected cards.",
 	},
 	modal: {
+		canvasPickerPlaceholder: "Choose a Linked Canvas containing this note…",
 		graphsTitle: "Saved graphs",
 		graphsDescription: "Saved graphs keep an exploration range and layout without copying Markdown.",
 		noSavedGraphs: "There are no saved graphs. Open a linked-note reading map, then save that exploration.",
@@ -83,9 +85,11 @@ export const COPY_EN: typeof COPY_KO = {
 		reloadSourceTitle: "Reload the source?",
 		reloadSourceDescription: "Unsaved edits in this card will be discarded. Use “Select my edit” first if you need to copy them.",
 	},
-	notice: {
+		notice: {
 		openMarkdownFirst: "Open a Markdown note first.",
 		canvasCreated: "Created the Linked Canvas.",
+		canvasOpened: "Opened an existing Linked Canvas.",
+		canvasOpenFailed: "Could not open a Linked Canvas for this note.",
 		canvasCreateFailed: "Could not create the Linked Canvas.",
 		openCanvasFirst: "Open an Obsidian Canvas first.",
 		canvasEnabled: "Enabled link-aware sync for this Canvas.",

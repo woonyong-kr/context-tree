@@ -4,6 +4,7 @@ import {
 	createLinkedCanvasProfile,
 	createLinkedCanvasProfileForExistingCanvas,
 	linkedCanvasProfilePath,
+	linkedCanvasIncludesSource,
 	manualCanvasRelations,
 	manualMarkdownSeeds,
 	parseLinkedCanvasProfile,
@@ -21,6 +22,16 @@ test("a linked canvas profile round-trips portable roots and safe defaults", () 
 	assert.equal(profile.autoExpandDroppedMarkdown, true);
 	assert.deepEqual(parseLinkedCanvasProfile(serializeLinkedCanvasProfile(profile)), profile);
 	assert.equal(linkedCanvasProfilePath(profile.canvasPath), "maps/linked-canvas/Project.linked-canvas.json");
+});
+
+test("the primary entry point reuses a canvas containing the same source card", () => {
+	const profile = createLinkedCanvasProfile("Board.canvas", "Root.md");
+	profile.seedPaths = ["Manual.md"];
+	profile.managed.filesByNodeId = { linked: "Linked.md" };
+	assert.equal(linkedCanvasIncludesSource(profile, "Root.md"), true);
+	assert.equal(linkedCanvasIncludesSource(profile, "Manual.md"), true);
+	assert.equal(linkedCanvasIncludesSource(profile, "Linked.md"), true);
+	assert.equal(linkedCanvasIncludesSource(profile, "Other.md"), false);
 });
 
 test("an existing Canvas adopts every Markdown card as a root without inventing a primary card", () => {

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.5.9
+
+- Make standard Obsidian Canvas the primary entry: the ribbon opens an existing
+  Linked Canvas containing the active Markdown note and creates one only when
+  none exists.
+- Keep Linked Map as an explicit secondary reading surface and replace its
+  ambiguous icon-only save action with a labelled **Continue in Canvas** handoff
+  that follows the same reuse rule.
+- Centralize generated Canvas roles and Map design tokens, preserving Cupertino
+  and other theme compatibility without detecting or copying a specific theme.
+- Enforce the design boundary in CI: component selectors cannot introduce raw
+  colours, dimensions, typography, or motion values, and unused design tokens
+  fail the build.
+- Document the Canvas/Map ownership contract, direct-manipulation runtime checks,
+  and the exact public-safe release workflow.
+
 ## 0.5.8
 
 - Rename the visible product to **Linked Canvas** while retaining the

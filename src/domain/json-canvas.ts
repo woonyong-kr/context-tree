@@ -1,3 +1,5 @@
+import { generatedCanvasNodeDesign, generatedCanvasNodePosition } from "./generated-canvas-design";
+
 export interface JsonCanvasFileNode {
 	id: string;
 	type: "file";
@@ -202,37 +204,6 @@ function edgeId(relation: LinkedCanvasRelation): string {
 	return `linked-canvas-edge-${hashText(`${relation.fromPath}\u0000${relation.toPath}`)}`;
 }
 
-function nodeSize(path: string): { width: number; height: number } {
-	const extension = path.split(".").pop()?.toLowerCase();
-	if (extension === "pdf") return { width: 460, height: 560 };
-	if (["png", "jpg", "jpeg", "gif", "webp", "svg", "avif"].includes(extension ?? "")) {
-		return { width: 400, height: 300 };
-	}
-	return { width: 380, height: 240 };
-}
-
-function generatedNodeColor(path: string, isRoot: boolean): string {
-	if (isRoot) return "6";
-	const extension = path.split(".").pop()?.toLowerCase();
-	if (extension === "pdf") return "3";
-	if (["png", "jpg", "jpeg", "gif", "webp", "svg", "avif"].includes(extension ?? "")) return "4";
-	return "5";
-}
-
-function newNodePosition(index: number): { x: number; y: number } {
-	if (index === 0) return { x: -190, y: -120 };
-	const ringIndex = index - 1;
-	const perRing = 8;
-	const ring = Math.floor(ringIndex / perRing);
-	const slot = ringIndex % perRing;
-	const angle = -Math.PI / 2 + slot * (Math.PI * 2 / perRing);
-	const radius = 540 + ring * 460;
-	return {
-		x: Math.round(Math.cos(angle) * radius - 190),
-		y: Math.round(Math.sin(angle) * radius - 120),
-	};
-}
-
 function sameDirectedEdge(edge: JsonCanvasEdge, fromNode: string, toNode: string): boolean {
 	return edge.fromNode === fromNode && edge.toNode === toNode;
 }
@@ -261,15 +232,17 @@ export function reconcileLinkedCanvas(
 	for (const [index, path] of wantedPaths.entries()) {
 		let node = existingFileNodeByPath.get(path);
 		if (!node) {
-			const position = newNodePosition(index);
+			const position = generatedCanvasNodePosition(index);
 			const isRoot = rootPaths.has(path);
+			const design = generatedCanvasNodeDesign(path, isRoot);
 			node = {
 				id: nodeId(path),
 				type: "file",
 				file: path,
 				...position,
-				...nodeSize(path),
-				color: generatedNodeColor(path, isRoot),
+				width: design.width,
+				height: design.height,
+				color: design.color,
 			};
 			if (nodes.some((candidate) => candidate.id === node!.id)) {
 				node.id = `${node.id}-${nodes.length + 1}`;

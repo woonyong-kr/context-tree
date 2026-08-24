@@ -1,4 +1,4 @@
-import { App, Modal } from "obsidian";
+import { App, FuzzySuggestModal, Modal, TFile } from "obsidian";
 import { GraphWorkspace } from "./domain/graph-workspace";
 import { ContextTreeNode } from "./types";
 import { COPY } from "./ui/copy";
@@ -71,4 +71,27 @@ export class SavedGraphsModal extends Modal {
 	}
 
 	onClose(): void { this.contentEl.empty(); }
+}
+
+export class LinkedCanvasPickerModal extends FuzzySuggestModal<TFile> {
+	constructor(
+		app: App,
+		private readonly canvases: readonly TFile[],
+		private readonly onChoose: (canvas: TFile) => void,
+	) {
+		super(app);
+		this.setPlaceholder(COPY.modal.canvasPickerPlaceholder);
+	}
+
+	getItems(): TFile[] {
+		return [...this.canvases];
+	}
+
+	getItemText(canvas: TFile): string {
+		return canvas.basename;
+	}
+
+	onChooseItem(canvas: TFile): void {
+		this.onChoose(canvas);
+	}
 }

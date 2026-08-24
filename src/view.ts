@@ -410,7 +410,7 @@ export class ContextTreeView extends FileView {
 		search.setAttribute("aria-expanded", "false");
 		filter.setAttribute("aria-expanded", "false");
 		this.createIconControl(controls, "file-plus-2", COPY.actions.newCard, () => this.createInlineTopic());
-		if (this.plugin.isTransientGraph(this.getGraphId())) this.createSaveGraphControl(controls);
+		if (this.plugin.isTransientGraph(this.getGraphId())) this.createCanvasHandoffControl(controls);
 		controls.createDiv({ cls: "context-tree-control-divider" });
 		this.createZoomButton(controls, "minus", COPY.actions.zoomOut, 0.86);
 		const label = controls.createDiv({ cls: "context-tree-zoom-label", text: "100%" });
@@ -425,17 +425,18 @@ export class ContextTreeView extends FileView {
 		this.createSearchPanel(parent);
 	}
 
-	private createSaveGraphControl(controls: HTMLElement): void {
+	private createCanvasHandoffControl(controls: HTMLElement): void {
 		const save = controls.createEl("button", {
-			cls: "context-tree-zoom-button context-tree-control-button",
-			attr: { "aria-label": COPY.actions.saveGraph, title: COPY.actions.saveGraph },
+			cls: "context-tree-zoom-button context-tree-control-button context-tree-canvas-handoff",
+			attr: { "aria-label": COPY.actions.continueInCanvas, title: COPY.actions.continueInCanvas },
 		});
 		setIcon(save, "layout-dashboard");
+		save.createSpan({ cls: "context-tree-canvas-handoff-label", text: COPY.actions.continueInCanvas });
 		save.addEventListener("click", (event) => {
 			event.preventDefault();
 			event.stopPropagation();
 			if (this.graph.scope.kind !== "rooted") return;
-			void this.plugin.createLinkedCanvasFromPath(this.graph.scope.rootPath);
+			void this.plugin.openLinkedCanvasFromPath(this.graph.scope.rootPath);
 		});
 	}
 

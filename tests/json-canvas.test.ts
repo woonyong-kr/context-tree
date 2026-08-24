@@ -6,6 +6,24 @@ import {
 	serializeJsonCanvas,
 	type JsonCanvasDocument,
 } from "../src/domain/json-canvas";
+import {
+	GENERATED_CANVAS_DESIGN,
+	generatedCanvasNodeDesign,
+	generatedCanvasNodePosition,
+	generatedCanvasRole,
+} from "../src/domain/generated-canvas-design";
+
+test("keeps generated Canvas role visuals and placement in one design contract", () => {
+	assert.equal(generatedCanvasRole("Root.md", true), "root");
+	assert.equal(generatedCanvasRole("paper.pdf", false), "pdf");
+	assert.equal(generatedCanvasRole("diagram.webp", false), "image");
+	assert.equal(generatedCanvasRole("Note.md", false), "markdown");
+	assert.deepEqual(generatedCanvasNodeDesign("paper.pdf", false), GENERATED_CANVAS_DESIGN.roles.pdf);
+	assert.deepEqual(generatedCanvasNodePosition(0), {
+		x: GENERATED_CANVAS_DESIGN.placement.rootX,
+		y: GENERATED_CANVAS_DESIGN.placement.rootY,
+	});
+});
 
 test("parses and serializes standard file, media, text, link and group cards", () => {
 	const source = JSON.stringify({

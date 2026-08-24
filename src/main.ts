@@ -3,12 +3,10 @@ import { GRAPH_DEFINITION_EXTENSION } from "./domain/graph-definition";
 import {
 	collapsePathInScope,
 	createCurrentNoteGraph,
-	createGraphWorkspace,
 	currentNoteGraphId,
 	currentNoteGraphPath,
 	excludePathFromScope,
 	GraphScope,
-	GraphScopeInput,
 	GraphViewState,
 	GraphWorkspace,
 	graphScopeIncludesPath,
@@ -21,7 +19,7 @@ import {
 import { GraphPhysics } from "./graph/simulation";
 import { GraphDefinitionStore } from "./graph-definition-store";
 import { ContextTreeSettingTab, ContextTreeSettings, DEFAULT_SETTINGS } from "./settings";
-import { SavedGraphsModal } from "./topic-modals";
+import { LinkedCanvasPickerModal, SavedGraphsModal } from "./topic-modals";
 import { COPY } from "./ui/copy";
 import { ContextTreeView, VIEW_TYPE_CONTEXT_TREE } from "./view";
 import type { InlineEditorDraft } from "./domain/inline-editor-draft";
@@ -63,10 +61,15 @@ export default class ContextTreePlugin extends Plugin {
 			});
 		});
 
-		this.addRibbonIcon("git-fork", COPY.view.openRibbon, () => {
-			void this.activateCurrentNote();
+		this.addRibbonIcon("layout-dashboard", COPY.view.openRibbon, () => {
+			void this.openCurrentNoteInLinkedCanvas();
 		});
 
+		this.addCommand({
+			id: "open-linked-canvas",
+			name: COPY.view.openCanvasCommand,
+			callback: () => void this.openCurrentNoteInLinkedCanvas(),
+		});
 		this.addCommand({
 			id: "open-tree",
 			name: COPY.view.openCommand,
@@ -100,13 +103,13 @@ export default class ContextTreePlugin extends Plugin {
 		this.registerEvent(this.app.workspace.on("file-menu", (menu, file) => {
 			if (!(file instanceof TFile) || file.extension !== "md") return;
 			menu.addItem((item) => item
-				.setTitle(COPY.view.openCommand)
-				.setIcon("share-2")
-				.onClick(() => void this.activateNote(file)));
-			menu.addItem((item) => item
-				.setTitle(COPY.view.createCanvasCommand)
+				.setTitle(COPY.view.openCanvasCommand)
 				.setIcon("layout-dashboard")
-				.onClick(() => void this.createLinkedCanvas(file)));
+				.onClick(() => void this.openNoteInLinkedCanvas(file)));
+			menu.addItem((item) => item
+				.setTitle(COPY.view.openCommand)
+				.setIcon("git-fork")
+				.onClick(() => void this.activateNote(file)));
 		}));
 
 		this.registerEvent(this.app.vault.on("create", (file) => this.handleVaultChange(file)));
@@ -214,13 +217,49 @@ export default class ContextTreePlugin extends Plugin {
 		await this.createLinkedCanvas(file);
 	}
 
-	async createLinkedCanvasFromPath(path: string): Promise<void> {
+	async openCurrentNoteInLinkedCanvas(): Promise<void> {
+		const file = this.app.workspace.getActiveFile();
+		if (!(file instanceof TFile) || file.extension !== "md") {
+			new Notice(COPY.notice.openMarkdownFirst);
+			return;
+		}
+		await this.openNoteInLinkedCanvas(file);
+	}
+
+	private async openNoteInLinkedCanvas(file: TFile): Promise<void> {
+		try {
+			await this.linkedCanvas.initialize();
+			const canvases = this.linkedCanvas.canvasesForSource(file.path);
+			if (!canvases.length) {
+				await this.createLinkedCanvas(file);
+				return;
+			}
+			if (canvases.length === 1) {
+				await this.linkedCanvas.open(canvases[0]!);
+				new Notice(COPY.notice.canvasOpened);
+				return;
+			}
+			new LinkedCanvasPickerModal(this.app, canvases, (canvas) => {
+				void this.linkedCanvas.open(canvas)
+					.then(() => new Notice(COPY.notice.canvasOpened))
+					.catch((error: unknown) => {
+						console.error("Linked Canvas: failed to open selected Canvas", error);
+						new Notice(COPY.notice.canvasOpenFailed);
+					});
+			}).open();
+		} catch (error) {
+			console.error("Linked Canvas: failed to open a Canvas for the current note", error);
+			new Notice(COPY.notice.canvasOpenFailed);
+		}
+	}
+
+	async openLinkedCanvasFromPath(path: string): Promise<void> {
 		const file = this.app.vault.getAbstractFileByPath(path);
 		if (!(file instanceof TFile) || file.extension !== "md") {
 			new Notice(COPY.notice.sourceMissing);
 			return;
 		}
-		await this.createLinkedCanvas(file);
+		await this.openNoteInLinkedCanvas(file);
 	}
 
 	private async createLinkedCanvas(file: TFile): Promise<void> {
@@ -288,22 +327,7 @@ export default class ContextTreePlugin extends Plugin {
 		}
 	}
 
-	async createGraph(
-		name: string,
-		scope: GraphScopeInput = { kind: "curated" },
-		initialViewState?: GraphViewState,
-	): Promise<GraphWorkspace> {
-		const graph = createGraphWorkspace(name, this.settings.graphs.map((item) => item.id), scope);
-		await this.writeGraphDefinition(graph);
-		this.settings.graphs.push(graph);
-		if (initialViewState) this.settings.viewStates[graph.id] = initialViewState;
-		if (!this.settings.defaultGraphId) this.settings.defaultGraphId = graph.id;
-		await this.persistSettings();
-		this.refreshOpenViews();
-		return graph;
-	}
-
-	/** Opens the saved graph list; creating a graph starts from the current note. */
+	/** Opens legacy saved Maps without exposing the retired graph-creation path. */
 	openGraphPicker(): void {
 		new SavedGraphsModal(
 			this.app,
