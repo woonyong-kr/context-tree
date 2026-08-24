@@ -46,9 +46,9 @@ test("the in-app guide explains the choice and file ownership before acting", ()
 	assert.match(COPY_EN.modal.canvasLauncherBlank, /blank Canvas/);
 });
 
-test("explains that Canvas connection sync writes real note relations only when enabled", () => {
-	assert.match(COPY_KO.notice.canvasRelationSyncEnabled, /실제 노트 관계/);
-	assert.match(COPY_EN.notice.canvasRelationSyncDisabled, /visual only/);
+test("explains that Canvas owns spatial connections without mutating Markdown", () => {
+	assert.match(COPY_KO.help.ownershipItems[2]!, /frontmatter를 변경하지 않습니다/);
+	assert.match(COPY_EN.help.ownershipItems[2]!, /never change Markdown frontmatter/);
 });
 
 test("ships complete Korean and English relation labels", () => {

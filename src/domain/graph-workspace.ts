@@ -135,7 +135,7 @@ export function createGraphWorkspace(
 	scope: GraphScopeInput = { kind: "curated" },
 	physics: GraphPhysics = DEFAULT_GRAPH_PHYSICS,
 ): GraphWorkspace {
-	const normalizedName = name.trim() || "Context Graph";
+	const normalizedName = name.trim() || "Linked Map";
 	const id = nextId(normalizedName, existingIds);
 	const normalizedScope = scopeFrom(scope);
 	// The graph picker defaults to folder scope. Giving that workspace a stable
@@ -156,12 +156,12 @@ export function createGraphWorkspace(
 export function createCurrentNoteGraph(
 	path: string,
 	title: string,
-	displayName = title.trim() || "Context Graph",
+	displayName = title.trim() || "Linked Map",
 ): GraphWorkspace & { scope: RootedGraphScope } {
 	const rootPath = normalizedPath(path);
 	return {
 		id: currentNoteGraphId(rootPath),
-		name: displayName.trim() || title.trim() || "Context Graph",
+		name: displayName.trim() || title.trim() || "Linked Map",
 		scope: {
 			kind: "rooted",
 			rootPath,
@@ -457,7 +457,7 @@ export function migrateGraphWorkspaces(
 			ids.push(id);
 			return {
 				id,
-				name: graph.name.trim() || "Context Graph",
+				name: graph.name.trim() || "Linked Map",
 				scope: scopeFrom(graph.scope),
 				physics: graphPhysicsFrom(graph.physics),
 			};
@@ -465,7 +465,7 @@ export function migrateGraphWorkspaces(
 	}
 	const folder = normalizedPath(legacySourceFolder ?? "");
 	return [createGraphWorkspace(
-		"Context Graph",
+		"Linked Map",
 		[],
 		folder ? { kind: "folders", folders: [folder] } : { kind: "all" },
 		legacyPhysics,

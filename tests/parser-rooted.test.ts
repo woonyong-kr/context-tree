@@ -100,6 +100,17 @@ test("reads new Linked Canvas relations and legacy relations without duplicating
 	]);
 });
 
+test("reads an optional visual role without turning it into graph meaning", async () => {
+	const app = fakeApp([
+		{ path: "Root.md", content: "# Root", frontmatter: { linked_canvas_role: "entity" } },
+		{ path: "Question.md", content: "# Question", frontmatter: { linked_canvas_role: "question" } },
+	], { "Root.md": { "Question.md": 1 } });
+
+	const roots = await loadContextTree(app, createCurrentNoteGraph("Root.md", "Root"));
+	assert.equal(roots.find((node) => node.path === "Root.md")?.visualRole, "entity");
+	assert.equal(roots.find((node) => node.path === "Question.md")?.visualRole, "question");
+});
+
 test("uses a unique authored graph id across note renames but disambiguates duplicates", async () => {
 	const app = fakeApp([
 		{ path: "A.md", content: "# A", frontmatter: { context_tree: true, context_tree_id: "stable-a" } },

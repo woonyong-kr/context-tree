@@ -6,7 +6,6 @@ import {
 	enableLinkedCanvasExpansion,
 	linkedCanvasProfilePath,
 	linkedCanvasIncludesSource,
-	manualCanvasRelations,
 	manualMarkdownSeeds,
 	parseLinkedCanvasProfile,
 	pathsRemovedFromCanvas,
@@ -19,10 +18,20 @@ import type { JsonCanvasDocument } from "../src/domain/json-canvas";
 test("a linked canvas profile round-trips portable roots and safe defaults", () => {
 	const profile = createLinkedCanvasProfile("maps/linked-canvas/Project.canvas", "Project.md");
 	assert.equal(profile.depth, 0);
-	assert.equal(profile.relationSync, "visual-only");
 	assert.equal(profile.autoExpandDroppedMarkdown, true);
 	assert.deepEqual(parseLinkedCanvasProfile(serializeLinkedCanvasProfile(profile)), profile);
 	assert.equal(linkedCanvasProfilePath(profile.canvasPath), "maps/linked-canvas/Project.linked-canvas.json");
+});
+
+test("legacy Canvas-to-Markdown sync state is retired instead of being re-enabled", () => {
+	const legacy = JSON.stringify({
+		...createLinkedCanvasProfile("maps/Board.canvas", "Root.md"),
+		relationSync: "frontmatter-additive",
+	});
+	const parsed = parseLinkedCanvasProfile(legacy);
+	assert.ok(parsed);
+	assert.equal("relationSync" in parsed, false);
+	assert.doesNotMatch(serializeLinkedCanvasProfile(parsed), /relationSync|frontmatter-additive/);
 });
 
 test("the primary entry point reuses only deliberate roots and seeds", () => {
@@ -136,26 +145,4 @@ test("manually restoring an excluded Markdown card makes it a seed again", () =>
 		edges: [],
 	};
 	assert.deepEqual(manualMarkdownSeeds(profile, canvas), ["Restored.md"]);
-});
-
-test("only opt-in manual edges between Markdown cards become additive relations", () => {
-	const profile = createLinkedCanvasProfile("Board.canvas", "Root.md");
-	profile.relationSync = "frontmatter-additive";
-	profile.managed.edgeIds = ["generated"];
-	const canvas: JsonCanvasDocument = {
-		nodes: [
-			{ id: "a", type: "file", file: "A.md", x: 0, y: 0, width: 380, height: 240 },
-			{ id: "b", type: "file", file: "B.md", x: 400, y: 0, width: 380, height: 240 },
-			{ id: "pdf", type: "file", file: "Paper.pdf", x: 800, y: 0, width: 460, height: 560 },
-		],
-		edges: [
-			{ id: "generated", fromNode: "a", toNode: "b" },
-			{ id: "manual", fromNode: "b", toNode: "a", label: "supports" },
-			{ id: "unknown", fromNode: "a", toNode: "b", label: "depends on" },
-			{ id: "media", fromNode: "a", toNode: "pdf" },
-		],
-	};
-	assert.deepEqual(manualCanvasRelations(profile, canvas), [{ fromPath: "B.md", toPath: "A.md", label: "supports" }]);
-	profile.relationSync = "visual-only";
-	assert.deepEqual(manualCanvasRelations(profile, canvas), []);
 });

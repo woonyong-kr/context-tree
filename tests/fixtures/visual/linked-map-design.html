@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Linked Map semantic-role fixture</title>
+	<link rel="stylesheet" href="../../../styles.css">
+	<style>
+		* { box-sizing: border-box; }
+		html, body { width: 100%; height: 100%; margin: 0; }
+		body { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px; background: #111318; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+		.fixture-pane { position: relative; min-width: 0; min-height: 0; overflow: hidden; border-radius: 18px; color: var(--text-normal); }
+		.fixture-label { position: absolute; z-index: 20; top: 18px; left: 20px; color: var(--text-muted); font-size: 12px; letter-spacing: .04em; }
+		.fixture-pane .context-tree-view { --cg-viewport-width: 700px; --cg-viewport-height: 850px; }
+		.fixture-pane .context-tree-node { left: var(--x); top: var(--y); }
+		.fixture-pane .context-tree-card.is-detail-open { --cg-open-card-height: 360px; }
+		.fixture-pane .context-tree-detail-wrap { --cg-detail-height: 260px; }
+		.fixture-pane .context-tree-edges { width: 700px; height: 850px; }
+		.fixture-pane button { font: inherit; }
+		.theme-dark {
+			--background-primary: #20232b; --background-primary-alt: #262a34; --background-secondary: #181b22; --background-secondary-alt: #2b303a;
+			--background-modifier-hover: #323844; --background-modifier-active-hover: #39404d; --background-modifier-border: #3d4350; --background-modifier-border-hover: #596170;
+			--text-normal: #eef1f6; --text-muted: #aab1bd; --text-faint: #747d8b; --text-on-accent: #ffffff; --text-error: #ff7b86; --text-warning: #e8b15d; --text-accent: #6ea8ff;
+			--divider-color: #3d4350; --interactive-accent: #5b9bff; --interactive-accent-hover: #73aaff; --color-green: #6eb89a; --color-orange: #d99a59; --color-red: #dc7580; --color-purple: #a58bd2;
+			--shadow-s: 0 2px 10px rgba(0,0,0,.22); --shadow-l: 0 18px 48px rgba(0,0,0,.34);
+		}
+		.theme-light {
+			--background-primary: #ffffff; --background-primary-alt: #fbfbfc; --background-secondary: #f2f3f5; --background-secondary-alt: #f7f7f8;
+			--background-modifier-hover: #eceef2; --background-modifier-active-hover: #e4e8ef; --background-modifier-border: #d9dde5; --background-modifier-border-hover: #b8c0cd;
+			--text-normal: #20242b; --text-muted: #646d7a; --text-faint: #929aa6; --text-on-accent: #ffffff; --text-error: #c94f5c; --text-warning: #a96c1f; --text-accent: #276fd2;
+			--divider-color: #d9dde5; --interactive-accent: #3478d4; --interactive-accent-hover: #2768bf; --color-green: #4b9278; --color-orange: #a9702f; --color-red: #b95762; --color-purple: #7f68b4;
+			--shadow-s: 0 2px 9px rgba(20,28,40,.08); --shadow-l: 0 18px 44px rgba(20,28,40,.14);
+		}
+		.theme-dark, .theme-light {
+			--size-4-1: 4px; --size-4-2: 8px; --size-4-3: 12px; --size-4-4: 16px; --size-4-6: 24px; --size-4-8: 32px;
+			--radius-s: 7px; --radius-m: 11px; --radius-l: 16px; --radius-xl: 999px;
+			--anim-motion-baseline: cubic-bezier(.2,.8,.2,1); --anim-duration-superfast: 70ms; --anim-duration-fast: 140ms; --anim-duration-moderate: 220ms; --anim-duration-none: 0ms;
+			--font-interface: -apple-system, BlinkMacSystemFont, sans-serif; --font-text: ui-serif, Georgia, serif; --font-monospace: ui-monospace, SFMono-Regular, monospace;
+		}
+	</style>
+</head>
+<body>
+	<section class="fixture-pane theme-dark" aria-label="Dark theme Linked Map fixture">
+		<span class="fixture-label">DARK · semantic roles · open Reading</span>
+		<div class="context-tree-view">
+			<div class="context-tree-viewport">
+				<div class="context-tree-scene">
+					<svg class="context-tree-edges" viewBox="0 0 700 850" aria-hidden="true">
+						<path class="context-tree-edge is-open-related" d="M 180 190 C 260 190, 290 145, 390 145"></path>
+						<path class="context-tree-edge" data-relation="supports" d="M 180 190 C 275 225, 305 310, 410 315"></path>
+						<path class="context-tree-edge" data-relation="follow-up" d="M 180 190 C 170 315, 205 405, 260 500"></path>
+					</svg>
+					<div class="context-tree-node" style="--x: 180px; --y: 190px">
+						<article class="context-tree-card" data-role="root">
+							<button class="context-tree-card-trigger"><span class="context-tree-role">Root</span><span class="context-tree-title">Research question</span><span class="context-tree-summary">Which evidence changes the decision?</span></button>
+						</article>
+					</div>
+					<div class="context-tree-node" style="--x: 480px; --y: 145px">
+						<article class="context-tree-card" data-role="topic">
+							<button class="context-tree-card-trigger"><span class="context-tree-role">Topic</span><span class="context-tree-title">Source review</span><span class="context-tree-summary">Notes that establish the current context.</span></button>
+						</article>
+					</div>
+					<div class="context-tree-node" style="--x: 500px; --y: 315px">
+						<article class="context-tree-card" data-role="entity">
+							<button class="context-tree-card-trigger"><span class="context-tree-role">Entity</span><span class="context-tree-title">Project Atlas</span><span class="context-tree-summary">A named object, not an inferred category.</span></button>
+						</article>
+					</div>
+					<div class="context-tree-node is-detail-open" style="--x: 350px; --y: 610px">
+						<article class="context-tree-card is-detail-open is-pinned has-fixed-open-footprint" data-role="question">
+							<div class="context-tree-card-quick-actions"><button class="context-tree-card-quick-action">⌘</button><button class="context-tree-card-quick-action context-tree-card-pin" aria-pressed="true">⌑</button><button class="context-tree-card-quick-action context-tree-card-detail-action">✎</button></div>
+							<button class="context-tree-card-more">•••</button>
+							<button class="context-tree-card-trigger"><span class="context-tree-role">Question</span><span class="context-tree-title">What changed after the review?</span></button>
+							<div class="context-tree-detail-wrap"><div class="context-tree-detail"><div class="markdown-reading-view"><div class="markdown-preview-view"><div class="markdown-preview-sizer context-tree-markdown-render-target"><h2>Decision</h2><p>The original Markdown remains authoritative. This Reading surface uses the whole card width and keeps the surrounding map visible.</p><ul><li>Evidence is linked, not copied.</li><li>Canvas owns only spatial context.</li></ul><p><a href="#">Open the supporting note</a></p></div></div></div></div></div>
+						</article>
+					</div>
+				</div>
+				<div class="context-tree-graph-controls" role="toolbar" aria-label="Graph toolbar"><button class="context-tree-zoom-button">⌕</button><span class="context-tree-zoom-label">72%</span><button class="context-tree-zoom-button">−</button><button class="context-tree-zoom-button">＋</button></div>
+			</div>
+		</div>
+	</section>
+
+	<section class="fixture-pane theme-light" aria-label="Light theme Linked Map state fixture">
+		<span class="fixture-label">LIGHT · empty · loading · error · keyboard focus</span>
+		<div class="context-tree-view">
+			<div class="context-tree-viewport">
+				<div class="context-tree-node is-focused" style="--x: 210px; --y: 170px">
+					<article class="context-tree-card" data-role="root"><button class="context-tree-card-trigger"><span class="context-tree-role">Root</span><span class="context-tree-title">Focused note</span><span class="context-tree-summary">Focus remains visible without relying on colour alone.</span></button></article>
+				</div>
+				<div class="context-tree-node" style="--x: 500px; --y: 170px">
+					<article class="context-tree-card" data-role="question"><button class="context-tree-card-trigger"><span class="context-tree-role">Question</span><span class="context-tree-title">What is still unknown?</span><span class="context-tree-summary">The label survives high-contrast and forced-colour modes.</span></button></article>
+				</div>
+				<div class="context-tree-node" style="--x: 210px; --y: 370px">
+					<article class="context-tree-card is-detail-open" data-role="topic" style="--cg-open-card-max-width: 300px; --cg-open-card-height: 180px; --cg-detail-height: 90px"><button class="context-tree-card-trigger"><span class="context-tree-role">Topic</span><span class="context-tree-title">Loading</span></button><div class="context-tree-detail-wrap"><div class="context-tree-card-status" role="status">Rendering the original note…</div></div></article>
+				</div>
+				<div class="context-tree-node" style="--x: 500px; --y: 370px">
+					<article class="context-tree-card is-detail-open" data-role="entity" style="--cg-open-card-max-width: 300px; --cg-open-card-height: 180px; --cg-detail-height: 90px"><button class="context-tree-card-trigger"><span class="context-tree-role">Entity</span><span class="context-tree-title">Failed</span></button><div class="context-tree-detail-wrap"><div class="context-tree-card-status" role="alert">The Markdown source could not be read.</div></div></article>
+				</div>
+				<div class="context-tree-empty" style="position:absolute; top:540px; left:90px; width:520px; margin:0"><span class="context-tree-empty-eyebrow">Linked Map</span><h2>No linked notes in this view</h2><p class="context-tree-empty-status">The current Markdown remains unchanged.</p><p class="context-tree-empty-next">Add a real wikilink, or continue with the note in a standard Canvas.</p><div class="context-tree-empty-actions"><button class="context-tree-action">Continue in Canvas</button><button class="context-tree-action">Close map</button></div></div>
+				<div class="context-tree-graph-controls" role="toolbar" aria-label="Graph toolbar"><button class="context-tree-zoom-button">⌕</button><span class="context-tree-zoom-label">100%</span><button class="context-tree-zoom-button">−</button><button class="context-tree-zoom-button">＋</button></div>
+			</div>
+		</div>
+	</section>
+</body>
+</html>

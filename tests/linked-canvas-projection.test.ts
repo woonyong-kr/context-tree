@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildLinkedCanvasProjection, linkedCanvasVaultLinks } from "../src/domain/linked-canvas-projection";
+import {
+	buildLinkedCanvasProjection,
+	linkedCanvasVaultLinks,
+	MAX_LINKED_CANVAS_DERIVED_CARDS,
+} from "../src/domain/linked-canvas-projection";
 import { createLinkedCanvasProfile } from "../src/domain/linked-canvas-profile";
 
 const paths = new Set(["Root.md", "Outgoing.md", "Backlink.md", "Second.md", "image.png", "Orphan.md"]);
@@ -44,6 +48,23 @@ test("depth expands deliberately without including the rest of the vault", () =>
 	const projection = buildLinkedCanvasProjection(profile, paths, links);
 	assert.ok(projection.filePaths.includes("Second.md"));
 	assert.ok(!projection.filePaths.includes("Orphan.md"));
+});
+
+test("automatic expansion is capped while explicit roots and seeds remain visible", () => {
+	const neighbours = Array.from({ length: 40 }, (_, index) => `Neighbour-${index.toString().padStart(2, "0")}.md`);
+	const available = new Set(["Root.md", "Pinned.md", ...neighbours]);
+	const profile = createLinkedCanvasProfile("Board.canvas", "Root.md");
+	profile.seedPaths = ["Pinned.md"];
+	profile.depth = 1;
+	const projection = buildLinkedCanvasProjection(profile, available, {
+		"Root.md": neighbours,
+		"Pinned.md": [],
+	});
+
+	assert.ok(projection.filePaths.includes("Root.md"));
+	assert.ok(projection.filePaths.includes("Pinned.md"));
+	assert.equal(projection.filePaths.length, 2 + MAX_LINKED_CANVAS_DERIVED_CARDS);
+	assert.equal(projection.relations.length, MAX_LINKED_CANVAS_DERIVED_CARDS);
 });
 
 test("manually dropped Markdown seeds expand independently while exclusions win", () => {

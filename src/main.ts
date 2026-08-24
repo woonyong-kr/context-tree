@@ -106,11 +106,6 @@ export default class ContextTreePlugin extends Plugin {
 			name: COPY.view.enableCanvasCommand,
 			callback: () => void this.enableActiveCanvas(),
 		});
-		this.addCommand({
-			id: "toggle-linked-canvas-relation-sync",
-			name: COPY.view.toggleCanvasRelationSyncCommand,
-			callback: () => void this.toggleActiveCanvasRelationSync(),
-		});
 		this.registerEvent(this.app.workspace.on("file-menu", (menu, file) => {
 			if (!(file instanceof TFile) || file.extension !== "md") return;
 			menu.addItem((item) => item
@@ -358,23 +353,6 @@ export default class ContextTreePlugin extends Plugin {
 		} catch (error) {
 			console.error("Linked Canvas: failed to enable an existing Canvas", error);
 			new Notice(COPY.notice.canvasEnableFailed);
-		}
-	}
-
-	private async toggleActiveCanvasRelationSync(): Promise<void> {
-		const canvas = this.activeLinkedCanvas();
-		if (!canvas) {
-			new Notice(COPY.notice.openLinkedCanvasFirst);
-			return;
-		}
-		try {
-			const mode = await this.linkedCanvas.toggleRelationSync(canvas);
-			new Notice(mode === "frontmatter-additive"
-				? COPY.notice.canvasRelationSyncEnabled
-				: COPY.notice.canvasRelationSyncDisabled);
-		} catch (error) {
-			console.error("Linked Canvas: failed to change relation sync", error);
-			new Notice(COPY.notice.canvasSyncFailed);
 		}
 	}
 

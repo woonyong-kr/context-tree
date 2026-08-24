@@ -1,5 +1,6 @@
 import type { App, TAbstractFile, TFile } from "obsidian";
 import { GraphWorkspace, graphScopeIncludesPath, rootedGraphPaths } from "./domain/graph-workspace";
+import { parseGraphNodeRole } from "./domain/graph-node-role";
 import { noteLinkTarget } from "./domain/note-link";
 import { DIRECT_RELATION, isContextRelationType, storedRelationItems } from "./domain/relations";
 import { markdownSummary, markdownWithoutFencedCode, removeMarkdownSummary } from "./topic-content";
@@ -37,7 +38,7 @@ export function topicGraphMetadataSignature(content: string): string {
 		}
 		return value.join("\n").trim();
 	};
-	return ["context_tree", "context_tree_id", "context_tree_parent", "linked_canvas_links", "context_tree_links", "title", "context_tree_summary"]
+	return ["context_tree", "context_tree_id", "context_tree_parent", "linked_canvas_links", "context_tree_links", "linked_canvas_role", "title", "context_tree_summary"]
 		.map(entry)
 		.join("\n\u0000\n");
 }
@@ -170,6 +171,7 @@ export async function loadContextTree(
 			title: display.title,
 			summary: display.summary,
 			body: display.body,
+			visualRole: parseGraphNodeRole(frontmatter?.linked_canvas_role),
 			links: extractLinks(app, storedRelationItems(frontmatter), file.path),
 			referencePaths: rootedPaths
 				? (outgoingByPath[file.path] ?? []).filter((path) => rootedPaths.has(path))

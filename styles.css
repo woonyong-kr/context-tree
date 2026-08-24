@@ -1,317 +1,315 @@
 /* linked-canvas-design-tokens:start */
 :where(.context-tree-view, .linked-canvas-help-modal) {
-	/* Scoped visual foundation adapted from Cupertino at commit 080cea8 under
-	   the MIT license. Components consume only this semantic layer, so the
-	   plugin keeps the same hierarchy without changing global Obsidian styles. */
-	--ct-font-scale: 1.2;
-	--ct-accent: rgb(0 136 255);
-	--ct-on-accent: #fff;
-	--ct-accent-hover: color-mix(in srgb, var(--ct-accent) 88%, black);
-	--ct-red: rgb(255 56 60);
-	--ct-orange: rgb(255 141 40);
-	--ct-green: rgb(52 199 89);
-	--ct-purple: rgb(203 48 224);
+	/* Obsidian's active theme is the only global token source. These aliases are
+	   built into the plugin, but never carry a copied theme palette. */
+	--cg-surface-canvas: var(--background-secondary);
+	--cg-surface-card: var(--background-primary);
+	--cg-surface-document: var(--background-primary-alt, var(--background-primary));
+	--cg-surface-control: var(--background-secondary-alt, var(--background-secondary));
+	--cg-surface-field: var(--background-primary);
+	--cg-surface-card-hover: var(--background-modifier-hover);
+	--cg-surface-card-focus: var(--background-modifier-active-hover, var(--background-modifier-hover));
+	--cg-surface-control-hover: var(--background-modifier-hover);
+	--cg-text-primary: var(--text-normal);
+	--cg-text-secondary: var(--text-muted);
+	--cg-text-tertiary: var(--text-faint);
+	--cg-text-on-accent: var(--text-on-accent);
+	--cg-text-error: var(--text-error);
+	--cg-text-warning: var(--text-warning);
+	--cg-text-link: var(--text-accent);
+	--cg-separator: var(--divider-color, var(--background-modifier-border));
+	--cg-separator-strong: var(--background-modifier-border-hover, var(--divider-color));
+	--cg-accent: var(--interactive-accent);
+	--cg-accent-hover: var(--interactive-accent-hover, var(--interactive-accent));
+	--cg-focus-ring: var(--interactive-accent);
+	--cg-space-1: var(--size-4-1);
+	--cg-space-2: var(--size-4-2);
+	--cg-space-3: var(--size-4-3);
+	--cg-space-4: var(--size-4-4);
+	--cg-space-5: var(--size-4-6);
+	--cg-space-6: var(--size-4-8);
+	--cg-radius-card: var(--radius-m);
+	--cg-radius-open-card: var(--radius-l, var(--radius-m));
+	--cg-radius-control: var(--radius-s);
+	--cg-radius-panel: var(--radius-l, var(--radius-m));
+	--cg-radius-round: var(--radius-xl, var(--radius-l));
+	--cg-shadow-card: var(--shadow-s);
+	--cg-shadow-card-hover: var(--shadow-s);
+	--cg-shadow-drag: var(--shadow-l);
+	--cg-shadow-document: var(--shadow-l);
+	--cg-shadow-control: var(--shadow-s);
+	--cg-shadow-popover: var(--shadow-l);
+	--cg-motion-standard: var(--anim-motion-baseline);
+	--cg-duration-instant: var(--anim-duration-superfast);
+	--cg-duration-fast: var(--anim-duration-fast);
+	--cg-duration-moderate: var(--anim-duration-moderate);
+	--cg-duration-none: var(--anim-duration-none);
+	--cg-font-interface: var(--font-interface);
+	--cg-font-text: var(--font-text);
+	--cg-font-monospace: var(--font-monospace);
+}
 
-	/* Surfaces and authored relation colour. Light and dark modes only change
-	   the surface ordering below; components share this vocabulary. */
-	--ct-canvas: var(--background-secondary);
-	--ct-card: color-mix(in srgb, var(--background-primary) 97%, var(--text-normal) 3%);
-	--ct-card-open: color-mix(in srgb, var(--background-primary) 96%, var(--ct-accent) 4%);
-	--ct-card-hover: color-mix(in srgb, var(--ct-card) 94%, var(--text-normal) 6%);
-	--ct-card-focus: color-mix(in srgb, var(--ct-card) 92%, var(--ct-accent) 8%);
-	--ct-control: color-mix(in srgb, var(--background-primary) 96%, var(--background-secondary) 4%);
-	--ct-field: color-mix(in srgb, var(--background-primary) 96%, var(--background-secondary) 4%);
-	--ct-control-hover: var(--background-modifier-hover);
-	--ct-border: color-mix(in srgb, var(--background-modifier-border) 62%, var(--text-faint) 38%);
-	--ct-border-strong: color-mix(in srgb, var(--background-modifier-border-hover, var(--background-modifier-border)) 38%, var(--text-muted) 62%);
-	--ct-edge: color-mix(in srgb, var(--text-muted) 76%, transparent);
-	--ct-dot: color-mix(in srgb, var(--text-muted) 52%, transparent);
-	--ct-related: color-mix(in srgb, var(--ct-accent) 82%, var(--text-muted));
-	--ct-prerequisite: color-mix(in srgb, var(--ct-orange) 82%, var(--text-muted));
-	--ct-supports: color-mix(in srgb, var(--ct-green) 82%, var(--text-muted));
-	--ct-contrasts: color-mix(in srgb, var(--ct-red) 82%, var(--text-muted));
-	--ct-follow-up: color-mix(in srgb, var(--ct-purple) 82%, var(--text-muted));
-	--ct-muted: var(--text-muted);
-	--ct-edge-focus: color-mix(in srgb, var(--ct-accent) 58%, var(--text-muted));
-	--ct-edge-open: color-mix(in srgb, var(--ct-accent) 72%, var(--text-normal));
-	--ct-endpoint-halo-color: color-mix(in srgb, var(--background-primary) 70%, transparent);
-	--ct-accent-halo-soft: color-mix(in srgb, var(--ct-accent) 12%, transparent);
-	--ct-accent-halo: color-mix(in srgb, var(--ct-accent) 14%, transparent);
-	--ct-accent-halo-strong: color-mix(in srgb, var(--ct-accent) 18%, transparent);
-	--ct-neutral-halo: color-mix(in srgb, var(--text-muted) 14%, transparent);
-	--ct-text-halo: color-mix(in srgb, var(--text-normal) 10%, transparent);
-	--ct-focus-border: color-mix(in srgb, var(--ct-accent) 58%, var(--ct-border));
-	--ct-open-border: color-mix(in srgb, var(--ct-accent) 34%, var(--ct-border));
-	--ct-pinned-border: color-mix(in srgb, var(--ct-accent) 44%, var(--ct-border));
-	--ct-card-boundary-open: color-mix(in srgb, var(--ct-accent) 46%, var(--ct-border));
-	--ct-pin-active: color-mix(in srgb, var(--ct-accent) 18%, var(--ct-control));
-	--ct-port-border: color-mix(in srgb, var(--text-muted) 78%, var(--ct-border));
-	--ct-scroll-thumb: color-mix(in srgb, var(--text-faint) 62%, transparent);
-	--ct-warning-border: color-mix(in srgb, var(--text-warning) 56%, var(--ct-border));
-	--ct-warning-surface: color-mix(in srgb, var(--text-warning) 9%, var(--ct-card));
-	--ct-section-rule: color-mix(in srgb, var(--ct-border) 72%, transparent);
-	--ct-chip-surface: color-mix(in srgb, var(--background-secondary) 72%, transparent);
+.context-tree-view {
+	/* Graph roles are local, low-chroma derivations; they are not shared theme
+	   tokens and never change the global Obsidian palette. */
+	--cg-role-question: color-mix(in srgb, var(--cg-accent) 48%, var(--cg-text-secondary));
+	--cg-role-entity: color-mix(in srgb, var(--color-green, var(--cg-accent)) 36%, var(--cg-text-secondary));
+	--cg-role-topic: var(--cg-text-secondary);
+	--cg-role-root-surface: color-mix(in srgb, var(--cg-accent) 10%, transparent);
+	--cg-role-question-surface: color-mix(in srgb, var(--cg-role-question) 10%, transparent);
+	--cg-role-entity-surface: color-mix(in srgb, var(--cg-role-entity) 10%, transparent);
+	--cg-edge: color-mix(in srgb, var(--cg-text-secondary) 76%, transparent);
+	--cg-dot: color-mix(in srgb, var(--cg-text-secondary) 52%, transparent);
+	--cg-related: color-mix(in srgb, var(--cg-accent) 82%, var(--cg-text-secondary));
+	--cg-prerequisite: color-mix(in srgb, var(--color-orange, var(--cg-text-warning)) 56%, var(--cg-text-secondary));
+	--cg-supports: color-mix(in srgb, var(--color-green, var(--cg-accent)) 48%, var(--cg-text-secondary));
+	--cg-contrasts: color-mix(in srgb, var(--color-red, var(--cg-text-error)) 56%, var(--cg-text-secondary));
+	--cg-follow-up: color-mix(in srgb, var(--color-purple, var(--cg-accent)) 48%, var(--cg-text-secondary));
+	--cg-muted: var(--cg-text-secondary);
+	--cg-edge-focus: color-mix(in srgb, var(--cg-accent) 58%, var(--cg-text-secondary));
+	--cg-edge-open: color-mix(in srgb, var(--cg-accent) 72%, var(--cg-text-primary));
+	--cg-endpoint-halo-color: color-mix(in srgb, var(--cg-surface-card) 70%, transparent);
+	--cg-accent-halo-soft: color-mix(in srgb, var(--cg-accent) 12%, transparent);
+	--cg-accent-halo: color-mix(in srgb, var(--cg-accent) 14%, transparent);
+	--cg-accent-halo-strong: color-mix(in srgb, var(--cg-accent) 18%, transparent);
+	--cg-neutral-halo: color-mix(in srgb, var(--cg-text-secondary) 14%, transparent);
+	--cg-text-halo: color-mix(in srgb, var(--cg-text-primary) 10%, transparent);
+	--cg-focus-border: color-mix(in srgb, var(--cg-accent) 58%, var(--cg-separator));
+	--cg-open-border: color-mix(in srgb, var(--cg-accent) 34%, var(--cg-separator));
+	--cg-pinned-border: color-mix(in srgb, var(--cg-accent) 44%, var(--cg-separator));
+	--cg-open-boundary: color-mix(in srgb, var(--cg-accent) 46%, var(--cg-separator));
+	--cg-pin-active: color-mix(in srgb, var(--cg-accent) 18%, var(--cg-surface-control));
+	--cg-port-border: color-mix(in srgb, var(--cg-text-secondary) 78%, var(--cg-separator));
+	--cg-scroll-thumb: color-mix(in srgb, var(--cg-text-tertiary) 62%, transparent);
+	--cg-warning-border: color-mix(in srgb, var(--cg-text-warning) 56%, var(--cg-separator));
+	--cg-warning-surface: color-mix(in srgb, var(--cg-text-warning) 9%, var(--cg-surface-card));
+	--cg-section-rule: color-mix(in srgb, var(--cg-separator) 72%, transparent);
+	--cg-chip-surface: color-mix(in srgb, var(--cg-surface-canvas) 72%, transparent);
+}
 
-	/* Cupertino shape, elevation and motion are local fallbacks rather than a
-	   dependency on the theme being installed. */
-	--ct-corner-shape: var(--corner-shape, superellipse(1.1));
-	--ct-radius-card: 12px;
-	--ct-radius-open-card: 16px;
-	--ct-radius-control: 10px;
-	--ct-radius-panel: 16px;
-	--ct-radius-round: 100vh;
-	--ct-card-shadow: 0 2px 8px -2px rgb(0 0 0 / 4%), 0 2px 4px -2px rgb(0 0 0 / 4%);
-	--ct-card-shadow-hover: 0 12px 24px -4px rgb(0 0 0 / 8%), 0 8px 16px -4px rgb(0 0 0 / 4%);
-	--ct-card-shadow-drag: 0 14px 36px rgb(0 0 0 / 20%);
-	--ct-open-card-shadow: 0 14px 62px rgb(0 0 0 / 25%);
-	--ct-control-shadow: 0 2px 8px -2px rgb(0 0 0 / 4%), 0 2px 4px -2px rgb(0 0 0 / 4%);
-	--ct-popover-shadow: 0 12px 24px -4px rgb(0 0 0 / 8%), 0 8px 16px -4px rgb(0 0 0 / 4%);
-	--ct-motion-standard: cubic-bezier(0.32, 0.72, 0, 1);
-	--ct-duration-instant: 80ms;
-	--ct-duration-fast: 160ms;
-	--ct-duration-moderate: 320ms;
-	--ct-duration-none: 0s;
-	--ct-pressed-scale: 0.75;
-	--ct-control-opacity-idle: 0.82;
-	--ct-control-opacity-active: 1;
+:where(.context-tree-view, .linked-canvas-help-modal) {
+	/* Component-only values remain private to this stylesheet. */
+	--cg-pressed-scale: 0.75;
+	--cg-control-opacity-idle: 0.82;
+	--cg-control-opacity-active: 1;
 
 	/* Type and state hierarchy are tokens too. This prevents a component from
 	   inventing a private scale that drifts from the rest of the product. */
-	--ct-type-zoom-label: 0.7rem;
-	--ct-type-label: 0.72rem;
-	--ct-type-action: 0.76rem;
-	--ct-type-hint: 0.78rem;
-	--ct-type-search: 0.8rem;
-	--ct-type-summary: 0.81rem;
-	--ct-type-empty-next: 0.82rem;
-	--ct-type-source: 0.86rem;
-	--ct-type-empty-status: 0.88rem;
-	--ct-type-reading: 0.92rem;
-	--ct-type-title: 0.94rem;
-	--ct-type-control: 1rem;
-	--ct-type-empty-title: 1.08rem;
-	--ct-type-open-title: 1.34rem;
-	--ct-weight-semibold: 600;
-	--ct-weight-bold: 700;
-	--ct-leading-control: 1;
-	--ct-leading-open-title: 1.22;
-	--ct-leading-title: 1.38;
-	--ct-leading-hint: 1.4;
-	--ct-leading-conflict: 1.45;
-	--ct-leading-empty-next: 1.5;
-	--ct-leading-summary: 1.52;
-	--ct-leading-empty-status: 1.55;
-	--ct-leading-source: 1.58;
-	--ct-leading-reading: 1.72;
-	--ct-tracking-title: -0.012em;
-	--ct-tracking-open-title: -0.024em;
-	--ct-tracking-eyebrow: 0.02em;
-	--ct-summary-max-height: 3.7rem;
-	--ct-opacity-search-context: 0.5;
-	--ct-opacity-hover-muted: 0.52;
-	--ct-layer-edges: 0;
-	--ct-layer-card: 1;
-	--ct-layer-open-card: 2;
-	--ct-layer-endpoint: 3;
-	--ct-layer-dragging: 4;
-	--ct-layer-panel: 5;
-	--ct-layer-menu: 6;
+	--cg-type-zoom-label: 0.7rem;
+	--cg-type-label: 0.72rem;
+	--cg-type-action: 0.76rem;
+	--cg-type-hint: 0.78rem;
+	--cg-type-search: 0.8rem;
+	--cg-type-summary: 0.81rem;
+	--cg-type-empty-next: 0.82rem;
+	--cg-type-source: 0.86rem;
+	--cg-type-empty-status: 0.88rem;
+	--cg-type-reading: 0.92rem;
+	--cg-type-title: 0.94rem;
+	--cg-type-control: 1rem;
+	--cg-type-empty-title: 1.08rem;
+	--cg-type-open-title: 1.34rem;
+	--cg-weight-semibold: 600;
+	--cg-weight-bold: 700;
+	--cg-leading-control: 1;
+	--cg-leading-open-title: 1.22;
+	--cg-leading-title: 1.38;
+	--cg-leading-hint: 1.4;
+	--cg-leading-conflict: 1.45;
+	--cg-leading-empty-next: 1.5;
+	--cg-leading-summary: 1.52;
+	--cg-leading-empty-status: 1.55;
+	--cg-leading-source: 1.58;
+	--cg-leading-reading: 1.72;
+	--cg-tracking-title: -0.012em;
+	--cg-tracking-open-title: -0.024em;
+	--cg-tracking-eyebrow: 0.02em;
+	--cg-summary-max-height: 3.7rem;
+}
+
+.context-tree-view {
+	/* The 1.2 reading scale is a product accessibility choice. It is local to
+	   Linked Map and never changes Obsidian's host typography. */
+	--cg-font-scale: 1.2;
+	--cg-opacity-search-context: 0.5;
+	--cg-opacity-hover-muted: 0.52;
+	--cg-layer-edges: 0;
+	--cg-layer-card: 1;
+	--cg-layer-open-card: 2;
+	--cg-layer-endpoint: 3;
+	--cg-layer-dragging: 4;
+	--cg-layer-panel: 5;
+	--cg-layer-menu: 6;
 
 	/* Canvas, card and control geometry live beside the visual tokens so a
 	   component never carries an unexplained design constant. */
-	--ct-border-width: 1px;
-	--ct-focus-ring-width: 2px;
-	--ct-focus-ring-offset: 4px;
-	--ct-ring-subtle-size: 1px;
-	--ct-ring-emphasis-size: 2px;
-	--ct-grid-size: 20px;
-	--ct-grid-dot-size: 1px;
-	--ct-grid-dot-fade: 1.2px;
-	--ct-edge-width: 1.2;
-	--ct-edge-draft-width: 1.5;
-	--ct-edge-focus-width: 1.45;
-	--ct-edge-open-width: 1.65;
-	--ct-edge-active-width: 1.8;
-	--ct-edge-dash: 5;
-	--ct-edge-focus-opacity: 0.78;
-	--ct-edge-open-opacity: 0.92;
-	--ct-edge-muted-opacity: 0.18;
-	--ct-edge-hover-muted-opacity: 0.32;
-	--ct-card-width: 288px;
-	--ct-viewport-fallback-width: 100vw;
-	--ct-card-min-width: 160px;
-	--ct-card-min-height: 88px;
-	--ct-card-pane-gap: 32px;
-	--ct-card-padding-block-start: 16px;
-	--ct-card-padding-inline: 18px;
-	--ct-card-padding-block-end: 17px;
-	--ct-card-compact-action-reserve: 74px;
-	--ct-card-compact-expanded-action-reserve: 112px;
-	--ct-card-open-action-reserve: 138px;
-	--ct-card-open-expanded-action-reserve: 168px;
-	--ct-card-action-inset: 7px;
-	--ct-card-action-rail-offset: 40px;
-	--ct-card-action-size: 28px;
-	--ct-card-action-gap: 2px;
-	--ct-card-action-padding: 3px;
-	--ct-card-action-radius: var(--ct-radius-control);
-	--ct-card-menu-offset: 6px;
-	--ct-card-menu-width: 132px;
-	--ct-open-card-min-size: 180px;
-	--ct-open-card-max-width: 680px;
-	--ct-open-card-max-height-base: 760px;
-	--ct-open-card-pane-gap: 40px;
-	--ct-open-card-height-gap: 72px;
-	--ct-card-open-padding-top: 32px;
-	--ct-open-card-padding-inline: 34px;
-	--ct-open-card-padding-bottom: 32px;
-	--ct-card-editor-toolbar-spacer: 62px;
-	--ct-control-inset-inline: 16px;
-	--ct-control-inset-block: 15px;
-	--ct-control-padding: 4px;
-	--ct-control-gap: 2px;
-	--ct-control-button-width: 32px;
-	--ct-control-button-height: 32px;
-	--ct-panel-width: 304px;
-	--ct-panel-pane-gap: 32px;
-	--ct-panel-padding: 10px;
-	--ct-search-panel-offset: 57px;
-	--ct-action-padding-block: 5px;
-	--ct-action-padding-inline: 8px;
-	--ct-card-control-shift: -2px;
-	--ct-card-menu-padding: 4px;
-	--ct-card-menu-item-padding-block: 7px;
-	--ct-card-menu-item-padding-inline: 8px;
-	--ct-card-menu-motion-shift: -4px;
-	--ct-card-menu-scale: 0.98;
-	--ct-edge-endpoint-hit-size: 22px;
-	--ct-edge-endpoint-size: 7px;
-	--ct-edge-endpoint-active-size: 11px;
-	--ct-edge-endpoint-border-width: 1.5px;
-	--ct-edge-endpoint-halo: 3px;
-	--ct-edge-endpoint-active-halo: 4px;
-	--ct-graph-list-gap: 5px;
-	--ct-graph-list-margin-block-start: 12px;
-	--ct-graph-list-margin-block-end: 20px;
-	--ct-graph-list-item-padding-block: 8px;
-	--ct-graph-list-item-padding-inline: 10px;
-	--ct-summary-margin: 6px;
-	--ct-connect-port-hit-size: 28px;
-	--ct-connect-port-size: 8px;
-	--ct-connect-port-visible-size: 12px;
-	--ct-connect-port-active-size: 14px;
-	--ct-connect-port-border-width: 1.5px;
-	--ct-connect-port-halo: 4px;
-	--ct-connect-port-active-halo: 5px;
-	--ct-detail-open-margin: 24px;
-	--ct-detail-motion-shift: -8px;
-	--ct-detail-max-height: 2400px;
-	--ct-editor-scrollbar-size: 8px;
-	--ct-editor-scrollbar-border: 2px;
-	--ct-conflict-gap-block: 7px;
-	--ct-conflict-gap-inline: 10px;
-	--ct-conflict-margin: 8px;
-	--ct-conflict-padding-block: 8px;
-	--ct-conflict-padding-inline: 10px;
-	--ct-inline-button-padding-block: 3px;
-	--ct-inline-button-padding-inline: 6px;
-	--ct-connection-gap: 4px;
-	--ct-connection-margin: 14px;
-	--ct-connection-padding: 13px;
-	--ct-connection-item-gap: 3px;
-	--ct-connection-button-padding-block: 4px;
-	--ct-connection-button-padding-inline: 7px;
-	--ct-link-underline-width: 1px;
-	--ct-root-hint-inset-block: 14px;
-	--ct-root-hint-inset-inline: 16px;
-	--ct-root-hint-width: 420px;
-	--ct-root-hint-pane-gap: 32px;
-	--ct-root-hint-padding-block: 6px;
-	--ct-root-hint-padding-inline: 4px;
-	--ct-empty-width: 480px;
-	--ct-empty-pane-gap: 64px;
-	--ct-empty-margin-min: 64px;
-	--ct-empty-margin-fluid: 14vh;
-	--ct-empty-margin-max: 144px;
-	--ct-empty-padding-block: 30px;
-	--ct-empty-padding-inline: 32px;
-	--ct-empty-eyebrow-gap: 8px;
-	--ct-empty-status-gap: 12px;
-	--ct-empty-next-gap: 7px;
-	--ct-empty-action-gap: 8px;
-	--ct-empty-action-margin: 20px;
-	--ct-filter-gap-block: 5px;
-	--ct-filter-gap-inline: 7px;
-	--ct-filter-margin: 10px;
-	--ct-search-empty-margin: 8px;
-	--ct-control-divider-width: 1px;
-	--ct-control-divider-height: 18px;
-	--ct-control-divider-gap: 2px;
-	--ct-zoom-label-width: 43px;
-	--ct-zoom-label-padding: 3px;
-	--ct-search-input-min-height: 30px;
-	--ct-search-input-padding-block: 5px;
-	--ct-search-input-padding-inline: 8px;
-	--ct-compact-card-width: 258px;
-	--ct-compact-open-card-width: 520px;
-	--ct-help-width: 760px;
-	--ct-help-pane-gap: 48px;
-	--ct-help-section-gap: 12px;
-	--ct-help-choice-padding: 16px;
-	--ct-help-ownership-margin: 18px;
-	--ct-help-ownership-padding: 16px;
-	--ct-help-list-gap: 6px;
-	--ct-help-actions-margin: 16px;
-	--ct-help-eyebrow-size: 0.72rem;
-	--ct-help-body-size: 0.88rem;
-	--ct-help-lead-leading: 1.55;
-	--ct-help-body-leading: 1.5;
-	--ct-help-choice-grow: 1;
-	--ct-help-choice-basis: 190px;
-	--ct-help-heading-margin: 4px;
-	--ct-help-body-margin: 0;
-	--ct-help-list-margin: 8px;
-	--ct-help-list-padding: 20px;
-	--ct-help-title-margin: 0;
-	--ct-help-lead-margin: 8px;
-	--ct-help-letter-spacing: 0.02em;
-	--ct-help-modal-padding: 24px;
-	--ct-help-modal-max-height: 82vh;
-	--ct-help-modal-scrollbar: auto;
+	--cg-separator-width: 1px;
+	--cg-focus-ring-width: 2px;
+	--cg-focus-ring-offset: 4px;
+	--cg-ring-subtle-size: 1px;
+	--cg-ring-emphasis-size: 2px;
+	--cg-grid-size: 20px;
+	--cg-grid-dot-size: 1px;
+	--cg-grid-dot-fade: 1.2px;
+	--cg-edge-width: 1.2;
+	--cg-edge-draft-width: 1.5;
+	--cg-edge-focus-width: 1.45;
+	--cg-edge-open-width: 1.65;
+	--cg-edge-active-width: 1.8;
+	--cg-edge-dash: 5;
+	--cg-edge-focus-opacity: 0.78;
+	--cg-edge-open-opacity: 0.92;
+	--cg-edge-muted-opacity: 0.18;
+	--cg-edge-hover-muted-opacity: 0.32;
+	--cg-card-width: 288px;
+	--cg-card-max-width: 500px;
+	--cg-viewport-fallback-width: 100vw;
+	--cg-card-min-width: 160px;
+	--cg-card-min-height: 88px;
+	--cg-card-pane-gap: 32px;
+	--cg-card-padding-block-start: 16px;
+	--cg-card-padding-inline: 18px;
+	--cg-card-padding-block-end: 17px;
+	--cg-card-compact-action-reserve: 74px;
+	--cg-card-compact-expanded-action-reserve: 112px;
+	--cg-card-open-action-reserve: 138px;
+	--cg-card-open-expanded-action-reserve: 168px;
+	--cg-card-action-inset: 7px;
+	--cg-card-action-rail-offset: 40px;
+	--cg-card-action-size: 28px;
+	--cg-card-action-gap: 2px;
+	--cg-card-action-padding: 3px;
+	--cg-card-action-radius: var(--cg-radius-control);
+	--cg-card-menu-offset: 6px;
+	--cg-card-menu-width: 132px;
+	--cg-open-card-min-size: 180px;
+	--cg-open-card-max-width: 680px;
+	--cg-open-card-max-height-base: 760px;
+	--cg-open-card-pane-gap: 40px;
+	--cg-open-card-height-gap: 72px;
+	--cg-card-open-padding-top: 32px;
+	--cg-open-card-padding-inline: var(--cg-space-6);
+	--cg-open-card-padding-bottom: 32px;
+	--cg-card-editor-toolbar-spacer: 62px;
+	--cg-control-inset-inline: 16px;
+	--cg-control-inset-block: 15px;
+	--cg-control-padding: 4px;
+	--cg-control-gap: var(--cg-space-1);
+	--cg-control-button-width: 32px;
+	--cg-control-button-height: 32px;
+	--cg-panel-width: 304px;
+	--cg-panel-pane-gap: 32px;
+	--cg-panel-padding: 10px;
+	--cg-search-panel-offset: 57px;
+	--cg-action-padding-block: 5px;
+	--cg-action-padding-inline: 8px;
+	--cg-card-control-shift: -2px;
+	--cg-card-menu-padding: 4px;
+	--cg-card-menu-item-padding-block: 7px;
+	--cg-card-menu-item-padding-inline: 8px;
+	--cg-card-menu-motion-shift: -4px;
+	--cg-card-menu-scale: 0.98;
+	--cg-edge-endpoint-hit-size: 22px;
+	--cg-edge-endpoint-size: 7px;
+	--cg-edge-endpoint-active-size: 11px;
+	--cg-edge-endpoint-border-width: 1.5px;
+	--cg-edge-endpoint-halo: 3px;
+	--cg-edge-endpoint-active-halo: 4px;
+	--cg-graph-list-gap: 5px;
+	--cg-graph-list-margin-block-start: 12px;
+	--cg-graph-list-margin-block-end: 20px;
+	--cg-graph-list-item-padding-block: 8px;
+	--cg-graph-list-item-padding-inline: 10px;
+	--cg-summary-margin: var(--cg-space-2);
+	--cg-role-gap: var(--cg-space-2);
+	--cg-role-padding-block: var(--cg-space-1);
+	--cg-role-padding-inline: var(--cg-space-2);
+	--cg-role-border-width: var(--cg-separator-width);
+	--cg-connect-port-hit-size: 28px;
+	--cg-connect-port-size: 8px;
+	--cg-connect-port-visible-size: 12px;
+	--cg-connect-port-active-size: 14px;
+	--cg-connect-port-border-width: 1.5px;
+	--cg-connect-port-halo: 4px;
+	--cg-connect-port-active-halo: 5px;
+	--cg-detail-open-margin: 24px;
+	--cg-detail-motion-shift: -8px;
+	--cg-detail-max-height: 2400px;
+	--cg-editor-scrollbar-size: 8px;
+	--cg-editor-scrollbar-border: 2px;
+	--cg-conflict-gap-block: 7px;
+	--cg-conflict-gap-inline: 10px;
+	--cg-conflict-margin: 8px;
+	--cg-conflict-padding-block: 8px;
+	--cg-conflict-padding-inline: 10px;
+	--cg-inline-button-padding-block: 3px;
+	--cg-inline-button-padding-inline: 6px;
+	--cg-connection-gap: 4px;
+	--cg-connection-margin: 14px;
+	--cg-connection-padding: 13px;
+	--cg-connection-item-gap: 3px;
+	--cg-connection-button-padding-block: 4px;
+	--cg-connection-button-padding-inline: 7px;
+	--cg-link-underline-width: 1px;
+	--cg-root-hint-inset-block: 14px;
+	--cg-root-hint-inset-inline: 16px;
+	--cg-root-hint-width: 420px;
+	--cg-root-hint-pane-gap: 32px;
+	--cg-root-hint-padding-block: 6px;
+	--cg-root-hint-padding-inline: 4px;
+	--cg-empty-width: 480px;
+	--cg-empty-pane-gap: 64px;
+	--cg-empty-margin-min: 64px;
+	--cg-empty-margin-fluid: 14vh;
+	--cg-empty-margin-max: 144px;
+	--cg-empty-padding-block: 30px;
+	--cg-empty-padding-inline: 32px;
+	--cg-empty-eyebrow-gap: 8px;
+	--cg-empty-status-gap: 12px;
+	--cg-empty-next-gap: 7px;
+	--cg-empty-action-gap: 8px;
+	--cg-empty-action-margin: 20px;
+	--cg-filter-gap-block: 5px;
+	--cg-filter-gap-inline: 7px;
+	--cg-filter-margin: var(--cg-space-2);
+	--cg-search-empty-margin: 8px;
+	--cg-control-divider-width: 1px;
+	--cg-control-divider-height: 18px;
+	--cg-control-divider-gap: 2px;
+	--cg-zoom-label-width: 43px;
+	--cg-zoom-label-padding: 3px;
+	--cg-search-input-min-height: 30px;
+	--cg-search-input-padding-block: 5px;
+	--cg-search-input-padding-inline: 8px;
+	--cg-compact-card-width: 258px;
+	--cg-compact-open-card-width: 520px;
 }
 
-.theme-light :where(.context-tree-view, .linked-canvas-help-modal) {
-	--ct-accent: rgb(0 136 255);
-	--ct-red: rgb(255 56 60);
-	--ct-orange: rgb(255 141 40);
-	--ct-green: rgb(52 199 89);
-	--ct-purple: rgb(203 48 224);
-	--ct-canvas: color-mix(in srgb, #fff, black 5%);
-	--ct-card: #fff;
-	--ct-card-open: color-mix(in srgb, #fff 96%, var(--ct-accent) 4%);
-	--ct-control: color-mix(in srgb, #fff, black 3%);
-	--ct-field: #fff;
-	--ct-control-hover: hsl(0 0% 0% / 5%);
-	--ct-border: hsl(0 0% 0% / 12%);
-	--ct-border-strong: hsl(0 0% 0% / 24%);
-	--ct-dot: hsl(0 0% 0% / 18%);
-}
-
-.theme-dark :where(.context-tree-view, .linked-canvas-help-modal) {
-	--ct-accent: rgb(0 145 255);
-	--ct-red: rgb(255 66 69);
-	--ct-orange: rgb(255 146 48);
-	--ct-green: rgb(48 209 88);
-	--ct-purple: rgb(107 52 242);
-	--ct-canvas: #1e1e1e;
-	--ct-card: color-mix(in srgb, #1e1e1e, white 5%);
-	--ct-card-open: color-mix(in srgb, #1e1e1e 92%, var(--ct-accent) 8%);
-	--ct-control: color-mix(in srgb, #1e1e1e, white 8%);
-	--ct-field: color-mix(in srgb, #1e1e1e, white 5%);
-	--ct-control-hover: hsl(0 0% 100% / 8%);
-	--ct-border: hsl(0 0% 100% / 13%);
-	--ct-border-strong: hsl(0 0% 100% / 26%);
-	--ct-dot: hsl(0 0% 100% / 22%);
+.linked-canvas-help-modal {
+	--cg-help-width: 760px;
+	--cg-help-pane-gap: 48px;
+	--cg-help-section-gap: var(--cg-space-3);
+	--cg-help-choice-padding: var(--cg-space-4);
+	--cg-help-ownership-margin: 18px;
+	--cg-help-ownership-padding: 16px;
+	--cg-help-list-gap: 6px;
+	--cg-help-actions-margin: 16px;
+	--cg-help-eyebrow-size: 0.72rem;
+	--cg-help-body-size: 0.88rem;
+	--cg-help-lead-leading: 1.55;
+	--cg-help-body-leading: 1.5;
+	--cg-help-choice-grow: 1;
+	--cg-help-choice-basis: 190px;
+	--cg-help-heading-margin: 4px;
+	--cg-help-body-margin: 0;
+	--cg-help-list-margin: 8px;
+	--cg-help-list-padding: 20px;
+	--cg-help-title-margin: 0;
+	--cg-help-lead-margin: 8px;
+	--cg-help-letter-spacing: 0.02em;
+	--cg-help-modal-padding: var(--cg-space-5);
+	--cg-help-modal-max-height: 82vh;
+	--cg-help-modal-scrollbar: auto;
 }
 /* linked-canvas-design-tokens:end */
 
@@ -325,22 +323,27 @@
 
 .context-tree-action,
 .context-tree-zoom-button {
-	border: var(--ct-border-width) solid var(--ct-border);
-	border-radius: var(--ct-radius-control);
+	border: var(--cg-separator-width) solid var(--cg-separator);
+	border-radius: var(--cg-radius-control);
 	background: transparent;
-	color: var(--text-muted);
-	font-size: calc(var(--ct-type-action) * var(--ct-font-scale));
+	color: var(--cg-text-secondary);
+	font-size: calc(var(--cg-type-action) * var(--cg-font-scale));
 	cursor: pointer;
-	corner-shape: var(--ct-corner-shape);
 }
 
-.context-tree-action { padding: var(--ct-action-padding-block) var(--ct-action-padding-inline); }
+.context-tree-action { padding: var(--cg-action-padding-block) var(--cg-action-padding-inline); }
 
 .context-tree-action:hover,
 .context-tree-zoom-button:hover {
 	border-color: transparent;
-	color: var(--text-normal);
-	background: var(--ct-control-hover);
+	color: var(--cg-text-primary);
+	background: var(--cg-surface-control-hover);
+}
+
+.context-tree-action:focus-visible,
+.context-tree-zoom-button:focus-visible {
+	outline: var(--cg-focus-ring-width) solid var(--cg-focus-ring);
+	outline-offset: var(--cg-ring-subtle-size);
 }
 
 .context-tree-viewport {
@@ -350,10 +353,10 @@
 	flex: 1;
 	overflow: hidden;
 	cursor: grab;
-	background-color: var(--ct-canvas);
-	background-image: radial-gradient(circle at center, var(--ct-dot) var(--ct-grid-dot-size), transparent var(--ct-grid-dot-fade));
+	background-color: var(--cg-surface-canvas);
+	background-image: radial-gradient(circle at center, var(--cg-dot) var(--cg-grid-dot-size), transparent var(--cg-grid-dot-fade));
 	background-position: 0 0;
-	background-size: var(--ct-grid-size) var(--ct-grid-size);
+	background-size: var(--cg-grid-size) var(--cg-grid-size);
 	outline: none;
 }
 
@@ -372,13 +375,13 @@
 	height: 100%;
 	overflow: visible;
 	pointer-events: none;
-	z-index: var(--ct-layer-edges);
+	z-index: var(--cg-layer-edges);
 }
 
 .context-tree-draft-edges {
 	position: absolute;
 	inset: 0;
-	z-index: var(--ct-layer-endpoint);
+	z-index: var(--cg-layer-endpoint);
 	width: 100%;
 	height: 100%;
 	pointer-events: none;
@@ -387,62 +390,62 @@
 
 .context-tree-draft-edges path {
 	fill: none;
-	stroke: var(--text-normal);
-	stroke-width: var(--ct-edge-draft-width);
-	stroke-dasharray: var(--ct-edge-dash) var(--ct-edge-dash);
+	stroke: var(--cg-text-primary);
+	stroke-width: var(--cg-edge-draft-width);
+	stroke-dasharray: var(--cg-edge-dash) var(--cg-edge-dash);
 	stroke-linecap: round;
 }
 
 .context-tree-edges path {
 	fill: none;
-	stroke: var(--ct-edge);
-	stroke-width: var(--ct-edge-width);
+	stroke: var(--cg-edge);
+	stroke-width: var(--cg-edge-width);
 	stroke-linecap: round;
 	vector-effect: non-scaling-stroke;
 }
 
 /* Colour is reserved for authored relationship meaning. Ordinary wikilinks
    remain neutral, while typed relations keep a stable visual vocabulary. */
-.context-tree-edge[data-relation~="related"] { stroke: var(--ct-related); }
-.context-tree-edge[data-relation~="prerequisite"] { stroke: var(--ct-prerequisite); }
-.context-tree-edge[data-relation~="supports"] { stroke: var(--ct-supports); }
-.context-tree-edge[data-relation~="contrasts"] { stroke: var(--ct-contrasts); }
-.context-tree-edge[data-relation~="follow-up"] { stroke: var(--ct-follow-up); }
+.context-tree-edge[data-relation~="related"] { stroke: var(--cg-related); }
+.context-tree-edge[data-relation~="prerequisite"] { stroke: var(--cg-prerequisite); }
+.context-tree-edge[data-relation~="supports"] { stroke: var(--cg-supports); }
+.context-tree-edge[data-relation~="contrasts"] { stroke: var(--cg-contrasts); }
+.context-tree-edge[data-relation~="follow-up"] { stroke: var(--cg-follow-up); }
 
 .context-tree-edge-endpoint {
 	position: absolute;
-	z-index: var(--ct-layer-endpoint);
+	z-index: var(--cg-layer-endpoint);
 	box-sizing: border-box;
-	width: var(--ct-edge-endpoint-hit-size);
-	height: var(--ct-edge-endpoint-hit-size);
+	width: var(--cg-edge-endpoint-hit-size);
+	height: var(--cg-edge-endpoint-hit-size);
 	padding: 0;
 	border: 0;
-	border-radius: var(--ct-radius-round);
+	border-radius: var(--cg-radius-round);
 	background: transparent;
 	opacity: 0;
 	pointer-events: none;
 	transform: translate(-50%, -50%);
-	transition: opacity var(--ct-duration-instant) var(--ct-motion-standard);
+	transition: opacity var(--cg-duration-instant) var(--cg-motion-standard);
 }
 
 .context-tree-edge-endpoint::before {
 	position: absolute;
 	top: 50%;
 	left: 50%;
-	width: var(--ct-edge-endpoint-size);
-	height: var(--ct-edge-endpoint-size);
-	border: var(--ct-edge-endpoint-border-width) solid var(--text-muted);
-	border-radius: var(--ct-radius-round);
-	background: var(--ct-card);
-	box-shadow: 0 0 0 var(--ct-edge-endpoint-halo) var(--ct-endpoint-halo-color);
+	width: var(--cg-edge-endpoint-size);
+	height: var(--cg-edge-endpoint-size);
+	border: var(--cg-edge-endpoint-border-width) solid var(--cg-text-secondary);
+	border-radius: var(--cg-radius-round);
+	background: var(--cg-surface-card);
+	box-shadow: 0 0 0 var(--cg-edge-endpoint-halo) var(--cg-endpoint-halo-color);
 	content: "";
 	transform: translate(-50%, -50%);
 	transition:
-		width var(--ct-duration-instant) var(--ct-motion-standard),
-		height var(--ct-duration-instant) var(--ct-motion-standard),
-		border-color var(--ct-duration-instant) var(--ct-motion-standard),
-		background var(--ct-duration-instant) var(--ct-motion-standard),
-		box-shadow var(--ct-duration-instant) var(--ct-motion-standard);
+		width var(--cg-duration-instant) var(--cg-motion-standard),
+		height var(--cg-duration-instant) var(--cg-motion-standard),
+		border-color var(--cg-duration-instant) var(--cg-motion-standard),
+		background var(--cg-duration-instant) var(--cg-motion-standard),
+		box-shadow var(--cg-duration-instant) var(--cg-motion-standard);
 }
 
 .context-tree-edge-endpoint.is-visible { opacity: 1; }
@@ -455,49 +458,49 @@
 .context-tree-edge-endpoint.is-visible.is-detachable.is-selected { cursor: grab; }
 
 .context-tree-edge-endpoint.is-selected::before {
-	width: var(--ct-edge-endpoint-active-size);
-	height: var(--ct-edge-endpoint-active-size);
-	border-color: var(--ct-accent);
-	background: var(--background-primary);
-	box-shadow: 0 0 0 var(--ct-edge-endpoint-active-halo) var(--ct-accent-halo-strong);
+	width: var(--cg-edge-endpoint-active-size);
+	height: var(--cg-edge-endpoint-active-size);
+	border-color: var(--cg-accent);
+	background: var(--cg-surface-card);
+	box-shadow: 0 0 0 var(--cg-edge-endpoint-active-halo) var(--cg-accent-halo-strong);
 }
 
 .context-tree-edge-endpoint.is-disconnecting { cursor: grabbing; }
-.context-tree-edge-endpoint.is-disconnecting::before { border-color: var(--text-error); }
+.context-tree-edge-endpoint.is-disconnecting::before { border-color: var(--cg-text-error); }
 
 .context-tree-edge.is-focus-related {
-	stroke: var(--ct-edge-focus);
-	stroke-width: var(--ct-edge-focus-width);
-	opacity: var(--ct-edge-focus-opacity);
+	stroke: var(--cg-edge-focus);
+	stroke-width: var(--cg-edge-focus-width);
+	opacity: var(--cg-edge-focus-opacity);
 }
 
 .context-tree-edge.is-open-related {
-	stroke: var(--ct-edge-open);
-	stroke-width: var(--ct-edge-open-width);
-	opacity: var(--ct-edge-open-opacity);
+	stroke: var(--cg-edge-open);
+	stroke-width: var(--cg-edge-open-width);
+	opacity: var(--cg-edge-open-opacity);
 }
 
-.context-tree-edge.is-muted { opacity: var(--ct-edge-muted-opacity); }
+.context-tree-edge.is-muted { opacity: var(--cg-edge-muted-opacity); }
 
 /* Hover is a one-hop lens: the active card and direct relationship stay
    legible while the rest of the graph recedes without changing geometry. */
 .context-tree-edge.is-hover-related {
-	stroke: var(--text-normal);
-	stroke-width: var(--ct-edge-active-width);
+	stroke: var(--cg-text-primary);
+	stroke-width: var(--cg-edge-active-width);
 	opacity: 1;
 }
 
-.context-tree-edge.is-hover-muted { opacity: var(--ct-edge-hover-muted-opacity); }
+.context-tree-edge.is-hover-muted { opacity: var(--cg-edge-hover-muted-opacity); }
 
 .context-tree-edge.is-highlighted {
-	stroke: var(--text-normal);
-	stroke-width: var(--ct-edge-active-width);
+	stroke: var(--cg-text-primary);
+	stroke-width: var(--cg-edge-active-width);
 	opacity: 1;
 }
 
 .context-tree-edge.is-selected {
-	stroke: var(--ct-accent);
-	stroke-width: var(--ct-edge-active-width);
+	stroke: var(--cg-accent);
+	stroke-width: var(--cg-edge-active-width);
 	opacity: 1;
 }
 
@@ -507,41 +510,41 @@
 
 .context-tree-node {
 	position: absolute;
-	z-index: var(--ct-layer-card);
+	z-index: var(--cg-layer-card);
 	transform: translate(-50%, -50%);
 	will-change: left, top;
 }
 
-.context-tree-node.is-node-dragging { z-index: var(--ct-layer-dragging); }
-.context-tree-node.is-detail-open { z-index: var(--ct-layer-open-card); }
+.context-tree-node.is-node-dragging { z-index: var(--cg-layer-dragging); }
+.context-tree-node.is-detail-open { z-index: var(--cg-layer-open-card); }
 .context-tree-node.is-search-hidden { display: none; }
-.context-tree-node.is-search-context .context-tree-card { opacity: var(--ct-opacity-search-context); }
+.context-tree-node.is-search-context .context-tree-card { opacity: var(--cg-opacity-search-context); }
 .context-tree-node.is-search-match .context-tree-card {
-	border-color: var(--ct-accent);
-	box-shadow: 0 0 0 var(--ct-ring-emphasis-size) var(--ct-accent-halo), var(--ct-card-shadow-hover);
+	border-color: var(--cg-accent);
+	box-shadow: 0 0 0 var(--cg-ring-emphasis-size) var(--cg-accent-halo), var(--cg-shadow-card-hover);
 }
 .context-tree-node.is-focused .context-tree-card:not(.is-detail-open) {
-	border-color: var(--ct-focus-border);
-	background: var(--ct-card-focus);
-	box-shadow: 0 0 0 var(--ct-ring-subtle-size) var(--ct-accent-halo);
+	border-color: var(--cg-focus-border);
+	background: var(--cg-surface-card-focus);
+	box-shadow: 0 0 0 var(--cg-ring-subtle-size) var(--cg-accent-halo);
 }
 .context-tree-node.is-focused .context-tree-card:not(.is-detail-open) .context-tree-title {
-	color: var(--ct-accent);
+	color: var(--cg-accent);
 }
 .context-tree-node.is-hover-origin .context-tree-card {
-	border-color: var(--ct-border-strong);
-	box-shadow: var(--ct-card-shadow-hover);
+	border-color: var(--cg-separator-strong);
+	box-shadow: var(--cg-shadow-card-hover);
 }
 .context-tree-node.is-hover-neighbour .context-tree-card {
 	/* Neighbourhood is already explained by the highlighted edge. Repainting
 	   every adjacent card as selected creates a noisy ring around the reader. */
 	border-color: transparent;
 }
-.context-tree-node.is-hover-muted .context-tree-card { opacity: var(--ct-opacity-hover-muted); }
+.context-tree-node.is-hover-muted .context-tree-card { opacity: var(--cg-opacity-hover-muted); }
 
 .context-tree-node.is-node-dragging .context-tree-card {
 	cursor: grabbing;
-	box-shadow: var(--ct-card-shadow-drag), 0 0 0 var(--ct-ring-subtle-size) var(--ct-border-strong);
+	box-shadow: var(--cg-shadow-drag), 0 0 0 var(--cg-ring-subtle-size) var(--cg-separator-strong);
 }
 
 .context-tree-view .context-tree-card {
@@ -549,45 +552,48 @@
 	box-sizing: border-box;
 	/* The fallback measures the whole Obsidian window. Cards must fit their own
 	   graph pane once the renderer supplies its measured viewport width. */
-	width: min(var(--ct-card-width), max(var(--ct-card-min-width), calc(var(--ct-viewport-width, var(--ct-viewport-fallback-width)) - var(--ct-card-pane-gap))));
-	min-height: var(--ct-card-min-height);
-	padding: var(--ct-card-padding-block-start) var(--ct-card-padding-inline) var(--ct-card-padding-block-end);
-	border: var(--ct-border-width) solid var(--ct-border);
-	border-radius: var(--ct-radius-card);
+	width: min(var(--cg-card-width), max(var(--cg-card-min-width), calc(var(--cg-viewport-width, var(--cg-viewport-fallback-width)) - var(--cg-card-pane-gap))));
+	min-height: var(--cg-card-min-height);
+	padding: var(--cg-card-padding-block-start) var(--cg-card-padding-inline) var(--cg-card-padding-block-end);
+	border: var(--cg-separator-width) solid var(--cg-separator);
+	border-radius: var(--cg-radius-card);
 	cursor: grab;
-	background: var(--ct-card);
+	background: var(--cg-surface-card);
 	background-image: none;
-	box-shadow: var(--ct-card-shadow);
-	font-family: var(--font-interface);
-	corner-shape: var(--ct-corner-shape);
+	color: var(--cg-text-primary);
+	box-shadow: var(--cg-shadow-card);
+	font-family: var(--cg-font-interface);
 	transition:
-		width var(--ct-duration-moderate) var(--ct-motion-standard),
-		box-shadow var(--ct-duration-fast) var(--ct-motion-standard),
-		border-color var(--ct-duration-fast) var(--ct-motion-standard),
-		background var(--ct-duration-fast) var(--ct-motion-standard),
-		transform var(--ct-duration-fast) var(--ct-motion-standard),
-		opacity var(--ct-duration-instant) var(--ct-motion-standard);
+		width var(--cg-duration-moderate) var(--cg-motion-standard),
+		box-shadow var(--cg-duration-fast) var(--cg-motion-standard),
+		border-color var(--cg-duration-fast) var(--cg-motion-standard),
+		background var(--cg-duration-fast) var(--cg-motion-standard),
+		transform var(--cg-duration-fast) var(--cg-motion-standard),
+		opacity var(--cg-duration-instant) var(--cg-motion-standard);
+}
+
+.context-tree-view .context-tree-card:not(.is-detail-open) {
+	max-width: var(--cg-card-max-width);
 }
 
 .context-tree-card-quick-actions {
 	position: absolute;
-	top: var(--ct-card-action-inset);
-	right: var(--ct-card-action-rail-offset);
-	z-index: var(--ct-layer-open-card);
+	top: var(--cg-card-action-inset);
+	right: var(--cg-card-action-rail-offset);
+	z-index: var(--cg-layer-open-card);
 	display: flex;
-	gap: var(--ct-card-action-gap);
-	padding: var(--ct-card-action-padding);
-	border: var(--ct-border-width) solid var(--ct-border);
-	border-radius: var(--ct-card-action-radius);
-	background: var(--ct-control);
-	box-shadow: var(--ct-control-shadow);
-	corner-shape: var(--ct-corner-shape);
+	gap: var(--cg-card-action-gap);
+	padding: var(--cg-card-action-padding);
+	border: var(--cg-separator-width) solid var(--cg-separator);
+	border-radius: var(--cg-card-action-radius);
+	background: var(--cg-surface-control);
+	box-shadow: var(--cg-shadow-control);
 	opacity: 0;
 	visibility: hidden;
-	transform: translateY(var(--ct-card-control-shift)) scale(var(--ct-card-control-scale, 1));
+	transform: translateY(var(--cg-card-control-shift)) scale(var(--cg-card-control-scale, 1));
 	transform-origin: right top;
 	pointer-events: none;
-	transition: opacity var(--ct-duration-fast) var(--ct-motion-standard), transform var(--ct-duration-fast) var(--ct-motion-standard), visibility var(--ct-duration-none) linear var(--ct-duration-fast);
+	transition: opacity var(--cg-duration-fast) var(--cg-motion-standard), transform var(--cg-duration-fast) var(--cg-motion-standard), visibility var(--cg-duration-none) linear var(--cg-duration-fast);
 }
 
 .context-tree-card-detail-action { display: none; }
@@ -601,46 +607,45 @@
 }
 
 .context-tree-card-pin[aria-pressed="true"] {
-	background: var(--ct-pin-active);
-	color: var(--ct-accent);
+	background: var(--cg-pin-active);
+	color: var(--cg-accent);
 }
 
 .context-tree-card-expand[aria-pressed="true"] {
-	background: var(--ct-control-hover);
-	color: var(--text-normal);
+	background: var(--cg-surface-control-hover);
+	color: var(--cg-text-primary);
 }
 
 .context-tree-card-more {
 	position: absolute;
-	top: var(--ct-card-action-inset);
-	right: var(--ct-card-action-inset);
-	z-index: var(--ct-layer-endpoint);
+	top: var(--cg-card-action-inset);
+	right: var(--cg-card-action-inset);
+	z-index: var(--cg-layer-endpoint);
 	opacity: 0;
 	visibility: hidden;
-	transform: scale(var(--ct-card-control-scale, 1));
+	transform: scale(var(--cg-card-control-scale, 1));
 	transform-origin: right top;
 	pointer-events: none;
-	transition: opacity var(--ct-duration-fast) var(--ct-motion-standard), transform var(--ct-duration-fast) var(--ct-motion-standard), visibility var(--ct-duration-none) linear var(--ct-duration-fast);
+	transition: opacity var(--cg-duration-fast) var(--cg-motion-standard), transform var(--cg-duration-fast) var(--cg-motion-standard), visibility var(--cg-duration-none) linear var(--cg-duration-fast);
 }
 
 .context-tree-card-menu {
 	position: absolute;
-	top: calc(100% + var(--ct-card-menu-offset));
+	top: calc(100% + var(--cg-card-menu-offset));
 	right: 0;
 	left: auto;
-	z-index: var(--ct-layer-menu);
-	min-width: var(--ct-card-menu-width);
-	padding: var(--ct-card-menu-padding);
-	border: var(--ct-border-width) solid var(--ct-border);
-	border-radius: var(--ct-radius-panel);
-	background: var(--ct-control);
-	box-shadow: var(--ct-popover-shadow);
-	corner-shape: var(--ct-corner-shape);
+	z-index: var(--cg-layer-menu);
+	min-width: var(--cg-card-menu-width);
+	padding: var(--cg-card-menu-padding);
+	border: var(--cg-separator-width) solid var(--cg-separator);
+	border-radius: var(--cg-radius-panel);
+	background: var(--cg-surface-control);
+	box-shadow: var(--cg-shadow-popover);
 	opacity: 0;
 	pointer-events: none;
-	transform: translateY(var(--ct-card-menu-motion-shift)) scale(var(--ct-card-menu-scale));
+	transform: translateY(var(--cg-card-menu-motion-shift)) scale(var(--cg-card-menu-scale));
 	transform-origin: right top;
-	transition: opacity var(--ct-duration-instant) var(--ct-motion-standard), transform var(--ct-duration-instant) var(--ct-motion-standard);
+	transition: opacity var(--cg-duration-instant) var(--cg-motion-standard), transform var(--cg-duration-instant) var(--cg-motion-standard);
 }
 
 .context-tree-card-more.is-open .context-tree-card-menu {
@@ -653,13 +658,13 @@
 	display: block;
 	box-sizing: border-box;
 	width: 100%;
-	padding: var(--ct-card-menu-item-padding-block) var(--ct-card-menu-item-padding-inline);
+	padding: var(--cg-card-menu-item-padding-block) var(--cg-card-menu-item-padding-inline);
 	border: 0;
-	border-radius: var(--ct-radius-control);
+	border-radius: var(--cg-radius-control);
 	background: transparent;
-	color: var(--text-muted);
+	color: var(--cg-text-secondary);
 	font: inherit;
-	font-size: calc(var(--ct-type-action) * var(--ct-font-scale));
+	font-size: calc(var(--cg-type-action) * var(--cg-font-scale));
 	text-align: left;
 	cursor: pointer;
 }
@@ -668,37 +673,37 @@
 
 .context-tree-view .context-tree-card-menu-item:hover,
 .context-tree-view .context-tree-card-menu-item:focus-visible {
-	background: var(--ct-control-hover);
-	color: var(--text-normal);
+	background: var(--cg-surface-control-hover);
+	color: var(--cg-text-primary);
 	outline: none;
 }
 
 .context-tree-card-menu-item.is-destructive:hover,
 .context-tree-card-menu-item.is-destructive:focus-visible {
-	color: var(--text-error);
+	color: var(--cg-text-error);
 }
 
 .context-tree-graph-list {
 	display: flex;
 	flex-direction: column;
-	gap: var(--ct-graph-list-gap);
-	margin: var(--ct-graph-list-margin-block-start) 0 var(--ct-graph-list-margin-block-end);
+	gap: var(--cg-graph-list-gap);
+	margin: var(--cg-graph-list-margin-block-start) 0 var(--cg-graph-list-margin-block-end);
 }
 
 .context-tree-graph-list-item {
-	padding: var(--ct-graph-list-item-padding-block) var(--ct-graph-list-item-padding-inline);
-	border: var(--ct-border-width) solid var(--ct-border);
-	border-radius: var(--ct-radius-control);
-	background: var(--ct-card);
-	color: var(--text-normal);
+	padding: var(--cg-graph-list-item-padding-block) var(--cg-graph-list-item-padding-inline);
+	border: var(--cg-separator-width) solid var(--cg-separator);
+	border-radius: var(--cg-radius-control);
+	background: var(--cg-surface-card);
+	color: var(--cg-text-primary);
 	text-align: left;
 	cursor: pointer;
 }
 
 .context-tree-graph-list-item:hover,
 .context-tree-graph-list-item.is-active {
-	border-color: var(--ct-border-strong);
-	background: var(--ct-control-hover);
+	border-color: var(--cg-separator-strong);
+	background: var(--cg-surface-control-hover);
 }
 
 .context-tree-card:hover .context-tree-card-quick-actions,
@@ -706,10 +711,10 @@
 .context-tree-card.is-pinned .context-tree-card-quick-actions,
 .context-tree-node.is-drag-connection-source .context-tree-card-quick-actions {
 	opacity: 1;
-	transform: translateY(0) scale(var(--ct-card-control-scale, 1));
+	transform: translateY(0) scale(var(--cg-card-control-scale, 1));
 	pointer-events: auto;
 	visibility: visible;
-	transition-delay: var(--ct-duration-none);
+	transition-delay: var(--cg-duration-none);
 }
 
 .context-tree-card.is-detail-open:hover .context-tree-card-quick-actions,
@@ -725,38 +730,37 @@
 	opacity: 1;
 	visibility: visible;
 	pointer-events: auto;
-	transition-delay: var(--ct-duration-none);
+	transition-delay: var(--cg-duration-none);
 }
 
 .context-tree-card-quick-action {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: var(--ct-card-action-size);
-	height: var(--ct-card-action-size);
+	width: var(--cg-card-action-size);
+	height: var(--cg-card-action-size);
 	padding: 0;
 	border: 0;
-	border-radius: var(--ct-radius-control);
+	border-radius: var(--cg-radius-control);
 	background: transparent;
-	color: var(--text-muted);
+	color: var(--cg-text-secondary);
 	cursor: pointer;
-	corner-shape: var(--ct-corner-shape);
 }
 
 /* A single magnetic perimeter anchor appears where the pointer is closest to
    a card edge. It is a generous hit target around one precise graph point. */
 .context-tree-view button.context-tree-connect-port {
 	position: absolute;
-	z-index: var(--ct-layer-endpoint);
-	top: var(--ct-port-y, 0%);
-	left: var(--ct-port-x, 50%);
+	z-index: var(--cg-layer-endpoint);
+	top: var(--cg-port-y, 0%);
+	left: var(--cg-port-x, 50%);
 	box-sizing: border-box;
-	width: var(--ct-connect-port-hit-size);
-	height: var(--ct-connect-port-hit-size);
+	width: var(--cg-connect-port-hit-size);
+	height: var(--cg-connect-port-hit-size);
 	margin: 0;
 	padding: 0;
 	border: 0;
-	border-radius: var(--ct-radius-round);
+	border-radius: var(--cg-radius-round);
 	background: transparent;
 	box-shadow: none;
 	cursor: crosshair;
@@ -764,7 +768,7 @@
 	opacity: 0;
 	pointer-events: none;
 	transform: translate(-50%, -50%);
-	transition: opacity var(--ct-duration-instant) var(--ct-motion-standard);
+	transition: opacity var(--cg-duration-instant) var(--cg-motion-standard);
 }
 
 .context-tree-connect-port.is-visible {
@@ -776,39 +780,39 @@
 	position: absolute;
 	top: 50%;
 	left: 50%;
-	width: var(--ct-connect-port-size);
-	height: var(--ct-connect-port-size);
-	border: var(--ct-connect-port-border-width) solid var(--ct-port-border);
-	border-radius: var(--ct-radius-round);
-	background: var(--ct-card);
+	width: var(--cg-connect-port-size);
+	height: var(--cg-connect-port-size);
+	border: var(--cg-connect-port-border-width) solid var(--cg-port-border);
+	border-radius: var(--cg-radius-round);
+	background: var(--cg-surface-card);
 	content: "";
 	transform: translate(-50%, -50%);
-	transition: width var(--ct-duration-fast) var(--ct-motion-standard), height var(--ct-duration-fast) var(--ct-motion-standard), background var(--ct-duration-fast) var(--ct-motion-standard), border-color var(--ct-duration-fast) var(--ct-motion-standard), box-shadow var(--ct-duration-fast) var(--ct-motion-standard);
+	transition: width var(--cg-duration-fast) var(--cg-motion-standard), height var(--cg-duration-fast) var(--cg-motion-standard), background var(--cg-duration-fast) var(--cg-motion-standard), border-color var(--cg-duration-fast) var(--cg-motion-standard), box-shadow var(--cg-duration-fast) var(--cg-motion-standard);
 }
 
 .context-tree-connect-port.is-visible::before,
 .context-tree-connect-port:focus-visible::before,
 .context-tree-node.is-drag-connection-source .context-tree-connect-port::before {
-	width: var(--ct-connect-port-visible-size);
-	height: var(--ct-connect-port-visible-size);
-	border-color: var(--text-normal);
-	background: var(--background-primary);
-	box-shadow: 0 0 0 var(--ct-connect-port-halo) var(--ct-neutral-halo);
+	width: var(--cg-connect-port-visible-size);
+	height: var(--cg-connect-port-visible-size);
+	border-color: var(--cg-text-primary);
+	background: var(--cg-surface-card);
+	box-shadow: 0 0 0 var(--cg-connect-port-halo) var(--cg-neutral-halo);
 }
 
 .context-tree-connect-port.is-drag-source-port::before,
 .context-tree-connect-port.is-drag-target-port::before {
-	width: var(--ct-connect-port-active-size);
-	height: var(--ct-connect-port-active-size);
-	border-color: var(--ct-accent);
-	background: var(--background-primary);
-	box-shadow: 0 0 0 var(--ct-connect-port-active-halo) var(--ct-accent-halo-strong);
+	width: var(--cg-connect-port-active-size);
+	height: var(--cg-connect-port-active-size);
+	border-color: var(--cg-accent);
+	background: var(--cg-surface-card);
+	box-shadow: 0 0 0 var(--cg-connect-port-active-halo) var(--cg-accent-halo-strong);
 }
 
 .context-tree-card-quick-action:hover,
 .context-tree-card-quick-action:focus-visible {
-	color: var(--text-normal);
-	background: var(--ct-control-hover);
+	color: var(--cg-text-primary);
+	background: var(--cg-surface-control-hover);
 	outline: none;
 }
 
@@ -820,7 +824,7 @@
 	min-width: 0;
 	width: 100%;
 	margin: 0;
-	padding: 0 calc(var(--ct-card-compact-action-reserve) * var(--ct-card-control-scale, 1)) 0 0;
+	padding: 0 calc(var(--cg-card-compact-action-reserve) * var(--cg-card-control-scale, 1)) 0 0;
 	border: 0;
 	border-radius: 0;
 	background: transparent;
@@ -848,57 +852,64 @@
 	overflow-wrap: anywhere;
 }
 
+/* Role is a compact text badge. The generic trigger-child reset above must
+   not stretch it into a decorative bar across the document header. */
+.context-tree-view .context-tree-card-trigger > .context-tree-role {
+	display: inline-flex;
+	width: auto;
+}
+
 .context-tree-card-trigger:focus-visible {
-	border-radius: var(--ct-radius-control);
-	outline: var(--ct-focus-ring-width) solid var(--ct-accent);
-	outline-offset: var(--ct-focus-ring-offset);
+	border-radius: var(--cg-radius-control);
+	outline: var(--cg-focus-ring-width) solid var(--cg-focus-ring);
+	outline-offset: var(--cg-focus-ring-offset);
 }
 
 .context-tree-view .context-tree-card:hover {
-	border-color: var(--ct-border-strong);
-	background: var(--ct-card-hover);
-	box-shadow: var(--ct-card-shadow-hover);
+	border-color: var(--cg-separator-strong);
+	background: var(--cg-surface-card-hover);
+	box-shadow: var(--cg-shadow-card-hover);
 }
 
 .context-tree-node.is-focused .context-tree-card {
-	border-color: var(--ct-border-strong);
-	box-shadow: var(--ct-card-shadow-hover);
+	border-color: var(--cg-separator-strong);
+	box-shadow: var(--cg-shadow-card-hover);
 }
 
 .context-tree-node.is-drag-connection-source .context-tree-card {
-	border-color: var(--ct-border-strong);
-	box-shadow: 0 0 0 var(--ct-ring-emphasis-size) var(--ct-text-halo), var(--ct-card-shadow-hover);
+	border-color: var(--cg-separator-strong);
+	box-shadow: 0 0 0 var(--cg-ring-emphasis-size) var(--cg-text-halo), var(--cg-shadow-card-hover);
 }
 
 .context-tree-view .context-tree-node.is-drag-connection-target .context-tree-card {
-	border-color: var(--text-normal);
-	background: var(--ct-card-hover);
-	box-shadow: 0 0 0 var(--ct-ring-emphasis-size) var(--ct-text-halo), var(--ct-card-shadow-hover);
+	border-color: var(--cg-text-primary);
+	background: var(--cg-surface-card-hover);
+	box-shadow: 0 0 0 var(--cg-ring-emphasis-size) var(--cg-text-halo), var(--cg-shadow-card-hover);
 }
 
 .context-tree-card.is-detail-open {
 	display: flex;
 	flex-direction: column;
-	width: max(var(--ct-open-card-min-size), min(var(--ct-open-card-max-width), calc(var(--ct-viewport-width, var(--ct-viewport-fallback-width)) - var(--ct-open-card-pane-gap))));
-	max-height: max(var(--ct-open-card-min-size), calc(var(--ct-viewport-height, var(--ct-open-card-max-height-base)) - var(--ct-open-card-height-gap)));
-	border-color: var(--ct-open-border);
-	padding: var(--ct-card-open-padding-top) var(--ct-open-card-padding-inline) var(--ct-open-card-padding-bottom);
-	border-radius: var(--ct-radius-open-card);
-	background: var(--ct-card-open);
-	box-shadow: var(--ct-open-card-shadow);
+	width: max(var(--cg-open-card-min-size), min(var(--cg-open-card-max-width), calc(var(--cg-viewport-width, var(--cg-viewport-fallback-width)) - var(--cg-open-card-pane-gap))));
+	max-height: max(var(--cg-open-card-min-size), calc(var(--cg-viewport-height, var(--cg-open-card-max-height-base)) - var(--cg-open-card-height-gap)));
+	border-color: var(--cg-open-border);
+	padding: var(--cg-card-open-padding-top) var(--cg-open-card-padding-inline) var(--cg-open-card-padding-bottom);
+	border-radius: var(--cg-radius-open-card);
+	background: var(--cg-surface-document);
+	box-shadow: var(--cg-shadow-document);
 	cursor: grab;
-	transform: scale(var(--ct-card-detail-scale, 1));
+	transform: scale(var(--cg-card-detail-scale, 1));
 	transform-origin: center;
 }
 
 .context-tree-card.is-detail-open.is-pinned {
-	border-color: var(--ct-pinned-border);
+	border-color: var(--cg-pinned-border);
 }
 
 /* Empty canvas may keep zooming while Reading stays open. Preserve the
    document's minimum screen size without moving its graph centre or camera. */
 .context-tree-card.is-detail-open .context-tree-card-quick-actions {
-	transform: translateY(var(--ct-card-control-shift)) scale(1);
+	transform: translateY(var(--cg-card-control-shift)) scale(1);
 }
 
 .context-tree-card.is-detail-open .context-tree-card-more { transform: scale(1); }
@@ -911,7 +922,7 @@
 .context-tree-card.is-editing {
 	/* The Reading measurement is installed synchronously after the mode switch.
 	   Keep the prior opened height as a paint-safe fallback during that handoff. */
-	height: var(--ct-source-card-height, var(--ct-open-card-height, auto));
+	height: var(--cg-source-card-height, var(--cg-open-card-height, auto));
 	min-height: 0;
 	/* There is one card surface in Source mode. The Markdown editor is the
 	   card interior, not a second panel placed inside it. */
@@ -923,14 +934,14 @@
 /* Preserve an opened card's exact graph footprint across Reading ↔ Source.
    Closing the card removes this value from the renderer. */
 .context-tree-card.is-detail-open {
-	min-height: var(--ct-open-card-height, 0);
+	min-height: var(--cg-open-card-height, 0);
 }
 
 /* After Source captures the Reading footprint, edited Markdown may change its
    intrinsic height but not the card's outer graph box. Reading content scrolls
    inside the preserved box until the reader deliberately closes the card. */
 .context-tree-card.has-fixed-open-footprint.is-detail-open:not(.is-editing) {
-	height: var(--ct-open-card-height);
+	height: var(--cg-open-card-height);
 	min-height: 0;
 	overflow: hidden;
 }
@@ -944,10 +955,10 @@
 }
 
 .context-tree-card.is-editing:focus-within {
-	border-color: var(--ct-border-strong);
+	border-color: var(--cg-separator-strong);
 	box-shadow:
-		0 0 0 var(--ct-ring-emphasis-size) var(--ct-accent-halo-soft),
-		var(--ct-card-shadow-hover);
+		0 0 0 var(--cg-ring-emphasis-size) var(--cg-accent-halo-soft),
+		var(--cg-shadow-card-hover);
 }
 
 .context-tree-view .context-tree-card.is-editing .context-tree-card-trigger {
@@ -974,14 +985,14 @@
 	resize: none;
 	/* Match Obsidian Source mode: no nested input chrome, only the enclosing
 	   note card owns the border and background. */
-	padding: 0 var(--ct-open-card-padding-inline) var(--ct-open-card-padding-bottom);
+	padding: 0 var(--cg-open-card-padding-inline) var(--cg-open-card-padding-bottom);
 	border: 0;
 	border-radius: 0;
 	background: transparent;
-	color: var(--text-normal);
-	font-family: var(--font-monospace);
-	font-size: calc(var(--ct-type-source) * var(--ct-font-scale));
-	line-height: var(--ct-leading-source);
+	color: var(--cg-text-primary);
+	font-family: var(--cg-font-monospace);
+	font-size: calc(var(--cg-type-source) * var(--cg-font-scale));
+	line-height: var(--cg-leading-source);
 	tab-size: 2;
 	overflow: hidden;
 }
@@ -989,7 +1000,7 @@
 /* The toolbar spacer is outside the scrollport, so source text can never
    travel underneath the card's fixed pin, edit, and overflow controls. */
 .context-tree-editor-toolbar-spacer {
-	flex: 0 0 var(--ct-card-editor-toolbar-spacer);
+	flex: 0 0 var(--cg-card-editor-toolbar-spacer);
 }
 
 .context-tree-markdown-editor-scroll {
@@ -1014,13 +1025,13 @@
 .context-tree-card.has-fixed-open-footprint.is-detail-open:not(.is-editing) .context-tree-detail-wrap:focus-within,
 .context-tree-markdown-editor-scroll:hover,
 .context-tree-markdown-editor-scroll:focus-within {
-	scrollbar-color: var(--ct-scroll-thumb) transparent;
+	scrollbar-color: var(--cg-scroll-thumb) transparent;
 }
 
 .context-tree-card.has-fixed-open-footprint.is-detail-open:not(.is-editing) .context-tree-detail-wrap::-webkit-scrollbar,
 .context-tree-markdown-editor-scroll::-webkit-scrollbar {
-	width: var(--ct-editor-scrollbar-size);
-	height: var(--ct-editor-scrollbar-size);
+	width: var(--cg-editor-scrollbar-size);
+	height: var(--cg-editor-scrollbar-size);
 }
 
 .context-tree-card.has-fixed-open-footprint.is-detail-open:not(.is-editing) .context-tree-detail-wrap::-webkit-scrollbar-track,
@@ -1030,8 +1041,8 @@
 
 .context-tree-card.has-fixed-open-footprint.is-detail-open:not(.is-editing) .context-tree-detail-wrap::-webkit-scrollbar-thumb,
 .context-tree-markdown-editor-scroll::-webkit-scrollbar-thumb {
-	border: var(--ct-editor-scrollbar-border) solid transparent;
-	border-radius: var(--ct-radius-round);
+	border: var(--cg-editor-scrollbar-border) solid transparent;
+	border-radius: var(--cg-radius-round);
 	background: transparent;
 	background-clip: padding-box;
 }
@@ -1040,7 +1051,7 @@
 .context-tree-card.has-fixed-open-footprint.is-detail-open:not(.is-editing) .context-tree-detail-wrap:focus-within::-webkit-scrollbar-thumb,
 .context-tree-markdown-editor-scroll:hover::-webkit-scrollbar-thumb,
 .context-tree-markdown-editor-scroll:focus-within::-webkit-scrollbar-thumb {
-	background: var(--ct-scroll-thumb);
+	background: var(--cg-scroll-thumb);
 	background-clip: padding-box;
 }
 
@@ -1053,44 +1064,75 @@
    prevents long titles or summaries from painting under controls that remain
    visible for a pinned working card. */
 .context-tree-card:not(.is-detail-open).has-expand-action .context-tree-card-trigger {
-	padding-right: calc(var(--ct-card-compact-expanded-action-reserve) * var(--ct-card-control-scale, 1));
+	padding-right: calc(var(--cg-card-compact-expanded-action-reserve) * var(--cg-card-control-scale, 1));
 }
 .context-tree-card.is-detail-open .context-tree-card-trigger {
-	padding-right: var(--ct-card-open-action-reserve);
+	padding-right: var(--cg-card-open-action-reserve);
 }
 .context-tree-card.is-detail-open.has-expand-action .context-tree-card-trigger {
-	padding-right: var(--ct-card-open-expanded-action-reserve);
+	padding-right: var(--cg-card-open-expanded-action-reserve);
 }
 .context-tree-view .context-tree-card.has-wrapped-title .context-tree-title { white-space: normal; }
 .context-tree-view .context-tree-card:not(.is-detail-open):not(.has-wrapped-title) .context-tree-title { white-space: nowrap; }
 
 .context-tree-view .context-tree-title {
 	margin: 0;
-	color: var(--text-normal);
-	font-size: calc(var(--ct-type-title) * var(--ct-font-scale));
-	font-weight: var(--ct-weight-semibold);
-	line-height: var(--ct-leading-title);
-	letter-spacing: var(--ct-tracking-title);
+	color: var(--cg-text-primary);
+	font-size: calc(var(--cg-type-title) * var(--cg-font-scale));
+	font-weight: var(--cg-weight-semibold);
+	line-height: var(--cg-leading-title);
+	letter-spacing: var(--cg-tracking-title);
+}
+
+.context-tree-role {
+	display: inline-flex;
+	align-items: center;
+	align-self: flex-start;
+	margin-block-end: var(--cg-role-gap);
+	padding: var(--cg-role-padding-block) var(--cg-role-padding-inline);
+	border: var(--cg-role-border-width) solid var(--cg-separator);
+	border-radius: var(--cg-radius-round);
+	background: transparent;
+	color: var(--cg-role-topic);
+	font-size: calc(var(--cg-type-label) * var(--cg-font-scale));
+	font-weight: var(--cg-weight-semibold);
+	line-height: var(--cg-leading-control);
+}
+
+.context-tree-card[data-role="root"] .context-tree-role {
+	border-color: var(--cg-accent);
+	background: var(--cg-role-root-surface);
+	color: var(--cg-accent);
+}
+.context-tree-card[data-role="question"] .context-tree-role {
+	border-color: var(--cg-role-question);
+	background: var(--cg-role-question-surface);
+	color: var(--cg-role-question);
+}
+.context-tree-card[data-role="entity"] .context-tree-role {
+	border-color: var(--cg-role-entity);
+	background: var(--cg-role-entity-surface);
+	color: var(--cg-role-entity);
 }
 
 .context-tree-view .context-tree-card.is-detail-open .context-tree-title {
-	font-family: var(--font-text);
-	font-size: calc(var(--ct-type-open-title) * var(--ct-font-scale));
-	font-weight: var(--ct-weight-bold);
-	line-height: var(--ct-leading-open-title);
-	letter-spacing: var(--ct-tracking-open-title);
+	font-family: var(--cg-font-text);
+	font-size: calc(var(--cg-type-open-title) * var(--cg-font-scale));
+	font-weight: var(--cg-weight-bold);
+	line-height: var(--cg-leading-open-title);
+	letter-spacing: var(--cg-tracking-open-title);
 }
 
 .context-tree-view .context-tree-summary {
-	margin: var(--ct-summary-margin) 0 0;
+	margin: var(--cg-summary-margin) 0 0;
 	/* Compact cards are map labels, not miniature document readers. Bound the
 	   preview to three text lines so an unusually long first paragraph cannot
 	   cover neighbouring cards before the measured collision pass settles. */
-	max-height: calc(var(--ct-summary-max-height) * var(--ct-font-scale));
+	max-height: calc(var(--cg-summary-max-height) * var(--cg-font-scale));
 	overflow: hidden;
-	color: var(--ct-muted);
-	font-size: calc(var(--ct-type-summary) * var(--ct-font-scale));
-	line-height: var(--ct-leading-summary);
+	color: var(--cg-muted);
+	font-size: calc(var(--cg-type-summary) * var(--cg-font-scale));
+	line-height: var(--cg-leading-summary);
 	text-align: left;
 }
 
@@ -1102,19 +1144,19 @@
 	max-height: 0;
 	overflow: hidden;
 	opacity: 0;
-	transform: translateY(var(--ct-detail-motion-shift));
+	transform: translateY(var(--cg-detail-motion-shift));
 	pointer-events: none;
 	transition:
-		max-height var(--ct-duration-moderate) var(--ct-motion-standard),
-		opacity var(--ct-duration-fast) var(--ct-motion-standard),
-		transform var(--ct-duration-fast) var(--ct-motion-standard),
-		margin-top var(--ct-duration-moderate) var(--ct-motion-standard);
+		max-height var(--cg-duration-moderate) var(--cg-motion-standard),
+		opacity var(--cg-duration-fast) var(--cg-motion-standard),
+		transform var(--cg-duration-fast) var(--cg-motion-standard),
+		margin-top var(--cg-duration-moderate) var(--cg-motion-standard);
 }
 
 .context-tree-card.is-detail-open .context-tree-detail-wrap {
-	/* The renderer records the actual Markdown height in --ct-detail-height. */
-	max-height: var(--ct-detail-height, var(--ct-detail-max-height));
-	margin-top: var(--ct-detail-open-margin);
+	/* The renderer records the actual Markdown height in --cg-detail-height. */
+	max-height: var(--cg-detail-height, var(--cg-detail-max-height));
+	margin-top: var(--cg-detail-open-margin);
 	opacity: 1;
 	transform: translateY(0);
 	pointer-events: auto;
@@ -1146,29 +1188,29 @@
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: var(--ct-conflict-gap-block) var(--ct-conflict-gap-inline);
-	margin-top: var(--ct-conflict-margin);
-	padding: var(--ct-conflict-padding-block) var(--ct-conflict-padding-inline);
-	border: var(--ct-border-width) solid var(--ct-warning-border);
-	border-radius: var(--ct-radius-control);
-	background: var(--ct-warning-surface);
-	color: var(--text-muted);
-	font-size: calc(var(--ct-type-action) * var(--ct-font-scale));
-	line-height: var(--ct-leading-conflict);
+	gap: var(--cg-conflict-gap-block) var(--cg-conflict-gap-inline);
+	margin-top: var(--cg-conflict-margin);
+	padding: var(--cg-conflict-padding-block) var(--cg-conflict-padding-inline);
+	border: var(--cg-separator-width) solid var(--cg-warning-border);
+	border-radius: var(--cg-radius-control);
+	background: var(--cg-warning-surface);
+	color: var(--cg-text-secondary);
+	font-size: calc(var(--cg-type-action) * var(--cg-font-scale));
+	line-height: var(--cg-leading-conflict);
 }
 
 .context-tree-edit-conflict-actions {
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--ct-connection-gap);
+	gap: var(--cg-connection-gap);
 }
 
 .context-tree-edit-conflict button {
-	padding: var(--ct-inline-button-padding-block) var(--ct-inline-button-padding-inline);
-	border: var(--ct-border-width) solid var(--ct-border);
-	border-radius: var(--ct-radius-control);
-	background: var(--ct-field);
-	color: var(--text-normal);
+	padding: var(--cg-inline-button-padding-block) var(--cg-inline-button-padding-inline);
+	border: var(--cg-separator-width) solid var(--cg-separator);
+	border-radius: var(--cg-radius-control);
+	background: var(--cg-surface-field);
+	color: var(--cg-text-primary);
 	font: inherit;
 	cursor: pointer;
 }
@@ -1181,11 +1223,18 @@
 	max-width: 100%;
 	padding-top: 0;
 	border-top: 0;
-	font-size: calc(var(--ct-type-reading) * var(--ct-font-scale));
-	line-height: var(--ct-leading-reading);
+	font-size: calc(var(--cg-type-reading) * var(--cg-font-scale));
+	line-height: var(--cg-leading-reading);
 	overflow-wrap: anywhere;
 	cursor: text;
-	font-family: var(--font-text);
+	font-family: var(--cg-font-text);
+}
+
+.context-tree-card-status {
+	padding-block: var(--cg-space-2);
+	color: var(--cg-text-secondary);
+	font-size: calc(var(--cg-type-action) * var(--cg-font-scale));
+	line-height: var(--cg-leading-summary);
 }
 
 /* Keep the document surface quiet. Links remain discoverable through a
@@ -1193,12 +1242,12 @@
    keeps the treatment compatible with the plugin's minimum Obsidian version. */
 .context-tree-detail a {
 	color: inherit;
-	border-bottom: var(--ct-link-underline-width) solid var(--text-faint);
+	border-bottom: var(--cg-link-underline-width) solid var(--cg-text-tertiary);
 }
 
 .context-tree-detail a:hover,
 .context-tree-detail a:focus-visible {
-	color: var(--text-accent);
+	color: var(--cg-text-link);
 	border-bottom-color: currentColor;
 }
 
@@ -1242,10 +1291,10 @@
 	flex-wrap: wrap;
 	align-content: flex-start;
 	align-items: center;
-	gap: var(--ct-connection-gap);
-	margin-top: var(--ct-connection-margin);
-	padding-top: var(--ct-connection-padding);
-	border-top: var(--ct-border-width) solid var(--ct-section-rule);
+	gap: var(--cg-connection-gap);
+	margin-top: var(--cg-connection-margin);
+	padding-top: var(--cg-connection-padding);
+	border-top: var(--cg-separator-width) solid var(--cg-section-rule);
 }
 
 .context-tree-connection {
@@ -1253,36 +1302,36 @@
 	min-width: 0;
 	max-width: 100%;
 	align-items: center;
-	gap: var(--ct-connection-item-gap);
+	gap: var(--cg-connection-item-gap);
 }
 
 .context-tree-connection-jump {
-	padding: var(--ct-connection-button-padding-block) var(--ct-connection-button-padding-inline);
-	border: var(--ct-border-width) solid transparent;
-	border-radius: var(--ct-radius-control);
-	background: var(--ct-chip-surface);
-	color: var(--text-muted);
-	font-size: calc(var(--ct-type-action) * var(--ct-font-scale));
+	padding: var(--cg-connection-button-padding-block) var(--cg-connection-button-padding-inline);
+	border: var(--cg-separator-width) solid transparent;
+	border-radius: var(--cg-radius-control);
+	background: var(--cg-chip-surface);
+	color: var(--cg-text-secondary);
+	font-size: calc(var(--cg-type-action) * var(--cg-font-scale));
 	text-align: left;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	cursor: pointer;
 }
-.context-tree-connection-jump:hover { background: var(--ct-control-hover); color: var(--text-normal); }
+.context-tree-connection-jump:hover { background: var(--cg-surface-control-hover); color: var(--cg-text-primary); }
 
 .context-tree-root-only-hint {
 	position: absolute;
-	top: var(--ct-root-hint-inset-block);
-	left: var(--ct-root-hint-inset-inline);
-	z-index: var(--ct-layer-dragging);
-	max-width: min(var(--ct-root-hint-width), calc(100% - var(--ct-root-hint-pane-gap)));
-	padding: var(--ct-root-hint-padding-block) var(--ct-root-hint-padding-inline);
+	top: var(--cg-root-hint-inset-block);
+	left: var(--cg-root-hint-inset-inline);
+	z-index: var(--cg-layer-dragging);
+	max-width: min(var(--cg-root-hint-width), calc(100% - var(--cg-root-hint-pane-gap)));
+	padding: var(--cg-root-hint-padding-block) var(--cg-root-hint-padding-inline);
 	border-radius: 0;
 	background: transparent;
-	color: var(--text-muted);
-	font-size: calc(var(--ct-type-hint) * var(--ct-font-scale));
-	line-height: var(--ct-leading-hint);
+	color: var(--cg-text-secondary);
+	font-size: calc(var(--cg-type-hint) * var(--cg-font-scale));
+	line-height: var(--cg-leading-hint);
 	pointer-events: none;
 }
 
@@ -1290,38 +1339,36 @@
 	position: absolute;
 	/* A theme must not turn this canvas HUD into an in-flow, centre control.
 	   Anchor all four inset sides explicitly to the viewport's bottom-right. */
-	inset: auto var(--ct-control-inset-inline) var(--ct-control-inset-block) auto;
-	z-index: var(--ct-layer-dragging);
+	inset: auto var(--cg-control-inset-inline) var(--cg-control-inset-block) auto;
+	z-index: var(--cg-layer-dragging);
 	display: flex;
 	align-items: center;
-	gap: var(--ct-control-gap);
-	padding: var(--ct-control-padding);
-	border: var(--ct-border-width) solid var(--ct-border);
-	border-radius: var(--ct-radius-panel);
-	background: var(--ct-control);
-	box-shadow: var(--ct-control-shadow);
-	corner-shape: var(--ct-corner-shape);
-	opacity: var(--ct-control-opacity-idle);
-	transition: opacity var(--ct-duration-fast) var(--ct-motion-standard);
+	gap: var(--cg-control-gap);
+	padding: var(--cg-control-padding);
+	border: var(--cg-separator-width) solid var(--cg-separator);
+	border-radius: var(--cg-radius-panel);
+	background: var(--cg-surface-control);
+	box-shadow: var(--cg-shadow-control);
+	opacity: var(--cg-control-opacity-idle);
+	transition: opacity var(--cg-duration-fast) var(--cg-motion-standard);
 }
 
 .context-tree-graph-controls:hover,
-.context-tree-graph-controls:focus-within { opacity: var(--ct-control-opacity-active); }
+.context-tree-graph-controls:focus-within { opacity: var(--cg-control-opacity-active); }
 
 .context-tree-search-panel {
 	position: absolute;
-	right: var(--ct-control-inset-inline);
-	bottom: var(--ct-search-panel-offset);
-	z-index: var(--ct-layer-panel);
+	right: var(--cg-control-inset-inline);
+	bottom: var(--cg-search-panel-offset);
+	z-index: var(--cg-layer-panel);
 	display: none;
 	box-sizing: border-box;
-	width: min(var(--ct-panel-width), calc(100% - var(--ct-panel-pane-gap)));
-	padding: var(--ct-panel-padding);
-	border: var(--ct-border-width) solid var(--ct-border);
-	border-radius: var(--ct-radius-panel);
-	background: var(--ct-control);
-	box-shadow: var(--ct-popover-shadow);
-	corner-shape: var(--ct-corner-shape);
+	width: min(var(--cg-panel-width), calc(100% - var(--cg-panel-pane-gap)));
+	padding: var(--cg-panel-padding);
+	border: var(--cg-separator-width) solid var(--cg-separator);
+	border-radius: var(--cg-radius-panel);
+	background: var(--cg-surface-control);
+	box-shadow: var(--cg-shadow-popover);
 }
 
 .context-tree-search-panel.is-open { display: block; }
@@ -1329,35 +1376,35 @@
 .context-tree-search-panel input[type="search"] {
 	box-sizing: border-box;
 	width: 100%;
-	min-height: var(--ct-search-input-min-height);
-	padding: var(--ct-search-input-padding-block) var(--ct-search-input-padding-inline);
-	border: var(--ct-border-width) solid var(--ct-border);
-	border-radius: var(--ct-radius-control);
-	background: var(--ct-field);
-	color: var(--text-normal);
+	min-height: var(--cg-search-input-min-height);
+	padding: var(--cg-search-input-padding-block) var(--cg-search-input-padding-inline);
+	border: var(--cg-separator-width) solid var(--cg-separator);
+	border-radius: var(--cg-radius-control);
+	background: var(--cg-surface-field);
+	color: var(--cg-text-primary);
 	font: inherit;
-	font-size: calc(var(--ct-type-search) * var(--ct-font-scale));
+	font-size: calc(var(--cg-type-search) * var(--cg-font-scale));
 }
 
 .context-tree-relation-filters {
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--ct-filter-gap-block) var(--ct-filter-gap-inline);
-	margin-top: var(--ct-filter-margin);
+	gap: var(--cg-filter-gap-block) var(--cg-filter-gap-inline);
+	margin-top: var(--cg-filter-margin);
 }
 
 .context-tree-filter-label {
 	flex-basis: 100%;
-	color: var(--text-muted);
-	font-size: calc(var(--ct-type-label) * var(--ct-font-scale));
+	color: var(--cg-text-secondary);
+	font-size: calc(var(--cg-type-label) * var(--cg-font-scale));
 }
 
 .context-tree-relation-filter {
 	display: inline-flex;
 	align-items: center;
-	gap: var(--ct-connection-gap);
-	color: var(--text-muted);
-	font-size: calc(var(--ct-type-label) * var(--ct-font-scale));
+	gap: var(--cg-connection-gap);
+	color: var(--cg-text-secondary);
+	font-size: calc(var(--cg-type-label) * var(--cg-font-scale));
 	white-space: nowrap;
 	cursor: pointer;
 }
@@ -1366,9 +1413,9 @@
 
 .context-tree-search-empty {
 	display: none;
-	margin-top: var(--ct-search-empty-margin);
-	color: var(--text-muted);
-	font-size: calc(var(--ct-type-action) * var(--ct-font-scale));
+	margin-top: var(--cg-search-empty-margin);
+	color: var(--cg-text-secondary);
+	font-size: calc(var(--cg-type-action) * var(--cg-font-scale));
 }
 
 .context-tree-search-empty.is-visible { display: block; }
@@ -1377,11 +1424,11 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: var(--ct-control-button-width);
-	height: var(--ct-control-button-height);
+	width: var(--cg-control-button-width);
+	height: var(--cg-control-button-height);
 	padding: 0;
-	font-size: calc(var(--ct-type-control) * var(--ct-font-scale));
-	line-height: var(--ct-leading-control);
+	font-size: calc(var(--cg-type-control) * var(--cg-font-scale));
+	line-height: var(--cg-leading-control);
 }
 
 .context-tree-graph-controls .context-tree-zoom-button {
@@ -1390,204 +1437,211 @@
 
 .context-tree-canvas-handoff {
 	width: auto;
-	gap: var(--ct-connection-gap);
-	padding-inline: var(--ct-action-padding-inline);
-	color: var(--text-normal);
+	gap: var(--cg-connection-gap);
+	padding-inline: var(--cg-action-padding-inline);
+	color: var(--cg-text-primary);
 }
 
 .context-tree-canvas-handoff-label { white-space: nowrap; }
 
 .context-tree-control-divider {
-	width: var(--ct-control-divider-width);
-	height: var(--ct-control-divider-height);
-	margin: 0 var(--ct-control-divider-gap);
-	background: var(--ct-border);
+	width: var(--cg-control-divider-width);
+	height: var(--cg-control-divider-height);
+	margin: 0 var(--cg-control-divider-gap);
+	background: var(--cg-separator);
 }
 
 .context-tree-zoom-label {
-	min-width: var(--ct-zoom-label-width);
-	padding: 0 var(--ct-zoom-label-padding);
-	color: var(--text-muted);
-	font-size: calc(var(--ct-type-zoom-label) * var(--ct-font-scale));
+	min-width: var(--cg-zoom-label-width);
+	padding: 0 var(--cg-zoom-label-padding);
+	color: var(--cg-text-secondary);
+	font-size: calc(var(--cg-type-zoom-label) * var(--cg-font-scale));
 	text-align: center;
 	font-variant-numeric: tabular-nums;
 }
 
 .context-tree-empty {
 	align-self: flex-start;
-	width: min(var(--ct-empty-width), calc(100% - var(--ct-empty-pane-gap)));
-	margin: clamp(var(--ct-empty-margin-min), var(--ct-empty-margin-fluid), var(--ct-empty-margin-max)) auto 0;
-	padding: var(--ct-empty-padding-block) var(--ct-empty-padding-inline);
-	border: var(--ct-border-width) solid var(--ct-border);
-	border-radius: var(--ct-radius-panel);
-	background: var(--ct-card);
-	box-shadow: var(--ct-card-shadow);
-	color: var(--text-muted);
-	corner-shape: var(--ct-corner-shape);
+	width: min(var(--cg-empty-width), calc(100% - var(--cg-empty-pane-gap)));
+	margin: clamp(var(--cg-empty-margin-min), var(--cg-empty-margin-fluid), var(--cg-empty-margin-max)) auto 0;
+	padding: var(--cg-empty-padding-block) var(--cg-empty-padding-inline);
+	border: var(--cg-separator-width) solid var(--cg-separator);
+	border-radius: var(--cg-radius-panel);
+	background: var(--cg-surface-card);
+	box-shadow: var(--cg-shadow-card);
+	color: var(--cg-text-secondary);
 }
 
 .context-tree-action:active,
 .context-tree-zoom-button:active,
 .context-tree-card-quick-action:active {
-	transform: scale(var(--ct-pressed-scale));
+	transform: scale(var(--cg-pressed-scale));
 }
 
 .linked-canvas-help-modal {
-	width: min(var(--ct-help-width), calc(100% - var(--ct-help-pane-gap)));
-	max-height: var(--ct-help-modal-max-height);
-	padding: var(--ct-help-modal-padding);
-	border: var(--ct-border-width) solid var(--ct-border);
-	border-radius: var(--ct-radius-panel);
-	background: var(--ct-card);
-	box-shadow: var(--ct-open-card-shadow);
-	corner-shape: var(--ct-corner-shape);
-	overflow-y: var(--ct-help-modal-scrollbar);
+	width: min(var(--cg-help-width), calc(100% - var(--cg-help-pane-gap)));
+	max-height: var(--cg-help-modal-max-height);
+	padding: var(--cg-help-modal-padding);
+	border: var(--cg-separator-width) solid var(--cg-separator);
+	border-radius: var(--cg-radius-panel);
+	background: var(--cg-surface-card);
+	box-shadow: var(--cg-shadow-document);
+	overflow-y: var(--cg-help-modal-scrollbar);
 }
 
-.linked-canvas-help-modal h2 { margin: var(--ct-help-title-margin); }
+.linked-canvas-help-modal h2 { margin: var(--cg-help-title-margin); }
 
 .linked-canvas-help-lead {
-	margin: var(--ct-help-lead-margin) 0 var(--ct-help-ownership-margin);
-	color: var(--text-muted);
-	line-height: var(--ct-help-lead-leading);
+	margin: var(--cg-help-lead-margin) 0 var(--cg-help-ownership-margin);
+	color: var(--cg-text-secondary);
+	line-height: var(--cg-help-lead-leading);
 }
 
 .linked-canvas-help-choices {
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--ct-help-section-gap);
+	gap: var(--cg-help-section-gap);
 }
 
 .linked-canvas-help-choice {
-	flex: var(--ct-help-choice-grow) var(--ct-help-choice-grow) var(--ct-help-choice-basis);
-	padding: var(--ct-help-choice-padding);
-	border: var(--ct-border-width) solid var(--ct-border);
-	border-radius: var(--ct-radius-card);
-	background: var(--ct-control);
-	corner-shape: var(--ct-corner-shape);
+	flex: var(--cg-help-choice-grow) var(--cg-help-choice-grow) var(--cg-help-choice-basis);
+	padding: var(--cg-help-choice-padding);
+	border: var(--cg-separator-width) solid var(--cg-separator);
+	border-radius: var(--cg-radius-card);
+	background: var(--cg-surface-control);
 }
 
 .linked-canvas-help-choice h3 {
-	margin: var(--ct-help-heading-margin) 0;
-	font-size: var(--ct-type-title);
+	margin: var(--cg-help-heading-margin) 0;
+	font-size: var(--cg-type-title);
 }
 
 .linked-canvas-help-choice p {
-	margin: var(--ct-help-body-margin);
-	color: var(--text-muted);
-	font-size: var(--ct-help-body-size);
-	line-height: var(--ct-help-body-leading);
+	margin: var(--cg-help-body-margin);
+	color: var(--cg-text-secondary);
+	font-size: var(--cg-help-body-size);
+	line-height: var(--cg-help-body-leading);
 }
 
 .linked-canvas-help-eyebrow {
-	color: var(--ct-accent);
-	font-size: var(--ct-help-eyebrow-size);
-	font-weight: var(--ct-weight-semibold);
-	letter-spacing: var(--ct-help-letter-spacing);
+	color: var(--cg-accent);
+	font-size: var(--cg-help-eyebrow-size);
+	font-weight: var(--cg-weight-semibold);
+	letter-spacing: var(--cg-help-letter-spacing);
 }
 
 .linked-canvas-help-ownership {
-	margin-top: var(--ct-help-ownership-margin);
-	padding: var(--ct-help-ownership-padding);
-	border-radius: var(--ct-radius-card);
-	background: var(--ct-accent-halo-soft);
-	corner-shape: var(--ct-corner-shape);
+	margin-top: var(--cg-help-ownership-margin);
+	padding: var(--cg-help-ownership-padding);
+	border-radius: var(--cg-radius-card);
+	background: var(--cg-accent-halo-soft);
 }
 
-.linked-canvas-help-ownership h3 { margin: var(--ct-help-body-margin); }
+.linked-canvas-help-ownership h3 { margin: var(--cg-help-body-margin); }
 
 .linked-canvas-help-ownership ul {
 	display: grid;
-	gap: var(--ct-help-list-gap);
-	margin: var(--ct-help-list-margin) 0 var(--ct-help-body-margin);
-	padding-left: var(--ct-help-list-padding);
-	color: var(--text-muted);
-	font-size: var(--ct-help-body-size);
-	line-height: var(--ct-help-body-leading);
+	gap: var(--cg-help-list-gap);
+	margin: var(--cg-help-list-margin) 0 var(--cg-help-body-margin);
+	padding-left: var(--cg-help-list-padding);
+	color: var(--cg-text-secondary);
+	font-size: var(--cg-help-body-size);
+	line-height: var(--cg-help-body-leading);
 }
 
-.linked-canvas-help-actions { margin-top: var(--ct-help-actions-margin); }
+.linked-canvas-help-actions { margin-top: var(--cg-help-actions-margin); }
 
 .linked-canvas-help-modal .linked-canvas-help-actions button {
-	border-color: var(--ct-border);
-	border-radius: var(--ct-radius-control);
-	background: var(--ct-control);
-	color: var(--text-normal);
-	box-shadow: var(--ct-control-shadow);
-	corner-shape: var(--ct-corner-shape);
+	border-color: var(--cg-separator);
+	border-radius: var(--cg-radius-control);
+	background: var(--cg-surface-control);
+	color: var(--cg-text-primary);
+	box-shadow: var(--cg-shadow-control);
 }
 
 .linked-canvas-help-modal .linked-canvas-help-actions button:hover {
-	background: var(--ct-control-hover);
+	background: var(--cg-surface-control-hover);
 }
 
 .linked-canvas-help-modal .linked-canvas-help-actions button:focus-visible {
-	outline: var(--ct-focus-ring-width) solid var(--ct-accent);
-	outline-offset: var(--ct-ring-subtle-size);
+	outline: var(--cg-focus-ring-width) solid var(--cg-focus-ring);
+	outline-offset: var(--cg-ring-subtle-size);
 }
 
 .linked-canvas-help-modal .linked-canvas-help-actions button.mod-cta {
-	border-color: var(--ct-accent);
-	background: var(--ct-accent);
-	color: var(--ct-on-accent);
+	border-color: var(--cg-accent);
+	background: var(--cg-accent);
+	color: var(--cg-text-on-accent);
 }
 
 .linked-canvas-help-modal .linked-canvas-help-actions button.mod-cta:hover {
-	background: var(--ct-accent-hover);
+	background: var(--cg-accent-hover);
 }
 
 .context-tree-empty-eyebrow {
 	display: block;
-	margin: 0 0 var(--ct-empty-eyebrow-gap);
+	margin: 0 0 var(--cg-empty-eyebrow-gap);
 	padding: 0;
 	border: 0;
 	background: transparent;
-	color: var(--text-faint);
-	font-size: calc(var(--ct-type-hint) * var(--ct-font-scale));
-	font-weight: var(--ct-weight-semibold);
-	letter-spacing: var(--ct-tracking-eyebrow);
+	color: var(--cg-text-tertiary);
+	font-size: calc(var(--cg-type-hint) * var(--cg-font-scale));
+	font-weight: var(--cg-weight-semibold);
+	letter-spacing: var(--cg-tracking-eyebrow);
 	text-align: left;
 	cursor: default;
 }
 
 .context-tree-empty h2 {
 	margin: 0;
-	color: var(--text-normal);
-	font-size: calc(var(--ct-type-empty-title) * var(--ct-font-scale));
+	color: var(--cg-text-primary);
+	font-size: calc(var(--cg-type-empty-title) * var(--cg-font-scale));
 }
 
-.context-tree-empty-status { margin: var(--ct-empty-status-gap) 0 0; color: var(--text-muted); font-size: calc(var(--ct-type-empty-status) * var(--ct-font-scale)); line-height: var(--ct-leading-empty-status); }
-.context-tree-empty-next { margin: var(--ct-empty-next-gap) 0 0; color: var(--text-faint); font-size: calc(var(--ct-type-empty-next) * var(--ct-font-scale)); line-height: var(--ct-leading-empty-next); }
-.context-tree-empty-actions { display: flex; flex-wrap: wrap; gap: var(--ct-empty-action-gap); margin-top: var(--ct-empty-action-margin); }
-.context-tree-empty-actions .context-tree-action:first-child { background: var(--ct-control-hover); }
+.context-tree-empty-status { margin: var(--cg-empty-status-gap) 0 0; color: var(--cg-text-secondary); font-size: calc(var(--cg-type-empty-status) * var(--cg-font-scale)); line-height: var(--cg-leading-empty-status); }
+.context-tree-empty-next { margin: var(--cg-empty-next-gap) 0 0; color: var(--cg-text-tertiary); font-size: calc(var(--cg-type-empty-next) * var(--cg-font-scale)); line-height: var(--cg-leading-empty-next); }
+.context-tree-empty-actions { display: flex; flex-wrap: wrap; gap: var(--cg-empty-action-gap); margin-top: var(--cg-empty-action-margin); }
+.context-tree-empty-actions .context-tree-action:first-child { background: var(--cg-surface-control-hover); }
 
 /* Theme CSS is loaded beside plugin CSS and may style a generic card class
    after this file. Keep Linked Canvas's neutral document boundary scoped and
    specific without resorting to global overrides or priority flags. */
 .context-tree-view .context-tree-node .context-tree-card {
-	border-color: var(--ct-border);
-	box-shadow: var(--ct-card-shadow);
+	border-color: var(--cg-separator);
+	box-shadow: var(--cg-shadow-card);
 }
 
 .context-tree-view .context-tree-node .context-tree-card.is-detail-open {
-	border-color: var(--ct-card-boundary-open);
-	background: var(--ct-card-open);
+	border-color: var(--cg-open-boundary);
+	background: var(--cg-surface-document);
 	box-shadow:
-		var(--ct-open-card-shadow),
-		0 0 0 var(--ct-ring-subtle-size) var(--ct-accent-halo-soft);
+		var(--cg-shadow-document),
+		0 0 0 var(--cg-ring-subtle-size) var(--cg-accent-halo-soft);
+}
+
+/* The generic theme-isolation boundary above must not erase the authored role
+   cue on compact cards. Open, hover and focus states remain stronger states. */
+.context-tree-view .context-tree-node .context-tree-card[data-role="root"]:not(.is-detail-open) {
+	border-color: var(--cg-accent);
+}
+.context-tree-view .context-tree-node .context-tree-card[data-role="question"]:not(.is-detail-open) {
+	border-color: var(--cg-role-question);
+}
+.context-tree-view .context-tree-node .context-tree-card[data-role="entity"]:not(.is-detail-open) {
+	border-color: var(--cg-role-entity);
 }
 
 .context-tree-view .context-tree-node:is(.is-focused, .is-hover-origin) .context-tree-card,
 .context-tree-view .context-tree-node .context-tree-card:hover {
-	border-color: var(--ct-border-strong);
-	box-shadow: var(--ct-card-shadow-hover);
+	border-color: var(--cg-separator-strong);
+	box-shadow: var(--cg-shadow-card-hover);
 }
 
 @media (max-width: 700px) {
-	.context-tree-card { width: min(var(--ct-compact-card-width), max(var(--ct-card-min-width), calc(var(--ct-viewport-width, var(--ct-viewport-fallback-width)) - var(--ct-card-pane-gap)))); }
-	.context-tree-card.is-detail-open { width: min(var(--ct-compact-open-card-width), max(var(--ct-open-card-min-size), calc(var(--ct-viewport-width, var(--ct-viewport-fallback-width)) - var(--ct-open-card-pane-gap)))); }
+	.context-tree-card { width: min(var(--cg-compact-card-width), max(var(--cg-card-min-width), calc(var(--cg-viewport-width, var(--cg-viewport-fallback-width)) - var(--cg-card-pane-gap)))); }
+	.context-tree-card.is-detail-open { width: min(var(--cg-compact-open-card-width), max(var(--cg-open-card-min-size), calc(var(--cg-viewport-width, var(--cg-viewport-fallback-width)) - var(--cg-open-card-pane-gap)))); }
 	.context-tree-canvas-handoff {
-		width: var(--ct-control-button-width);
+		width: var(--cg-control-button-width);
 		padding-inline: 0;
 	}
 	.context-tree-canvas-handoff-label { display: none; }
@@ -1599,10 +1653,10 @@
 		opacity: 1;
 		visibility: visible;
 		pointer-events: auto;
-		transition-delay: var(--ct-duration-none);
+		transition-delay: var(--cg-duration-none);
 	}
 	.context-tree-card-quick-actions {
-		transform: translateY(0) scale(var(--ct-card-control-scale, 1));
+		transform: translateY(0) scale(var(--cg-card-control-scale, 1));
 	}
 	.context-tree-card.is-detail-open .context-tree-card-quick-actions { transform: translateY(0) scale(1); }
 }
@@ -1611,4 +1665,26 @@
 	.context-tree-card,
 	.context-tree-detail-wrap,
 	.context-tree-connect-port::before { transition: none; }
+}
+
+@media (prefers-contrast: more) {
+	:where(.context-tree-view, .linked-canvas-help-modal) {
+		--cg-separator: var(--cg-text-primary);
+		--cg-separator-strong: var(--cg-text-primary);
+		--cg-edge: var(--cg-text-primary);
+		--cg-dot: var(--cg-text-secondary);
+		--cg-control-opacity-idle: var(--cg-control-opacity-active);
+	}
+}
+
+@media (forced-colors: active) {
+	.context-tree-card,
+	.context-tree-graph-controls,
+	.context-tree-search-panel,
+	.linked-canvas-help-modal { border-color: CanvasText; }
+	.context-tree-edge,
+	.context-tree-draft-edges path { stroke: CanvasText; }
+	.context-tree-card:focus-within,
+	.context-tree-zoom-button:focus-visible,
+	.context-tree-action:focus-visible { outline-color: Highlight; }
 }

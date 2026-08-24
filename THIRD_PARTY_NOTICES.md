@@ -19,10 +19,10 @@ THIS SOFTWARE.
 
 ## Cupertino design reference
 
-Linked Canvas adapts scoped colour, elevation, motion, and control-shape values
-from [Cupertino](https://github.com/aaaaalexis/obsidian-cupertino), commit
-`080cea8d2c680c66e26b61b58970e56fd6f30ae4`. It does not bundle Cupertino's
-global Obsidian selectors or assets.
+Linked Canvas uses [Cupertino](https://github.com/aaaaalexis/obsidian-cupertino),
+commit `080cea8d2c680c66e26b61b58970e56fd6f30ae4`, as a documented design
+reference. It does not bundle Cupertino's palette, global Obsidian selectors,
+or assets; runtime styling resolves from the active Obsidian theme variables.
 
 MIT License
 

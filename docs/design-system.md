@@ -5,9 +5,8 @@ application embedded inside it. Its visual direction follows the
 [Cupertino theme](https://github.com/aaaaalexis/obsidian-cupertino) principles:
 fresh, familiar, focused, with quiet secondary UI and clear document
 hierarchy. It does not copy Cupertino's global selectors or assets. It consumes
-Obsidian's public text and editor variables, while a plugin-scoped foundation
-adapts Cupertino's MIT-licensed colour, elevation, motion, and control-shape
-values.
+Obsidian's public text, surface, radius, shadow, motion, and editor variables.
+Cupertino is a design reference, not a copied palette or runtime dependency.
 The plugin therefore remains coherent when Cupertino is absent without
 overriding any global Obsidian or third-party theme selector. The exact source
 revision and license are recorded in `THIRD_PARTY_NOTICES.md`.
@@ -42,9 +41,9 @@ Linked Map is a secondary inspection tool rather than a competing whiteboard.
    to scan than the controls around them. Secondary actions appear on hover,
    keyboard focus, or a state that needs explanation.
 2. **Scoped platform foundation.** Text, fonts, Reading content, and editor
-   semantics remain native Obsidian. Plugin surfaces, accent, radii, shadows,
-   and motion resolve from the one Cupertino-derived token layer and never
-   escape the plugin boundary.
+   semantics remain native Obsidian. Plugin-scoped `--cg-*` surface, text, separator,
+   accent, focus, spacing, radius, shadow, and motion tokens are aliases over
+   the active host theme and never escape the plugin boundary.
 3. **One visual vocabulary.** Canvas, compact cards, opened documents, controls,
    fields, and popovers have named semantic tokens. A component cannot invent
    a private colour, radius, shadow, duration, type size, or pixel dimension.
@@ -52,9 +51,9 @@ Linked Map is a secondary inspection tool rather than a competing whiteboard.
    document sits above compact cards; drag raises the same card without
    changing its dimensions. Accent is reserved for focus, the active document,
    authored relationship meaning, and actionable state.
-5. **Theme-independent structure.** Code may distinguish Obsidian's supported
-   light and dark roots to preserve surface ordering. It must never detect a
-   theme name, depend on Cupertino classes, or patch a specific theme.
+5. **Theme-independent structure.** The stylesheet does not carry separate
+   copied light/dark palettes. It must never detect a theme name, depend on
+   Cupertino classes, or patch a specific theme.
 6. **Geometry is stable.** Hover, focus, Reading, Source, and pin state cannot
    move or resize a card. Visual polish must not change the interaction
    contract.
@@ -71,12 +70,14 @@ The block between `linked-canvas-design-tokens:start` and
 `linked-canvas-design-tokens:end` at the top of `styles.css` is the only
 place where Linked Canvas design values are declared.
 
-- Platform aliases map Cupertino-derived surface, relation, radius, shadow, and
-  motion values plus Obsidian text/font semantics to Linked Canvas roles.
+- Platform aliases map only Obsidian public surface, text, separator, accent,
+  focus, spacing, radius, shadow, motion, and font semantics.
 - Semantic state tokens describe focus, open, pin, warning, and relationship
   states.
-- Geometry and typography tokens describe component dimensions and hierarchy.
-- Component selectors consume those tokens through `var(--ct-...)`.
+- Graph-only role, edge, grid, node, and geometry tokens are scoped to
+  `.context-tree-view`; help-modal tokens are scoped separately and are not
+  part of the shared contract.
+- Component selectors consume those tokens through `var(--cg-...)`.
 
 `npm run check:css` parses the stylesheet and rejects:
 
@@ -103,9 +104,9 @@ the card dimensions inside that query still use semantic tokens.
 | Open Reading or Source | primary + restrained accent | raised secondary + restrained accent | strongest native elevation; fixed graph footprint |
 | HUD, menu, search | primary control surface | raised secondary control surface | one shared radius and shadow vocabulary |
 
-The exact Linked Canvas surfaces and elevations are owned by the scoped token
-layer. The active theme continues to own the rest of Obsidian and the semantic
-Markdown rendered inside each card.
+The active Obsidian theme owns every shared surface and elevation. Linked
+Canvas owns only local graph-role derivations and component geometry; semantic
+Markdown rendered inside each card remains theme-native.
 
 ## Component boundaries
 
@@ -125,14 +126,14 @@ Duplicate local constants are not accepted.
 
 Generated JSON Canvas cards use the same rule at the protocol boundary:
 `src/domain/generated-canvas-design.ts` is the single source for standard
-Canvas role colours, default dimensions, and initial placement rhythm.
+Canvas role hints, default dimensions, and initial placement rhythm.
 `json-canvas.ts` consumes that contract and never carries visual constants.
 A blank board has no generated cards and a current-note shortcut has only that
 one file card. When explicit link-aware expansion adds missing Markdown or
-media, generated cards use the role contract and compact columns beside the
-existing seed area. Manually placed cards keep their authored geometry and
-colour. Native Canvas drag, resize, group, and colour controls remain the
-long-term layout authority.
+media, generated root/question/entity cards may use restrained native JSON
+Canvas colours; ordinary topic and media cards retain the host default.
+Manually placed cards keep their authored geometry and colour. Native Canvas
+drag, resize, group, and colour controls remain the long-term layout authority.
 
 ## Visual release gate
 
