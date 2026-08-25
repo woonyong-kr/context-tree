@@ -1,6 +1,6 @@
 {
 	"name": "linked-canvas",
-	"version": "0.5.13",
+	"version": "0.5.14",
 	"description": "Arrange Vault files on standard Canvas boards with optional, bounded Markdown link awareness.",
 	"main": "main.js",
 	"type": "module",

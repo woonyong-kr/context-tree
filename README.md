@@ -165,7 +165,7 @@ board, and it does not hide a proprietary card database behind the Canvas.
 
 ## See the real desktop workflow
 
-These captures were made in Obsidian 1.13.7 from the exact 0.5.13 production
+These captures were made in Obsidian 1.13.7 from the exact 0.5.14 production
 bundle in a public-safe fixture. Their version, dimensions, and hashes are
 checked during every release build. Any later source change that affects
 rendering must repeat the desktop capture gate before the next release.
@@ -435,7 +435,7 @@ npm audit --omit=dev --audit-level=high
 ```
 
 `npm run check` runs ESLint, strict TypeScript checking, CSS validation, release
-media verification, a production esbuild bundle, and the unit suite. The 0.5.13
+media verification, a production esbuild bundle, and the unit suite. The 0.5.14
 release additionally follows the desktop checklist in
 [docs/ux-contract.md](docs/ux-contract.md): real Map and Canvas creation,
 Markdown rendering/editing, pointer-owned scroll and zoom, card movement,
