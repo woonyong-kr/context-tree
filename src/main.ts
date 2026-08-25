@@ -51,9 +51,10 @@ export default class LinkedGraphPlugin extends Plugin {
 
 	async graphFor(file: TFile): Promise<DocumentLinkGraph> {
 		const markdown = await this.app.vault.cachedRead(file);
-		return parseDocumentLinks(markdown, file.path, file.basename, (linkPath, sourcePath) =>
-			this.app.metadataCache.getFirstLinkpathDest(linkPath, sourcePath)?.path ?? null,
-		);
+		return parseDocumentLinks(markdown, file.path, file.basename, (linkPath, sourcePath) => {
+			const destination = this.app.metadataCache.getFirstLinkpathDest(linkPath, sourcePath);
+			return destination?.extension === "md" ? destination.path : null;
+		});
 	}
 
 	fileForPath(path: string): TFile | null {

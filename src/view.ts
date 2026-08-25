@@ -186,7 +186,11 @@ export class LinkedGraphView extends ItemView {
 		this.render();
 		if (!this.branchGraphs.has(link.key)) {
 			const file = this.plugin.fileForPath(link.path);
-			if (file) this.branchGraphs.set(link.key, await this.plugin.graphFor(file));
+			if (file) {
+				const graph = await this.plugin.graphFor(file);
+				this.branchGraphs.set(link.key, graph);
+				this.collectGroupKeys(graph.entries, this.collapsedGroups);
+			}
 		}
 		this.render();
 	}

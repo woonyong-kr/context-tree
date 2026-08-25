@@ -39,3 +39,18 @@ test("prunes empty labels and searches through descendants", () => {
 	assert.equal(graphMatches(graph.entries[0]!, "딥러닝"), true);
 	assert.equal(graphMatches(graph.entries[0]!, "프로젝트"), false);
 });
+
+test("uses the first H1 as the visible note name instead of a README basename", () => {
+	const graph = parseDocumentLinks("# Wiki\n- [[개념]]", "wiki/README.md", "README", resolve);
+	assert.equal(graph.title, "Wiki");
+});
+
+test("includes relative Markdown links in authored order but rejects external links", () => {
+	const graph = parseDocumentLinks(
+		"- [프로젝트](프로젝트.md)\n- [[개념]]\n- [외부](https://example.com)",
+		"Wiki.md",
+		"Wiki",
+		(link) => link === "프로젝트.md" ? "Wiki/프로젝트.md" : resolve(link),
+	);
+	assert.deepEqual(graph.entries.map((entry) => entry.label), ["프로젝트", "개념"]);
+});

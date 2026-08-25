@@ -30,6 +30,7 @@ interface GroupDraft extends LinkGroup {
 }
 
 const WIKILINK = /(?<!!)\[\[([^\]]+)\]\]/g;
+const MARKDOWN_LINK = /(?<!!)\[([^\]]+)\]\(([^)]+)\)/g;
 
 function visibleMarkdown(markdown: string): string[] {
 	const lines = markdown.split(/\r?\n/);
@@ -104,10 +105,28 @@ function splitLink(raw: string): { linkPath: string; subpath: string; label: str
 	};
 }
 
+function splitMarkdownLink(label: string, rawTarget: string): ReturnType<typeof splitLink> {
+	const withoutTitle = rawTarget.trim().replace(/\s+["'][^"']*["']\s*$/, "");
+	const target = withoutTitle.startsWith("<") && withoutTitle.endsWith(">")
+		? withoutTitle.slice(1, -1)
+		: withoutTitle;
+	if (/^(?:[a-z][a-z\d+.-]*:|#)/i.test(target)) return null;
+	let decoded = target;
+	try { decoded = decodeURIComponent(target); } catch { /* Keep the authored target. */ }
+	const parsed = splitLink(decoded);
+	return parsed ? { ...parsed, label: plainLabel(label) || parsed.label } : null;
+}
+
 function linksOnLine(line: string, sourcePath: string, resolve: LinkResolver, seen: Set<string>): LinkedNote[] {
 	const links: LinkedNote[] = [];
+	const candidates: Array<{ index: number; parsed: ReturnType<typeof splitLink> }> = [];
 	for (const match of line.matchAll(WIKILINK)) {
-		const parsed = splitLink(match[1] ?? "");
+		candidates.push({ index: match.index, parsed: splitLink(match[1] ?? "") });
+	}
+	for (const match of line.matchAll(MARKDOWN_LINK)) {
+		candidates.push({ index: match.index, parsed: splitMarkdownLink(match[1] ?? "", match[2] ?? "") });
+	}
+	for (const { parsed } of candidates.sort((left, right) => left.index - right.index)) {
 		if (!parsed) continue;
 		const path = resolve(parsed.linkPath, sourcePath);
 		if (!path) continue;
@@ -165,7 +184,7 @@ export function parseDocumentLinks(
 			if (!label) continue;
 			const group: GroupDraft = {
 				kind: "group",
-				key: `group:${groupSequence += 1}:${label}`,
+				key: `group:${sourcePath}:${groupSequence += 1}:${label}`,
 				label,
 				children: [],
 				indent,
@@ -182,5 +201,9 @@ export function parseDocumentLinks(
 	}
 
 	const entries = prune(root);
-	return { sourcePath, title, entries, linkCount: countLinks(entries) };
+	const heading = visibleMarkdown(markdown)
+		.map((line) => line.match(/^\s*#\s+(.+)$/)?.[1])
+		.find((value): value is string => Boolean(value));
+	const displayTitle = heading ? plainLabel(heading) : title;
+	return { sourcePath, title: displayTitle || title, entries, linkCount: countLinks(entries) };
 }
