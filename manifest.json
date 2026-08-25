@@ -1,10 +1,10 @@
 {
-	"id": "context-graph",
-	"name": "Linked Canvas",
-	"version": "0.5.14",
+	"id": "linked-graph",
+	"name": "Linked Graph",
+	"version": "1.0.0",
 	"minAppVersion": "1.8.0",
-	"description": "Arrange Vault files on standard Canvas boards and optionally keep real Markdown links visible.",
+	"description": "Follow the current Markdown note through its authored links in a focused right sidebar.",
 	"author": "woonyong-kr",
 	"authorUrl": "https://github.com/woonyong-kr",
-	"isDesktopOnly": true
+	"isDesktopOnly": false
 }
