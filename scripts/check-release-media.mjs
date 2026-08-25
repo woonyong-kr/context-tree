@@ -3,11 +3,7 @@ import { readFile } from "node:fs/promises";
 
 const repository = new URL("../", import.meta.url);
 const requiredAssets = [
-	"docs/assets/linked-canvas-01-canvas.png",
-	"docs/assets/linked-canvas-02-map.png",
-	"docs/assets/linked-canvas-03-reading.png",
-	"docs/assets/linked-canvas-04-edit.png",
-	"docs/assets/linked-canvas-tour.gif",
+	"docs/assets/linked-graph-runtime.png",
 ];
 
 const readJson = async (path) => JSON.parse(await readFile(new URL(path, repository), "utf8"));

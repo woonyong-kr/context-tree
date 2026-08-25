@@ -2,6 +2,8 @@
 
 Linked Graph is a focused right-sidebar navigator for the Markdown note you are reading.
 
+![Linked Graph following the canonical Wiki note](docs/assets/linked-graph-runtime.png)
+
 It reads resolved `[[wikilinks]]` in authored order, preserves plain-text bullet groups, and lets you preview the next link level without leaving the note. Clicking a title opens the canonical Markdown note.
 
 ## Why use this instead of Obsidian Graph view?
