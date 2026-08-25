@@ -48,6 +48,7 @@ export class LinkedGraphView extends ItemView {
 			const graph = await this.plugin.graphFor(file);
 			if (generation !== this.generation) return;
 			this.graph = graph;
+			this.contextLabel?.setText(`${COPY.labels.currentDocument} · ${graph.title}`);
 			this.branchGraphs.clear();
 			this.render();
 		} catch (error) {
