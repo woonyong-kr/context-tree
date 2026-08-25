@@ -88,7 +88,7 @@ export class LinkedCanvasPickerModal extends FuzzySuggestModal<TFile> {
 	}
 
 	getItemText(canvas: TFile): string {
-		return canvas.basename;
+		return COPY.modal.canvasPickerItem(canvas.basename, canvas.path);
 	}
 
 	onChooseItem(canvas: TFile): void {
@@ -123,7 +123,7 @@ export class LinkedCanvasLauncherModal extends FuzzySuggestModal<LinkedCanvasLau
 	getItemText(choice: LinkedCanvasLaunchChoice): string {
 		if (choice.kind === "blank") return COPY.modal.canvasLauncherBlank;
 		if (choice.kind === "current") return COPY.modal.canvasLauncherCurrent(choice.file.basename);
-		return COPY.modal.canvasLauncherExisting(choice.file.basename);
+		return COPY.modal.canvasLauncherExisting(choice.file.basename, choice.file.path);
 	}
 
 	onChooseItem(choice: LinkedCanvasLaunchChoice): void {

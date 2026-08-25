@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { cardActionLayout } from "../src/domain/card-action-layout";
+import { cardActionLayout, collapsedCardWidth } from "../src/domain/card-action-layout";
 
 test("card actions use their native size at a readable graph zoom", () => {
 	assert.deepEqual(cardActionLayout(1), {
@@ -21,4 +21,18 @@ test("invalid or extreme zoom cannot create an unbounded action rail", () => {
 	// The compact action rail is capped, but an already-open document keeps its
 	// readable screen scale even when the surrounding overview is much smaller.
 	assert.equal(cardActionLayout(0.01).detailScale, 72);
+});
+
+test("collapsed card width is derived entirely from the CSS metric contract", () => {
+	const metrics = {
+		baseWidth: 288,
+		maximumWidth: 500,
+		minimumWidth: 160,
+		paneGap: 32,
+		paddingInline: 18,
+		compactActionReserve: 74,
+		compactExpandedActionReserve: 112,
+	};
+	assert.deepEqual(collapsedCardWidth(130, 900, false, metrics), { width: 288, wraps: false });
+	assert.deepEqual(collapsedCardWidth(420, 400, true, metrics), { width: 368, wraps: true });
 });

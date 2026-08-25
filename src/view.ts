@@ -14,6 +14,7 @@ import { normalizePinnedCardIds, openCardAlongsidePins, retainPinnedCards } from
 import { openCardViewportWidth } from "./domain/open-card-viewport";
 import ContextTreePlugin from "./main";
 import { graphHoverNodeIds, graphSearchVisibility, isGraphEdgeVisible } from "./domain/graph-filter";
+import { graphNodeRole } from "./domain/graph-node-role";
 import type { GraphSearchVisibility } from "./domain/graph-filter";
 import {
 	graphNoteFolder,
@@ -157,6 +158,13 @@ export class ContextTreeView extends FileView {
 			onHover: (nodeId) => this.setHoveredNode(nodeId),
 			connectionsFor: (node) => this.connectionsFor(node),
 			onMeasure: () => this.scheduleMeasure(),
+			roleFor: (node) => graphNodeRole(node, this.graph.scope.kind === "rooted" ? this.graph.scope.rootPath : undefined),
+			roleLabel: (role) => ({
+				root: COPY.labels.roleRoot,
+				topic: COPY.labels.roleTopic,
+				entity: COPY.labels.roleEntity,
+				question: COPY.labels.roleQuestion,
+			})[role],
 		});
 	}
 
@@ -403,7 +411,10 @@ export class ContextTreeView extends FileView {
 	}
 
 	private createGraphControls(parent: HTMLElement): void {
-		const controls = parent.createDiv({ cls: "context-tree-graph-controls" });
+		const controls = parent.createDiv({
+			cls: "context-tree-graph-controls",
+			attr: { role: "toolbar", "aria-label": COPY.labels.graphToolbar },
+		});
 		const search = this.createIconControl(controls, "search", COPY.actions.searchGraph, () => this.toggleSearchPanel("search"));
 		const filter = this.createIconControl(controls, "sliders-horizontal", COPY.actions.filterRelations, () => this.toggleSearchPanel("filter"));
 		this.searchPanelButtons = { search, filter };
@@ -431,7 +442,6 @@ export class ContextTreeView extends FileView {
 			attr: { "aria-label": COPY.actions.continueInCanvas, title: COPY.actions.continueInCanvas },
 		});
 		setIcon(save, "layout-dashboard");
-		save.createSpan({ cls: "context-tree-canvas-handoff-label", text: COPY.actions.continueInCanvas });
 		save.addEventListener("click", (event) => {
 			event.preventDefault();
 			event.stopPropagation();
@@ -458,7 +468,10 @@ export class ContextTreeView extends FileView {
 	}
 
 	private createSearchPanel(parent: HTMLElement): void {
-		const panel = parent.createDiv({ cls: "context-tree-search-panel" });
+		const panel = parent.createDiv({
+			cls: "context-tree-search-panel",
+			attr: { role: "region", "aria-label": COPY.labels.searchPanel },
+		});
 		this.searchPanel = panel;
 		const input = panel.createEl("input", {
 			type: "search",
@@ -1521,13 +1534,13 @@ export class ContextTreeView extends FileView {
 			if (card?.hasClass("is-detail-open")) {
 				const detailScale = cardActionLayout(this.zoom).detailScale;
 				const screenCenterX = centerX + this.pan.x + (node.x ?? 0) * this.zoom;
-				card.style.setProperty("--ct-open-card-max-width", `${openCardViewportWidth({
+				card.style.setProperty("--cg-open-card-max-width", `${openCardViewportWidth({
 					viewportWidth: width,
 					screenCenterX,
 					screenScale: this.zoom * detailScale,
 				})}px`);
 			} else {
-				card?.style.removeProperty("--ct-open-card-max-width");
+				card?.style.removeProperty("--cg-open-card-max-width");
 			}
 		}
 		this.paintEdges(centerX, centerY, width, height);
@@ -1748,8 +1761,8 @@ export class ContextTreeView extends FileView {
 	 * overflowing into neighbouring views.
 	 */
 	private updateViewportSize(width: number, height: number): void {
-		this.viewport?.style.setProperty("--ct-viewport-width", `${Math.max(0, width)}px`);
-		this.viewport?.style.setProperty("--ct-viewport-height", `${Math.max(0, height)}px`);
+		this.viewport?.style.setProperty("--cg-viewport-width", `${Math.max(0, width)}px`);
+		this.viewport?.style.setProperty("--cg-viewport-height", `${Math.max(0, height)}px`);
 	}
 
 	private closeDetailsForCanvas(): void {
@@ -1875,8 +1888,8 @@ export class ContextTreeView extends FileView {
 		if (!this.scene || !this.viewport) return;
 		this.scene.style.transform = `translate(${this.pan.x}px, ${this.pan.y}px) scale(${this.zoom})`;
 		const actions = cardActionLayout(this.zoom);
-		this.viewport.style.setProperty("--ct-card-control-scale", String(actions.controlScale));
-		this.viewport.style.setProperty("--ct-card-detail-scale", String(actions.detailScale));
+		this.viewport.style.setProperty("--cg-card-control-scale", String(actions.controlScale));
+		this.viewport.style.setProperty("--cg-card-detail-scale", String(actions.detailScale));
 		if (this.openDetails.size) this.scheduleMeasure();
 	}
 

@@ -1,7 +1,7 @@
 {
 	"id": "context-graph",
 	"name": "Linked Canvas",
-	"version": "0.5.12",
+	"version": "0.5.13",
 	"minAppVersion": "1.8.0",
 	"description": "Arrange Vault files on standard Canvas boards and optionally keep real Markdown links visible.",
 	"author": "woonyong-kr",

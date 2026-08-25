@@ -2,6 +2,7 @@ import { App, Modal, Setting } from "obsidian";
 import { COPY } from "./copy";
 
 export interface LinkedCanvasHelpActions {
+	openMap(): Promise<void>;
 	openCanvas(): Promise<void>;
 }
 
@@ -32,6 +33,12 @@ export class LinkedCanvasHelpModal extends Modal {
 			.setClass("linked-canvas-help-actions")
 			.addButton((button) => button
 				.setCta()
+				.setButtonText(COPY.help.openMap)
+				.onClick(() => {
+					this.close();
+					void this.actions.openMap();
+				}))
+			.addButton((button) => button
 				.setButtonText(COPY.help.openCanvas)
 				.onClick(() => {
 					this.close();

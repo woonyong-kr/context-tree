@@ -81,3 +81,20 @@ test("does not close a four-backtick fence with a shorter marker", () => {
 	assert.equal(display.summary, "Visible body");
 	assert.match(display.body, /> \[!summary\] still code/);
 });
+
+test("keeps generated Wiki structure out of compact card summaries", () => {
+	const source = [
+		"# 책",
+		"",
+		"<!-- 탐색은 직접 하위 키워드 링크를 사용한다. -->",
+		"",
+		"## 하위 키워드",
+		"",
+		"- [[AI·머신러닝]]",
+	].join("\n");
+
+	const display = topicDisplayContent(source, { title: "fallback", summary: "" });
+	assert.equal(display.summary, "");
+	assert.match(display.body, /하위 키워드/);
+	assert.match(display.body, /AI·머신러닝/);
+});

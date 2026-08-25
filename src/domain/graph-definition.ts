@@ -1,7 +1,7 @@
 import { graphWorkspaceId, GraphWorkspace, migrateGraphWorkspaces } from "./graph-workspace";
 
 /**
- * Context Graph workspaces are first-class Vault files. The custom extension
+ * Legacy Linked Map workspaces remain first-class Vault files. The custom extension
  * lets Obsidian open them in the graph view without competing with `.canvas`.
  */
 export const GRAPH_DEFINITION_EXTENSION = "context-graph";

@@ -1,12 +1,13 @@
 import { App, Component, MarkdownRenderer, setIcon } from "obsidian";
 import { cardPointerAction, hasCardDragExceededClickThreshold } from "../domain/card-pointer-action";
+import { collapsedCardWidth } from "../domain/card-action-layout";
 import {
 	inlineEditorCardHeight,
 	retainsInlineEditorFootprint,
 } from "../domain/inline-editor-layout";
 import { readingCardMaximumHeight, settledReadingCardHeight } from "../domain/reading-card-layout";
 import { CardAnchor, cardAnchorAtPoint } from "../graph/simulation";
-import { ContextTreeNode } from "../types";
+import { ContextTreeNode, GraphNodeRole } from "../types";
 import type { RootedNeighbourhoodState } from "../domain/graph-workspace";
 import { COPY, cardToggleLabel } from "./copy";
 import { createReadingMarkdownFrame } from "./reading-markdown-frame";
@@ -34,6 +35,8 @@ export interface TopicCardRendererCallbacks {
 	onHover: (nodeId?: string) => void;
 	connectionsFor: (node: ContextTreeNode) => CardConnection[];
 	onMeasure: () => void;
+	roleFor: (node: ContextTreeNode) => GraphNodeRole;
+	roleLabel: (role: GraphNodeRole) => string;
 }
 
 export interface TopicCardState {
@@ -101,6 +104,9 @@ export class TopicCardRenderer {
 		});
 		// Use spans, not generic block divs. Some themes give divs inside buttons
 		// their own card-like surface, which breaks the visual card boundary.
+		const role = this.callbacks.roleFor(node);
+		card.dataset.role = role;
+		trigger.createSpan({ cls: "context-tree-role", text: this.callbacks.roleLabel(role) });
 		trigger.createSpan({ cls: "context-tree-title", text: node.title });
 		if (node.summary) trigger.createSpan({ cls: "context-tree-summary", text: node.summary });
 		let togglePointer: { pointerId: number; origin: { x: number; y: number }; moved: boolean } | undefined;
@@ -232,8 +238,8 @@ export class TopicCardRenderer {
 			neighbourButton.setAttribute("aria-pressed", String(neighbourAction === "collapse"));
 		}
 		if (!retainsInlineEditorFootprint(state.isOpen, card.hasClass("has-fixed-open-footprint"))) {
-			card.style.removeProperty("--ct-open-card-height");
-			card.style.removeProperty("--ct-source-card-height");
+			card.style.removeProperty("--cg-open-card-height");
+			card.style.removeProperty("--cg-source-card-height");
 			card.removeClass("has-fixed-open-footprint");
 		}
 		const pinButton = card.querySelector<HTMLButtonElement>(".context-tree-card-pin");
@@ -328,8 +334,8 @@ export class TopicCardRenderer {
 		// `readingCardHeight` is captured before `is-editing` replaces the Reading
 		// layout, so CSS mode changes cannot shrink the value we preserve.
 		const editorHeight = inlineEditorCardHeight(readingCardHeight, source);
-		card.style.setProperty("--ct-source-card-height", `${editorHeight}px`);
-		card.style.setProperty("--ct-open-card-height", `${editorHeight}px`);
+		card.style.setProperty("--cg-source-card-height", `${editorHeight}px`);
+		card.style.setProperty("--cg-open-card-height", `${editorHeight}px`);
 		card.addClass("has-fixed-open-footprint");
 		const wrapper = card.querySelector<HTMLElement>(".context-tree-detail-wrap") ?? card.createDiv({ cls: "context-tree-detail-wrap" });
 		wrapper.empty();
@@ -409,6 +415,9 @@ export class TopicCardRenderer {
 
 	updateHeader(card: HTMLElement, node: ContextTreeNode): void {
 		const trigger = card.querySelector<HTMLElement>(".context-tree-card-trigger");
+		const role = this.callbacks.roleFor(node);
+		card.dataset.role = role;
+		card.querySelector<HTMLElement>(".context-tree-role")?.setText(this.callbacks.roleLabel(role));
 		const title = card.querySelector<HTMLElement>(".context-tree-title");
 		title?.setText(node.title);
 		trigger?.setAttribute("aria-label", cardToggleLabel(node.title));
@@ -421,23 +430,38 @@ export class TopicCardRenderer {
 
 	private updateCollapsedWidth(card: HTMLElement, titleText: string, isOpen: boolean): void {
 		if (isOpen) {
-			card.style.removeProperty("--ct-card-width");
+			card.style.removeProperty("--cg-card-width");
 			card.removeClass("has-wrapped-title");
 			return;
 		}
 		const title = card.querySelector<HTMLElement>(".context-tree-title");
 		if (!title) return;
 		card.removeClass("has-wrapped-title");
-		// Reserve title space for the always-available source action and overflow
-		// menu, plus the optional neighbouring-notes action.
-		const quickActionSpace = card.hasClass("has-expand-action") ? 104 : 74;
-		const desired = Math.max(276, this.measureTitleWidth(title, titleText) + 32 + quickActionSpace);
-		const viewportWidth = card.closest<HTMLElement>(".context-tree-viewport")?.clientWidth ?? 500;
-		const maximum = Math.min(500, Math.max(160, viewportWidth - 32));
-		const width = Math.min(maximum, desired);
-		card.style.setProperty("--ct-card-width", `${width}px`);
-		const mustWrap = desired > maximum;
-		card.toggleClass("has-wrapped-title", mustWrap);
+		const viewport = card.closest<HTMLElement>(".context-tree-viewport");
+		if (!viewport?.clientWidth) return;
+		// Read the inherited design contract from the viewport, not the card. The
+		// card receives a measured inline --cg-card-width below; reading it back on
+		// the next content refresh would make a once-expanded title unable to shrink.
+		const css = getComputedStyle(viewport);
+		const metric = (name: string): number => Number.parseFloat(css.getPropertyValue(name));
+		const metrics = {
+			baseWidth: metric("--cg-card-width"),
+			maximumWidth: metric("--cg-card-max-width"),
+			minimumWidth: metric("--cg-card-min-width"),
+			paneGap: metric("--cg-card-pane-gap"),
+			paddingInline: metric("--cg-card-padding-inline"),
+			compactActionReserve: metric("--cg-card-compact-action-reserve"),
+			compactExpandedActionReserve: metric("--cg-card-compact-expanded-action-reserve"),
+		};
+		if (Object.values(metrics).some((value) => !Number.isFinite(value))) return;
+		const layout = collapsedCardWidth(
+			this.measureTitleWidth(title, titleText),
+			viewport.clientWidth,
+			card.hasClass("has-expand-action"),
+			metrics,
+		);
+		card.style.setProperty("--cg-card-width", `${layout.width}px`);
+		card.toggleClass("has-wrapped-title", layout.wraps);
 	}
 
 	private updateConnectionPort(card: HTMLElement, state: TopicCardState): void {
@@ -458,8 +482,8 @@ export class TopicCardRenderer {
 		if (!anchor) return;
 		port.dataset.anchorX = String(anchor.x);
 		port.dataset.anchorY = String(anchor.y);
-		port.style.setProperty("--ct-port-x", `${anchor.x * 100}%`);
-		port.style.setProperty("--ct-port-y", `${anchor.y * 100}%`);
+		port.style.setProperty("--cg-port-x", `${anchor.x * 100}%`);
+		port.style.setProperty("--cg-port-y", `${anchor.y * 100}%`);
 	}
 
 	private connectionAnchor(port: HTMLElement): CardAnchor {
@@ -490,20 +514,28 @@ export class TopicCardRenderer {
 		card.querySelector(".context-tree-detail-wrap")?.remove();
 		const wrapper = card.createDiv({ cls: "context-tree-detail-wrap" });
 		const detail = wrapper.createDiv({ cls: "context-tree-detail" });
+		const loading = detail.createDiv({
+			cls: "context-tree-card-status",
+			text: COPY.labels.cardLoading,
+			attr: { role: "status", "aria-live": "polite" },
+		});
 		const renderTarget = createReadingMarkdownFrame(detail);
 		const rendering = MarkdownRenderer.render(this.app, node.body, renderTarget, node.path, this.component)
 			.then(() => {
 				if (!wrapper.isConnected || wrapper.hasClass("is-editing")) return;
+				loading.remove();
 				detail.addEventListener("click", (event) => this.callbacks.onOpenInternalLink(event, node.path));
 				this.renderConnections(wrapper, node);
 				// CSS cannot animate to an intrinsic height. Store the measured
 				// Markdown height so long notes never disappear behind an arbitrary
 				// expansion ceiling.
-				wrapper.style.setProperty("--ct-detail-height", `${wrapper.scrollHeight}px`);
+				wrapper.style.setProperty("--cg-detail-height", `${wrapper.scrollHeight}px`);
 				this.callbacks.onMeasure();
 			})
 			.catch((error: unknown) => {
 				console.error("Linked Canvas: failed to render card Markdown", error);
+				loading.remove();
+				detail.setAttribute("role", "alert");
 				detail.setText(COPY.notice.renderFailed);
 				this.callbacks.onMeasure();
 			});

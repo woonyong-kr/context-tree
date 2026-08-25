@@ -6,6 +6,7 @@ import {
 	type JsonCanvasFileNode,
 } from "./domain/json-canvas";
 import { buildLinkedCanvasProjection, linkedCanvasVaultLinks } from "./domain/linked-canvas-projection";
+import { parseGraphNodeRole } from "./domain/graph-node-role";
 import {
 	createLinkedCanvasProfile,
 	createLinkedCanvasProfileForExistingCanvas,
@@ -13,7 +14,6 @@ import {
 	linkedCanvasIncludesSource,
 	linkedCanvasProfileFileName,
 	linkedCanvasProfilePath,
-	manualCanvasRelations,
 	manualMarkdownSeeds,
 	parseLinkedCanvasProfile,
 	pathsRemovedFromCanvas,
@@ -22,8 +22,6 @@ import {
 	serializeLinkedCanvasProfile,
 	type LinkedCanvasProfile,
 } from "./domain/linked-canvas-profile";
-import { DIRECT_RELATION } from "./domain/relations";
-import { addRelation } from "./topic-store";
 
 function safeFileStem(name: string): string {
 	return name.trim()
@@ -194,15 +192,6 @@ export class LinkedCanvasService {
 		return this.syncCanvas(canvas.path);
 	}
 
-	async toggleRelationSync(canvas: TFile): Promise<"visual-only" | "frontmatter-additive" | undefined> {
-		const profile = this.profilesByCanvasPath.get(canvas.path);
-		if (!profile) return undefined;
-		profile.relationSync = profile.relationSync === "visual-only" ? "frontmatter-additive" : "visual-only";
-		await this.writeProfile(profile);
-		if (profile.relationSync === "frontmatter-additive") await this.syncCanvas(canvas.path);
-		return profile.relationSync;
-	}
-
 	handleVaultChange(file: TAbstractFile, previousPath?: string): void {
 		if (previousPath && previousPath !== file.path) {
 			if (file instanceof TFile && file.extension === "canvas" && this.hasProfile(previousPath)) {
@@ -287,11 +276,6 @@ export class LinkedCanvasService {
 			profile.excludedPaths = profile.excludedPaths.filter((path) => !newSeeds.includes(path));
 		}
 
-		for (const relation of manualCanvasRelations(profile, canvas)) {
-			const type = relation.label ?? DIRECT_RELATION;
-			await addRelation(this.app, { path: relation.fromPath }, { path: relation.toPath }, type);
-		}
-
 		const projection = this.projection(profile);
 		const reconciled = reconcileLinkedCanvas(canvas, profile.managed, projection);
 		profile.managed = reconciled.managed;
@@ -311,7 +295,14 @@ export class LinkedCanvasService {
 	private projection(profile: LinkedCanvasProfile) {
 		const availablePaths = new Set(this.app.vault.getFiles().map((file) => file.path));
 		const links = linkedCanvasVaultLinks(this.app.metadataCache.resolvedLinks);
-		return buildLinkedCanvasProjection(profile, availablePaths, links);
+		const projection = buildLinkedCanvasProjection(profile, availablePaths, links);
+		const fileRoles = Object.fromEntries(projection.filePaths.flatMap((path) => {
+			const file = this.app.vault.getAbstractFileByPath(path);
+			if (!(file instanceof TFile) || file.extension !== "md") return [];
+			const role = parseGraphNodeRole(this.app.metadataCache.getFileCache(file)?.frontmatter?.linked_canvas_role);
+			return role ? [[path, role]] : [];
+		}));
+		return { ...projection, ...(Object.keys(fileRoles).length ? { fileRoles } : {}) };
 	}
 
 	private async reloadProfiles(): Promise<void> {

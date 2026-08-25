@@ -3,6 +3,13 @@ import type { LinkedCanvasProfile } from "./linked-canvas-profile";
 
 export type VaultLinks = Record<string, readonly string[]>;
 
+/**
+ * Canvas is an authored spatial board, not a full-vault index. Explicit roots
+ * and seeds are always preserved, while automatic link expansion is capped so
+ * a high-degree hub cannot turn the board into an unreadable vertical strip.
+ */
+export const MAX_LINKED_CANVAS_DERIVED_CARDS = 12;
+
 export function linkedCanvasVaultLinks(
 	resolvedLinks: Record<string, Record<string, number>>,
 ): VaultLinks {
@@ -42,6 +49,7 @@ export function buildLinkedCanvasProjection(
 		.filter((path) => availablePaths.has(path) && !excluded.has(path));
 	const incoming = profile.includeBacklinks ? backlinks(links) : {};
 	const visible = new Set(roots);
+	let derivedCount = 0;
 	let frontier = roots;
 	for (let depth = 0; depth < profile.depth; depth += 1) {
 		const next: string[] = [];
@@ -52,9 +60,12 @@ export function buildLinkedCanvasProjection(
 			];
 			for (const candidate of uniqueSorted(candidates)) {
 				if (!availablePaths.has(candidate) || excluded.has(candidate) || visible.has(candidate)) continue;
+				if (derivedCount >= MAX_LINKED_CANVAS_DERIVED_CARDS) break;
 				visible.add(candidate);
 				next.push(candidate);
+				derivedCount += 1;
 			}
+			if (derivedCount >= MAX_LINKED_CANVAS_DERIVED_CARDS) break;
 		}
 		frontier = next;
 		if (!frontier.length) break;

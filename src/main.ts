@@ -67,8 +67,8 @@ export default class ContextTreePlugin extends Plugin {
 			});
 		});
 
-		this.addRibbonIcon("layout-dashboard", COPY.view.openRibbon, () => {
-			void this.openLinkedCanvasLauncher();
+		this.addRibbonIcon("git-fork", COPY.view.openRibbon, () => {
+			void this.activateCurrentNote();
 		});
 
 		this.addCommand({
@@ -106,17 +106,12 @@ export default class ContextTreePlugin extends Plugin {
 			name: COPY.view.enableCanvasCommand,
 			callback: () => void this.enableActiveCanvas(),
 		});
-		this.addCommand({
-			id: "toggle-linked-canvas-relation-sync",
-			name: COPY.view.toggleCanvasRelationSyncCommand,
-			callback: () => void this.toggleActiveCanvasRelationSync(),
-		});
 		this.registerEvent(this.app.workspace.on("file-menu", (menu, file) => {
 			if (!(file instanceof TFile) || file.extension !== "md") return;
 			menu.addItem((item) => item
-				.setTitle(COPY.view.openCanvasCommand)
-				.setIcon("layout-dashboard")
-				.onClick(() => void this.openNoteInLinkedCanvas(file)));
+				.setTitle(COPY.view.openCommand)
+				.setIcon("git-fork")
+				.onClick(() => void this.activateNote(file)));
 		}));
 
 		this.registerEvent(this.app.vault.on("create", (file) => this.handleVaultChange(file)));
@@ -135,6 +130,7 @@ export default class ContextTreePlugin extends Plugin {
 
 	openHelp(): void {
 		new LinkedCanvasHelpModal(this.app, {
+			openMap: () => this.activateCurrentNote(),
 			openCanvas: () => this.openLinkedCanvasLauncher(),
 		}).open();
 	}
@@ -358,23 +354,6 @@ export default class ContextTreePlugin extends Plugin {
 		} catch (error) {
 			console.error("Linked Canvas: failed to enable an existing Canvas", error);
 			new Notice(COPY.notice.canvasEnableFailed);
-		}
-	}
-
-	private async toggleActiveCanvasRelationSync(): Promise<void> {
-		const canvas = this.activeLinkedCanvas();
-		if (!canvas) {
-			new Notice(COPY.notice.openLinkedCanvasFirst);
-			return;
-		}
-		try {
-			const mode = await this.linkedCanvas.toggleRelationSync(canvas);
-			new Notice(mode === "frontmatter-additive"
-				? COPY.notice.canvasRelationSyncEnabled
-				: COPY.notice.canvasRelationSyncDisabled);
-		} catch (error) {
-			console.error("Linked Canvas: failed to change relation sync", error);
-			new Notice(COPY.notice.canvasSyncFailed);
 		}
 	}
 

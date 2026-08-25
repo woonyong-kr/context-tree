@@ -9,7 +9,6 @@
 	"includeOutgoing": true,
 	"includeBacklinks": true,
 	"autoExpandDroppedMarkdown": true,
-	"relationSync": "visual-only",
 	"excludedPaths": [],
 	"managed": {
 		"filesByNodeId": {

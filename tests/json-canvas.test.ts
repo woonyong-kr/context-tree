@@ -15,11 +15,13 @@ import {
 
 test("keeps generated Canvas role visuals and placement in one design contract", () => {
 	assert.equal(generatedCanvasRole("Root.md", true), "root");
+	assert.equal(generatedCanvasRole("Question.md", false, "question"), "question");
+	assert.equal(generatedCanvasRole("Person.md", false, "entity"), "entity");
 	assert.equal(generatedCanvasRole("paper.pdf", false), "pdf");
 	for (const image of ["diagram.png", "photo.jpg", "animation.gif", "vector.svg", "modern.webp", "scan.avif"]) {
 		assert.equal(generatedCanvasRole(image, false), "image");
 	}
-	assert.equal(generatedCanvasRole("Note.md", false), "markdown");
+	assert.equal(generatedCanvasRole("Note.md", false), "topic");
 	assert.deepEqual(generatedCanvasNodeDesign("paper.pdf", false), GENERATED_CANVAS_DESIGN.roles.pdf);
 	assert.deepEqual(generatedCanvasNodePosition(0), {
 		x: GENERATED_CANVAS_DESIGN.placement.rootX,
@@ -75,6 +77,7 @@ test("creates file-backed notes and media with directed Markdown relations", () 
 		{
 			rootPaths: ["Root.md"],
 			filePaths: ["Root.md", "Answer.md", "diagram.png", "paper.pdf"],
+			fileRoles: { "Answer.md": "question" },
 			relations: [
 				{ fromPath: "Root.md", toPath: "Answer.md" },
 				{ fromPath: "Root.md", toPath: "diagram.png" },
@@ -84,7 +87,7 @@ test("creates file-backed notes and media with directed Markdown relations", () 
 	);
 	assert.equal(result.document.nodes.length, 4);
 	assert.deepEqual(result.document.nodes.map((node) => node.type), ["file", "file", "file", "file"]);
-	assert.deepEqual(result.document.nodes.map((node) => node.color), ["6", "5", "4", "3"]);
+	assert.deepEqual(result.document.nodes.map((node) => node.color), ["6", "3", undefined, undefined]);
 	assert.equal(result.document.edges.length, 3);
 	assert.ok(result.document.edges.every((edge) => edge.toEnd === "arrow"));
 	assert.equal(Object.keys(result.managed.filesByNodeId).length, 4);
@@ -116,6 +119,32 @@ test("preserves manual objects and card geometry while replacing only managed ed
 	assert.ok(result.document.edges.some((edge) => edge.id === "manual-edge"));
 	assert.ok(!result.document.edges.some((edge) => edge.id === "managed-old"));
 	assert.deepEqual(result.document.futureCanvasMetadata, { kept: true });
+});
+
+test("removes stale generated cards without touching user-owned cards", () => {
+	const existing: JsonCanvasDocument = {
+		nodes: [
+			{ id: "root", type: "file", file: "Root.md", x: 0, y: 0, width: 400, height: 240 },
+			{ id: "stale", type: "file", file: "Old.md", x: 500, y: 0, width: 360, height: 240 },
+			{ id: "manual", type: "text", text: "메모", x: 0, y: 300, width: 300, height: 180 },
+		],
+		edges: [
+			{ id: "generated", fromNode: "root", toNode: "stale" },
+			{ id: "manual-edge", fromNode: "root", toNode: "manual" },
+		],
+	};
+	const result = reconcileLinkedCanvas(existing, {
+		filesByNodeId: { root: "Root.md", stale: "Old.md" },
+		edgeIds: ["generated"],
+	}, {
+		rootPaths: ["Root.md"],
+		filePaths: ["Root.md"],
+		relations: [],
+	});
+
+	assert.deepEqual(result.document.nodes.map((node) => node.id), ["root", "manual"]);
+	assert.deepEqual(result.document.edges.map((edge) => edge.id), ["manual-edge"]);
+	assert.deepEqual(result.managed.filesByNodeId, { root: "Root.md" });
 });
 
 test("reuses a manually dropped file card instead of duplicating it", () => {

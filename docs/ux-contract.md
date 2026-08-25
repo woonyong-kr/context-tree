@@ -4,19 +4,19 @@
 
 ## 제품 모델
 
-1. Linked Canvas의 핵심 작업은 **공간을 먼저 만들고, 사용자가 고른 Vault 파일을 같은 원본 그대로 여러 공간에서 재사용하며, 필요한 배치를 계속 사용하는 것**이다. 현재 노트로 시작은 선택 가능한 단축 동작일 뿐 제품의 전제가 아니다. 모든 링크의 자동 공간화, 전체 Vault 관계 추론이나 별도 카드 데이터베이스는 범위가 아니다.
-2. 제품은 서로 대체하지 않는 두 표면을 제공한다. **Linked Canvas가 기본 작업공간**이다. Markdown·PDF·이미지·웹 링크·그룹을 자유롭게 배치하는 표준 Obsidian Canvas에 연결된 Markdown 범위만 선택적으로 동기화한다. **Linked Map**은 현재 Markdown의 1-hop을 잠깐 읽고 필요한 문맥을 발견하는 보조 탐색기다.
-3. ribbon을 한 번 누르면 native launcher에서 **새 빈 Canvas**, **현재 노트로 시작**, Vault의 모든 기존 표준 Canvas를 함께 고른다. 빈 Canvas에서는 File Explorer가 card library 역할을 하며 사용자가 Markdown·PDF·PNG·JPG·GIF 등 지원 파일을 직접 놓는다. 자동 확장으로 잠깐 나타난 파생 카드는 새 보드 생성을 가로막지 않는다. Linked Map은 고급 Command Palette 동작으로만 열며 Markdown file menu나 첫 사용 launcher와 경쟁하지 않는다. 기존 Canvas에서는 **현재 Canvas에 연결 동기화 켜기**를 한 번 실행한다. wizard·폴더 설정·전용 frontmatter는 필요 없다.
-4. 내용 정본은 원본 Markdown·PDF·이미지·기타 Vault 파일이다. `.canvas`는 위치·크기·그룹·수동 카드·수동 연결선의 정본이다. `.linked-canvas.json` sidecar는 root·seed·제외 목록과 자동 생성 개체 ID만 소유한다. 어느 파일도 다른 파일의 내용을 복제하지 않는다. `현재 노트로 시작`은 기존 `.md`를 가리키는 file card 한 장을 만들 뿐 Markdown이나 AI metadata를 생성하지 않는다.
-5. 기본 연결은 일반 wikilink·embed·backlink다. 새 관계는 `linked_canvas_links`에 기록하고, 기존 `context_tree_links`는 읽기·삭제 호환성을 유지한다. Canvas의 수동 연결선은 기본적으로 시각적 메모이며 사용자가 명시적으로 켠 경우에만 방향성 관계를 Markdown frontmatter에 **추가**한다. 삭제를 역동기화하지 않는다.
-6. 기존 `.context-graph` 저장 그래프와 plugin ID `context-graph`는 업데이트 호환성을 위해 유지한다. 새 저장 동작은 `.context-graph`를 만들지 않고 표준 `.canvas`를 만든다. 사용자 화면과 문서의 제품명은 Linked Canvas다.
+1. 핵심 작업은 **Markdown 노트의 파란 wikilink를 따라가고, 현재 노트의 실존 link·embed·backlink를 필요할 때 한눈에 보는 것**이다. 모든 관계의 정본은 원본 Markdown이며 별도 Map·Canvas·카드 데이터베이스가 아니다.
+2. **노트 연결 보기**가 기본 표면이다. 현재 Markdown의 1-hop을 읽고 카드를 열어 확인하거나 원본 편집기로 이동한다. 표준 Obsidian Canvas는 여러 Markdown·PDF·이미지를 공간에 직접 배치할 때만 쓰는 고급 표면이며 일상 Wiki 탐색의 전제가 아니다.
+3. ribbon과 Markdown file menu의 한 번 동작은 현재 노트 연결 보기를 바로 연다. 활성 Markdown이 없으면 새 공간 선택창을 띄우지 않고 먼저 노트를 열라는 안내를 보여 준다. **새 빈 Canvas**, **현재 노트로 Canvas 만들기**, **기존 Canvas 열기**는 `고급:` Command Palette 동작에만 둔다. 같은 basename의 Canvas는 Vault 상대 경로까지 표시해 구분한다.
+4. 내용과 문서 관계의 정본은 원본 Markdown이다. `.canvas`는 위치·크기·그룹·수동 카드·수동 연결선만 소유하고, `.linked-canvas.json` sidecar는 root·seed·제외 목록과 자동 생성 개체 ID만 소유한다. 어느 파일도 다른 파일의 내용을 복제하지 않는다.
+5. 기본 연결은 일반 wikilink·embed·backlink다. Canvas의 수동 연결선은 항상 `.canvas` 안의 시각적 메모이며 Markdown을 변경하지 않는다. 실제 문서 관계는 원본 Markdown의 wikilink 또는 `linked_canvas_links`에서 저자가 직접 관리하고, 기존 `context_tree_links`는 읽기 호환성만 유지한다.
+6. 기존 `.context-graph` 저장 그래프와 plugin ID `context-graph`는 업데이트 호환성을 위해 유지한다. 기본 사용자 화면은 **노트 연결 보기**, 공간 배치 명령은 **고급 Canvas**로 구분한다.
 
 ## 상호작용 깊이
 
-1. 현재 노트를 Linked Canvas에서 열기, 연결된 노트 읽기 지도 열기, 카드 읽기, 인접 노트 펼치기·접기, 오른쪽 원문 편집기 열기, 검색과 필터는 한 번의 직접 동작으로 끝난다. 인접 노트와 원문 편집기는 카드의 직접 동작으로 제공하며 더보기 메뉴를 거치지 않는다. 새 이웃이 없는 카드는 무효한 펼치기 동작을 노출하지 않고, 유효한 동작은 실행 전에 바뀔 노트 수를 이름으로 알려 준다.
-2. 현재 노트의 기존 Canvas 재사용 또는 최초 생성, 현재 Map을 Canvas로 전환, 기존 Canvas 활성화, 원문 편집은 각각 한 단계로 끝난다. 같은 노트가 여러 Canvas에 놓인 경우의 공간 선택만 두 번째 단계로 허용한다. 일상 동작에서 이름 입력 modal이나 modal 위 modal을 열지 않는다.
+1. 현재 노트 연결 보기, 카드 읽기, 인접 노트 펼치기·접기, 오른쪽 원문 편집기 열기, 검색과 필터는 한 번의 직접 동작으로 끝난다. 인접 노트와 원문 편집기는 카드의 직접 동작으로 제공하며 더보기 메뉴를 거치지 않는다.
+2. 고급 Canvas의 기존 공간 재사용 또는 최초 생성, 현재 연결 보기를 Canvas로 전환, 기존 Canvas 활성화는 각각 한 단계로 끝난다. 같은 노트가 여러 Canvas에 놓인 경우의 공간 선택만 두 번째 단계로 허용한다. 일상적인 노트 탐색에는 Canvas modal을 열지 않는다.
 3. 그래프에서 카드 제거는 두 단계 이내로 끝나되 Markdown 원문을 변경하지 않는다. 원본 노트를 휴지통으로 보내는 작업만 명시적 경고와 확인을 포함한 세 단계까지 허용한다.
-4. 설정 wizard나 강제 onboarding은 두지 않는다. Command Palette의 **Linked Canvas 사용 방법 보기**와 설정 첫 항목은 언제든 같은 task-first 도움말을 연다. 도움말은 **공간 만들기**, **Vault 자료 올리기**, **놓인 문서 사이의 링크 보조**와 Markdown·Canvas·sidecar의 소유권을 실행 전에 설명한다. Linked Map은 고급 보조 명령으로만 남기고 첫 사용 선택지와 동급으로 제시하지 않는다.
+4. 설정 wizard나 강제 onboarding은 두지 않는다. Command Palette의 **노트 연결 보기 사용 방법**과 설정 첫 항목은 같은 도움말을 연다. 도움말은 **노트 하이퍼링크 이동**, **현재 노트 연결 보기**, **고급 Canvas** 순서와 Markdown·Canvas·sidecar의 소유권을 설명한다.
 
 ## 공간과 카드
 
@@ -48,7 +48,7 @@
 Heptabase의 card/whiteboard 분리 원칙을 Obsidian 정본에 맞게 적용한다. Card Library를 새로 만들지 않고 Vault 파일을 재사용 가능한 card authority로, 표준 Canvas를 spatial context로 본다. 같은 Markdown은 여러 Canvas에 놓일 수 있고 각 Canvas의 위치·크기·색상은 독립적이지만 편집 내용은 항상 하나의 원본 파일에 반영된다. Obsidian File Explorer·Search·Canvas와 중복되는 전용 탐색 계층은 추가하지 않는다.
 
 1. 새 빈 Canvas는 file card 없이 시작한다. **현재 노트로 시작**을 고른 경우에만 그 기존 Markdown 한 장을 첫 표준 file card로 놓는다. 기본 depth는 0이며 dashboard·index·daily hub의 모든 link를 공간 결정으로 오해하지 않는다. 사용자가 직접 놓은 Markdown은 seed가 되고, 선택한 seed 사이의 실제 방향성 link만 edge로 투영한다. **현재 Canvas에 연결 동기화 켜기**를 명시적으로 실행한 경우에만 각 seed의 outgoing link·embed·backlink 1-hop을 추가한다. parser가 허용하는 최대 depth는 3이다. 존재하지 않는 파일과 제외한 파일은 범위를 넓히지 않는다.
-2. 사용자가 옮기거나 크기를 바꾼 카드, 직접 만든 text·link·group·file card, 수동 연결선과 알 수 없는 JSON Canvas 확장 필드는 그대로 보존한다. 동기화는 자동 생성 edge만 교체하고 카드의 geometry나 수동 개체를 삭제하지 않는다.
+2. 사용자가 옮기거나 크기를 바꾼 범위 안의 카드, 직접 만든 text·link·group·file card, 수동 연결선과 알 수 없는 JSON Canvas 확장 필드는 그대로 보존한다. 동기화는 자동 생성 edge를 교체하고, 이전에 자동 생성한 file card가 현재 root·seed·depth 범위를 벗어나면 제거한다. 이 정리는 사용자 소유 개체에는 적용하지 않으므로 Canvas가 정본과 별개의 낡은 지식 구조를 누적하지 않는다.
 3. Canvas에 Markdown file card를 직접 놓으면 그 카드는 추가 seed가 되지만 주변 카드를 임의로 가져오지 않는다. 이미 선택된 seed 사이의 실제 link만 동기화한다. 1-hop 자동 확장을 켠 Canvas에서만 새 seed 주변 파일이 추가된다. PDF·이미지는 자체 file card로 유지되지만 탐색 seed가 되지 않는다.
 4. 자동 추적 중인 카드를 사용자가 Canvas에서 삭제하면 해당 경로를 제외 목록에 기록해 다시 만들지 않는다. 같은 Markdown을 직접 다시 놓으면 제외를 해제하고 seed로 복원한다.
 5. Markdown 링크·embed가 바뀌거나 source·Canvas 파일 이름이 바뀌면 짧은 debounce 뒤 sidecar와 자동 edge를 갱신한다. source 파일명 변경은 file card의 새 path를 따라가며, Canvas 이름 변경은 sidecar 이름과 `canvasPath`를 함께 바꾼다.
@@ -60,7 +60,7 @@ Heptabase의 card/whiteboard 분리 원칙을 Obsidian 정본에 맞게 적용�
 
 ## 도구와 가독성
 
-1. 시각 언어는 **문서 우선의 조용한 작업면**이다. Cupertino의 MIT-licensed colour·elevation·motion·control-shape 값을 plugin-scoped 단일 토큰 계층에 적용하되, Cupertino의 global selector·asset·trade dress를 복제하거나 특정 theme 이름을 감지하지 않는다. Obsidian은 본문 text·font·Reading·editor 의미를 계속 소유하며, 다른 theme의 전역 UI는 변경하지 않는다. 강한 색상·큰 그림자·항상 보이는 버튼 테두리로 내용과 경쟁하지 않는다. Map의 Cupertino blue 강조색은 시작·중심 카드, 열린 문서와 그 직접 관계, 검색 결과, 선택된 관계, keyboard focus처럼 의미가 있는 상태에만 사용한다. 새 Linked Canvas는 표준 JSON Canvas 색상으로 root·일반 Markdown·PDF·이미지를 절제되게 구분하되 사용자가 정한 기존 카드 색을 덮어쓰거나 카드마다 무작위 색을 배정하지 않는다.
+1. 시각 언어는 **문서 우선의 조용한 작업면**이다. Cupertino의 fresh·familiar·focused 철학만 참고하고 색상값·selector·asset·trade dress는 복제하지 않는다. plugin-scoped `--cg-*` 공용 토큰은 활성 Obsidian theme의 public surface·text·separator·accent·font·spacing·radius·shadow·motion 변수를 가리키는 semantic alias일 뿐 실제 palette를 소유하지 않는다. Obsidian은 본문 text·font·Reading·editor 의미를 계속 소유하며, 다른 theme의 전역 UI는 변경하지 않는다. 강한 색상·큰 그림자·항상 보이는 버튼 테두리로 내용과 경쟁하지 않는다. Map의 theme accent는 시작·중심 카드, 열린 문서와 그 직접 관계, 검색 결과, 선택된 관계, keyboard focus처럼 의미가 있는 상태에만 사용한다. 새 Linked Canvas는 표준 JSON Canvas 색상으로 root·질문·개체 역할만 절제되게 보조하고 일반 topic·PDF·이미지와 사용자가 정한 기존 카드 색은 host 기본값을 유지한다.
 2. 일반 상태의 카드는 얇은 중성 경계와 낮은 그림자만 가진다. hover·focus·drag는 같은 카드 표면의 경계와 높이감만 단계적으로 바꾸며 폭·높이·좌표를 바꾸지 않는다. 카드 동작은 작은 단일 도구 묶음으로 드러나고 각 아이콘을 독립된 장식 상자로 보이게 만들지 않는다.
 3. 캔버스는 이동과 배율을 인지할 수 있는 20px 중성 도트 작업면이다. 도트는 텍스트보다 충분히 낮은 대비를 유지한다. 배경, compact 카드, 열린 문서는 서로 다른 세 단계의 중성 surface를 사용하고 열린 문서는 compact 카드보다 위 z-depth와 shadow를 가진다. 관계선은 카드 본문보다 한 단계 낮은 대비를 사용하되 기본 상태에서도 경로를 식별할 수 있고 카드 경계에서 끝나야 한다. hover는 직접 관계를 선명하게 만들 수 있지만 Reading·Source가 열린 동안 다른 카드와 관계를 흐리게 만들지 않는다. 우하단 도구 모음과 검색 패널은 같은 surface·radius 체계를 공유한다.
 4. Reading 카드는 Obsidian의 본문 글꼴과 Markdown 계층을, compact 카드와 도구는 interface 글꼴을 사용한다. 플러그인 장식이 Markdown 제목·목록·callout·표의 의미 계층을 덮어쓰지 않는다.
@@ -88,18 +88,20 @@ Heptabase의 card/whiteboard 분리 원칙을 Obsidian 정본에 맞게 적용�
 | 배경 클릭·드래그 구분 | `canvas-pointer-action.ts` | `canvas-pointer-action.test.ts` |
 | 휠 소유권과 중앙 기준 줌 | `canvas-wheel-target.ts`, `canvas-wheel-action.ts`, `ContextTreeView.zoomAt()` | `canvas-wheel-target.test.ts`, `canvas-wheel-action.test.ts` |
 | Markdown Reading 의미 | `TopicCardRenderer.ensureDetails()`, `createReadingMarkdownFrame()`, `topicDisplayContent()`, `styles.css` | `reading-markdown-frame.test.ts`, `topic-display.test.ts`, Desktop UI 검증 |
+| root·topic·entity·question 시각 역할 | `graph-node-role.ts`, `TopicCardRenderer`, `generated-canvas-design.ts` | `graph-node-role.test.ts`, `json-canvas.test.ts`, forced-colors fixture |
 | 관계 삭제 드롭 안전성 | `disconnect-drop-action.ts` | `disconnect-drop-action.test.ts` |
-| 기본 Canvas 진입과 기존 공간 재사용 | `linked-canvas-profile.ts`, `LinkedCanvasService.canvasesForSource()`, `ContextTreePlugin.openCurrentNoteInLinkedCanvas()`, ribbon·Markdown file menu | `linked-canvas-profile.test.ts`, copy regression, Desktop UI 검증 |
+| 기본 노트 연결 진입 | `ContextTreePlugin.activateCurrentNote()`, ribbon·Markdown file menu | `copy.test.ts`, Desktop UI 검증 |
+| 고급 Canvas 진입과 기존 공간 재사용 | `linked-canvas-profile.ts`, `LinkedCanvasService.canvasesForSource()`, `ContextTreePlugin.openCurrentNoteInLinkedCanvas()` | `linked-canvas-profile.test.ts`, copy regression, Desktop UI 검증 |
 | 사용 방법과 표면 선택 | `LinkedCanvasHelpModal`, `ContextTreePlugin.openHelp()`, Command Palette·Settings | `copy.test.ts`, Desktop UI 검증 |
-| 현재 노트와 1-hop 보조 탐색 | `graph-workspace.ts`, `parser.ts`, `ContextTreePlugin.activateCurrentNote()`, advanced Command Palette action | `graph-workspace.test.ts`, `parser-rooted.test.ts`, copy regression, Desktop UI 검증 |
+| 현재 노트와 1-hop 기본 탐색 | `graph-workspace.ts`, `parser.ts`, `ContextTreePlugin.activateCurrentNote()` | `graph-workspace.test.ts`, `parser-rooted.test.ts`, copy regression, Desktop UI 검증 |
 | 새 카드 저장 위치 | `graphNoteFolder()`, `ContextTreeView.createInlineTopic()` | `graph-workspace.test.ts` |
 | 편집 draft 복구 | `inline-editor-draft.ts`, `ContextTreeView` lifecycle, plugin settings | `inline-editor-draft.test.ts`, lifecycle regression |
 | 그래프 제거와 원문 휴지통 구분 | `graph-workspace.ts`, card menu callbacks | `graph-workspace.test.ts`, copy regression, Desktop UI 검증 |
 | 저장된 그래프 단일 정본 | graph definition adapter, plugin settings migration | graph definition integration regression |
 | 표준 Canvas parse·보존·reconcile | `json-canvas.ts` | `json-canvas.test.ts` |
 | 새 Canvas의 빈 보드 또는 선택한 root + media 역할 | `generated-canvas-design.ts`, `json-canvas.ts` | `json-canvas.test.ts` |
-| root·seed·제외·수동 관계 계약 | `linked-canvas-profile.ts` | `linked-canvas-profile.test.ts` |
-| bounded link projection | `linked-canvas-projection.ts` | `linked-canvas-projection.test.ts` |
+| root·seed·제외·수동 관계 계약 | `linked-canvas-profile.ts` | `linked-canvas-profile.test.ts`, manual edge leaves Markdown unchanged |
+| bounded link projection (automatic cards: at most 12) | `linked-canvas-projection.ts` | `linked-canvas-projection.test.ts` |
 | Vault event·rename·optimistic write 조정 | `linked-canvas-service.ts` | pure contracts + Desktop UI 검증 |
 
 새 상호작용을 추가하거나 기존 항목을 바꿀 때는 이 표의 계약 문장, 구현 경계, 자동 검증을 함께 갱신한다. 테스트만 또는 구현만 별도로 바꾸는 것은 계약 변경으로 인정하지 않는다.
@@ -111,8 +113,8 @@ Obsidian에서 플러그인을 다시 활성화한다. 짧은 카드와 화면�
 같이 준비해, 아래 순서를 같은 그래프에서 확인한다. 이 절차의 결과는 릴리스 후보
 검토 기록에 남긴다.
 
-1. **도움말과 기본 Canvas 진입:** Command Palette와 설정 첫 항목에서 같은 도움말이 열리고, 빈 Canvas·현재 노트 단축·기존 Canvas와 세 저장소의 소유권이 modal 안에서 구분되는지 확인한다. keyboard Tab으로 직접 동작에 접근할 수 있고 200% interface zoom에서도 내용과 버튼이 modal 내부에서 스크롤되어 잘리지 않아야 한다. 왼쪽 ribbon 아이콘을 한 번 눌러 새 빈 Canvas, 활성 Markdown 한 장으로 시작, Vault의 기존 표준 Canvas가 같은 launcher에 보이는지 확인한다. 빈 Canvas는 활성 파일 폴더 또는 Vault root에 빈 `nodes`·`edges`로 생성되고, 현재 노트 시작은 새 Markdown이나 frontmatter 없이 기존 파일 card 한 장만 만든다. Canvas 안에서 native drag·resize·group·text·Markdown·PDF·PNG·JPG·GIF가 보이고 해당 source를 참조하는지 확인한다.
-2. **보조 Map 열기:** Command Palette의 **고급: 주변을 Linked Map으로 탐색**을 한 번 실행해 같은 노트의 임시 Map이 나타나는지 확인하고 Markdown 파일 메뉴에는 이 보조 동작이 없는지 확인한다. Map을 열었을 때 도구 모음은 우하단에 있고 카드 내부에는
+1. **도움말과 기본 노트 연결 진입:** Command Palette와 설정 첫 항목에서 같은 도움말이 열리고 하이퍼링크→연결 보기→고급 Canvas 순서와 세 저장소의 소유권이 구분되는지 확인한다. keyboard Tab으로 직접 동작에 접근할 수 있고 200% interface zoom에서도 내용과 버튼이 잘리지 않아야 한다. Markdown 노트를 연 뒤 ribbon 또는 file menu의 **현재 노트 연결 보기**를 한 번 실행해 Canvas launcher 없이 같은 노트의 1-hop 그래프가 열리는지 확인한다. Canvas나 다른 비 Markdown 파일이 활성 상태라면 새 Canvas 선택창 대신 먼저 노트를 열라는 안내가 보여야 한다.
+2. **연결 보기:** 현재 노트 연결 보기를 열었을 때 도구 모음은 우하단에 있고 카드 내부에는
    `+`가 없으며 레이어 아이콘과 좌상단 텍스트 버튼도 없다. 그래프 이름은 탭 제목에만 보이고, 넓은 pane에서는 **Canvas에서 계속**이 아이콘과 텍스트로 같은 도구 모음에 보인다.
    어떤 배율에서도 카드를 열면 카메라와 카드 중심 좌표가 바뀌지 않는다. 72% 미만에서는
    열린 카드만 화면상 최소 읽기 크기를 유지하고, 빈 배경에서 축소하면 나머지 그래프만
@@ -144,15 +146,15 @@ Obsidian에서 플러그인을 다시 활성화한다. 짧은 카드와 화면�
    중복되지 않으며 Source에는 frontmatter를 포함한 전체 원문이 남는다. 긴 카드의
    스크롤바는 평상시 숨고 카드 hover 또는 focus 중에만 얇게 나타난다.
 11. **시각 계층:** Obsidian 기본 light·dark와 설치된 사용자 테마(Cupertino가 릴리스 대상이면 Cupertino 포함)에서 compact·Reading·Source 카드를
-   각각 확인한다. 20px 도트, canvas, compact, 열린 문서의 단계가 색상만으로도 구분되고 열린 문서는 겹친 compact 카드보다 위에 보여야 한다. 중심 카드와 열린 문서·직접 관계에는 같은 theme accent 계열이 적용되며 일반 카드는 중성을 유지해야 한다. compact 카드는 얇은 중성 경계와 theme-native low elevation이 있고 관계선은 기본 상태에서도 식별 가능한 중성 저대비이며, 검색·관계 선택·keyboard
+   각각 확인한다. 20px 도트, canvas, compact, 열린 문서의 단계가 색상에만 의존하지 않고 surface·경계·z-depth로 구분되며 열린 문서는 겹친 compact 카드보다 위에 보여야 한다. 중심 카드와 열린 문서·직접 관계에는 같은 theme accent 계열이 적용되며 일반 카드는 중성을 유지해야 한다. compact 카드는 얇은 중성 경계와 theme-native low elevation이 있고 관계선은 기본 상태에서도 식별 가능한 중성 저대비이며, 검색·관계 선택·keyboard
    focus만 강조색을 사용한다. 카드 hover와 Source focus는 폭·높이·좌표를 바꾸지 않고,
    열린 카드 hover는 다른 카드와 관계를 지우지 않는다. 카드 동작은 하나의 hover surface로
    보이며 54% 배율에서도 제목·본문과 겹치지 않는다. 우하단 도구 모음,
    검색 패널, 메뉴와 빈 상태는 같은 surface·radius·shadow 체계를 사용한다. component selector에 raw colour·length·radius·shadow·duration·type scale을 추가하지 않고 `styles.css`의 단일 semantic token layer를 거쳐야 하며 `npm run check:css`가 이를 거부해야 한다.
-12. **Linked Canvas 전환:** Map 우하단 **Canvas에서 계속**을 한 번 실행해 표준 `.canvas`가 열리는지 확인한다. 같은 root의 Canvas가 있으면 파일 수를 늘리지 않고 다시 열며, 없을 때만 생성한다. Map은 고급 Command Palette 탐색기이고 Markdown file menu에는 진입 동작을 추가하지 않는다. root, outgoing, backlink, link된 이미지·PDF는 file card이고 원문 내용이 복제되지 않아야 한다.
+12. **고급 Canvas 전환:** 연결 보기 우하단 **Canvas에서 계속**을 한 번 실행해 표준 `.canvas`가 열리는지 확인한다. 같은 root의 Canvas가 있으면 파일 수를 늘리지 않고 다시 열며, 없을 때만 생성한다. 별도 launcher는 `고급: Canvas 열기 또는 만들기`에서만 열리고 같은 이름의 Canvas는 상대 경로로 구분되어야 한다. root, outgoing, backlink, link된 이미지·PDF는 file card이고 원문 내용이 복제되지 않아야 한다.
 13. **기존 Canvas 활성화:** Markdown·text·image·PDF·group과 수동 edge가 있는 Canvas에서 동기화를 켠다. 모든 기존 geometry와 수동 개체가 유지되고 Markdown 카드의 1-hop만 추가되어야 한다.
 14. **양방향 작업:** Canvas에서 Markdown card를 편집하면 원본 `.md`가 바뀌고 다른 editor에서 즉시 보인다. Markdown을 Canvas에 직접 놓으면 그 파일은 seed가 되고, 기본 depth 0에서는 이미 놓인 seed 사이의 실제 link만 연결한다. 사용자가 연결 동기화를 켠 Canvas에서만 주변 1-hop card가 추가된다. 카드를 옮기고 크기를 바꾼 뒤 source link를 변경해도 geometry가 유지된다.
 15. **제외·재시작:** 자동 card를 삭제한 뒤 sync·plugin 재활성화·Obsidian 재시작을 거쳐도 다시 생기지 않아야 한다. 같은 파일을 직접 다시 놓으면 복원된다. Canvas·source rename도 끊기지 않아야 한다.
-16. **관계 쓰기 안전:** 기본 모드에서 수동 Canvas edge가 Markdown을 바꾸지 않는지 확인한다. opt-in 뒤 새 방향성 edge는 `linked_canvas_links`에 한 번만 추가되고, edge 삭제는 원문 관계를 삭제하지 않아야 한다.
+16. **관계 쓰기 안전:** 수동 Canvas edge를 만들고·바꾸고·삭제해도 Markdown과 frontmatter가 한 글자도 바뀌지 않는지 확인한다. 지속할 문서 관계는 원본 Markdown의 wikilink 또는 저자가 직접 작성한 `linked_canvas_links`에서만 관리한다.
 17. **비활성 호환성:** 플러그인을 끈 상태에서도 생성·활성화한 `.canvas`를 Obsidian Canvas로 열어 Markdown·PDF·이미지·그룹·text와 수동 edge를 읽고 이동할 수 있어야 한다. `.linked-canvas.json`은 렌더링 필수 파일이 아니다. 확인 뒤 플러그인을 다시 켜고 같은 Canvas를 열었을 때 자동 범위가 이어져야 한다.
 18. **공개 미디어:** 같은 릴리스 후보로 사용 방법 안내, Linked Map overview, native Reading, Source, 색상 역할이 보이는 표준 Canvas를 캡처하고 5단계 GIF를 만든다. `docs/release-media.json`의 version·Obsidian version·날짜·크기·SHA-256과 README 참조가 `npm run check:media`를 통과해야 한다.

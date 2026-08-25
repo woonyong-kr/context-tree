@@ -1,4 +1,5 @@
 import { generatedCanvasNodeDesign, generatedCanvasNodePosition } from "./generated-canvas-design";
+import type { SecondaryGraphNodeRole } from "../types";
 
 export interface JsonCanvasFileNode {
 	id: string;
@@ -75,6 +76,7 @@ export interface LinkedCanvasRelation {
 export interface LinkedCanvasProjection {
 	rootPaths: string[];
 	filePaths: string[];
+	fileRoles?: Record<string, SecondaryGraphNodeRole>;
 	relations: LinkedCanvasRelation[];
 }
 
@@ -210,9 +212,10 @@ function sameDirectedEdge(edge: JsonCanvasEdge, fromNode: string, toNode: string
 
 /**
  * Projects linked Vault files into standard JSON Canvas without ever copying
- * Markdown. Existing positions, sizes and all user-owned nodes and edges are
- * preserved. Previously managed nodes that leave scope become ordinary cards;
- * only generated edges are removed automatically.
+ * Markdown. Existing positions and sizes stay stable while the file remains in
+ * scope, and every user-owned node and edge is preserved. A generated file card
+ * that leaves the projection is removed together with generated edges, so a
+ * display-only Canvas cannot accumulate a second, stale knowledge structure.
  */
 export function reconcileLinkedCanvas(
 	existing: JsonCanvasDocument,
@@ -221,8 +224,12 @@ export function reconcileLinkedCanvas(
 ): ReconciledLinkedCanvas {
 	const rootPaths = new Set(projection.rootPaths);
 	const wantedPaths = [...new Set(projection.filePaths)];
+	const wantedPathSet = new Set(wantedPaths);
 	const previousManagedEdgeIds = new Set(previousManaged.edgeIds);
-	const nodes = [...existing.nodes];
+	const staleManagedNodeIds = new Set(Object.entries(previousManaged.filesByNodeId)
+		.filter(([, path]) => !wantedPathSet.has(path))
+		.map(([nodeId]) => nodeId));
+	const nodes = existing.nodes.filter((node) => !staleManagedNodeIds.has(node.id));
 	const existingFileNodeByPath = new Map<string, JsonCanvasFileNode>();
 	for (const node of nodes) {
 		if (node.type === "file" && !existingFileNodeByPath.has(node.file)) existingFileNodeByPath.set(node.file, node);
@@ -234,7 +241,7 @@ export function reconcileLinkedCanvas(
 		if (!node) {
 			const position = generatedCanvasNodePosition(index);
 			const isRoot = rootPaths.has(path);
-			const design = generatedCanvasNodeDesign(path, isRoot);
+			const design = generatedCanvasNodeDesign(path, isRoot, projection.fileRoles?.[path]);
 			node = {
 				id: nodeId(path),
 				type: "file",
@@ -242,7 +249,7 @@ export function reconcileLinkedCanvas(
 				...position,
 				width: design.width,
 				height: design.height,
-				color: design.color,
+				...(design.color ? { color: design.color } : {}),
 			};
 			if (nodes.some((candidate) => candidate.id === node!.id)) {
 				node.id = `${node.id}-${nodes.length + 1}`;
@@ -256,7 +263,9 @@ export function reconcileLinkedCanvas(
 		filesByNodeId[node.id] = path;
 	}
 
-	const baseEdges = existing.edges.filter((edge) => !previousManagedEdgeIds.has(edge.id));
+	const baseEdges = existing.edges.filter((edge) => !previousManagedEdgeIds.has(edge.id)
+		&& !staleManagedNodeIds.has(edge.fromNode)
+		&& !staleManagedNodeIds.has(edge.toNode));
 	const edges = [...baseEdges];
 	const edgeIds: string[] = [];
 	for (const relation of projection.relations) {

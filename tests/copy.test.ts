@@ -18,13 +18,15 @@ test("describes card retention instead of implying a position lock", () => {
 	assert.equal(COPY_EN.actions.pinCard, "Keep this card open while exploring");
 });
 
-test("makes Linked Canvas primary while keeping Linked Map as a secondary exploration", () => {
-	assert.equal(COPY_KO.view.openRibbon, "Linked Canvas 열기 또는 만들기");
-	assert.equal(COPY_EN.view.openRibbon, "Open or create Linked Canvas");
-	assert.equal(COPY_KO.view.openCommand, "고급: 현재 노트 주변을 Linked Map으로 탐색");
-	assert.equal(COPY_EN.view.openCommand, "Advanced: explore around the current note in Linked Map");
-	assert.equal(COPY_KO.view.createCanvasCommand, "현재 노트로 Linked Canvas 만들기");
-	assert.equal(COPY_KO.view.enableCanvasCommand, "현재 Canvas에 연결 동기화 켜기");
+test("makes current-note links primary while keeping Canvas explicitly advanced", () => {
+	assert.equal(COPY_KO.view.openRibbon, "현재 노트 연결 보기");
+	assert.equal(COPY_EN.view.openRibbon, "View current note connections");
+	assert.equal(COPY_KO.view.openCommand, "현재 노트 연결 보기");
+	assert.equal(COPY_EN.view.openCommand, "View current note connections");
+	assert.match(COPY_KO.view.openCanvasCommand, /^고급:/);
+	assert.match(COPY_EN.view.openCanvasCommand, /^Advanced:/);
+	assert.match(COPY_KO.view.createCanvasCommand, /^고급:/);
+	assert.match(COPY_KO.view.enableCanvasCommand, /^고급:/);
 	assert.equal(COPY_KO.actions.continueInCanvas, "Canvas에서 계속");
 	assert.equal(COPY_EN.actions.continueInCanvas, "Continue in Canvas");
 	assert.equal(COPY_KO.actions.expandNeighboursCount(3), "주변 노트 3개 펼치기");
@@ -34,21 +36,25 @@ test("makes Linked Canvas primary while keeping Linked Map as a secondary explor
 });
 
 test("the in-app guide explains the choice and file ownership before acting", () => {
-	assert.match(COPY_KO.help.canvasEyebrow, /공간 만들기/);
-	assert.match(COPY_KO.help.mapEyebrow, /자료 올리기/);
-	assert.match(COPY_KO.help.canvasDescription, /새 빈 보드/);
-	assert.match(COPY_KO.help.mapDescription, /Markdown·PDF·PNG·JPG·GIF/);
-	assert.match(COPY_KO.help.ownershipItems[0]!, /원본 Markdown·PDF·이미지/);
-	assert.match(COPY_EN.help.canvasEyebrow, /Create a space/);
-	assert.match(COPY_EN.help.mapEyebrow, /Place material/);
-	assert.match(COPY_EN.help.ownershipItems[1]!, /standard \.canvas/);
-	assert.equal(COPY_EN.view.helpCommand, "Show how to use Linked Canvas");
+	assert.match(COPY_KO.help.canvasEyebrow, /노트에서 이동/);
+	assert.match(COPY_KO.help.mapEyebrow, /연결을 한눈에 보기/);
+	assert.match(COPY_KO.help.canvasDescription, /파란 링크/);
+	assert.match(COPY_KO.help.mapDescription, /wikilink·embed·backlink/);
+	assert.match(COPY_KO.help.ownershipItems[0]!, /유일한 정본/);
+	assert.match(COPY_EN.help.canvasEyebrow, /Navigate in notes/);
+	assert.match(COPY_EN.help.mapEyebrow, /at a glance/);
+	assert.match(COPY_EN.help.ownershipItems[1]!, /without storing separate knowledge/);
+	assert.equal(COPY_EN.view.helpCommand, "Show how to explore note connections");
 	assert.match(COPY_EN.modal.canvasLauncherBlank, /blank Canvas/);
+	assert.equal(
+		COPY_KO.modal.canvasLauncherExisting("home Canvas", "maps/linked-canvas/home Canvas.canvas"),
+		"기존 Canvas — home Canvas · maps/linked-canvas/home Canvas.canvas",
+	);
 });
 
-test("explains that Canvas connection sync writes real note relations only when enabled", () => {
-	assert.match(COPY_KO.notice.canvasRelationSyncEnabled, /실제 노트 관계/);
-	assert.match(COPY_EN.notice.canvasRelationSyncDisabled, /visual only/);
+test("explains that Canvas owns spatial connections without mutating Markdown", () => {
+	assert.match(COPY_KO.help.ownershipItems[2]!, /Markdown을 변경하지 않습니다/);
+	assert.match(COPY_EN.help.ownershipItems[2]!, /never changes Markdown/);
 });
 
 test("ships complete Korean and English relation labels", () => {

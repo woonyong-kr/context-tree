@@ -1,6 +1,4 @@
 import type { JsonCanvasDocument, JsonCanvasFileNode, LinkedCanvasManagedState } from "./json-canvas";
-import { isContextRelationType } from "./relations";
-import type { ContextRelationType } from "../types";
 
 const LINKED_CANVAS_SCHEMA_VERSION = 1;
 const LINKED_CANVAS_PROFILE_SUFFIX = ".linked-canvas.json";
@@ -8,8 +6,6 @@ const LINKED_CANVAS_PROFILE_SUFFIX = ".linked-canvas.json";
 function isMarkdownPath(value: string): boolean {
 	return value.toLowerCase().endsWith(".md");
 }
-
-type CanvasRelationSync = "visual-only" | "frontmatter-additive";
 
 export interface LinkedCanvasProfile {
 	schemaVersion: typeof LINKED_CANVAS_SCHEMA_VERSION;
@@ -20,7 +16,6 @@ export interface LinkedCanvasProfile {
 	includeOutgoing: boolean;
 	includeBacklinks: boolean;
 	autoExpandDroppedMarkdown: boolean;
-	relationSync: CanvasRelationSync;
 	excludedPaths: string[];
 	managed: LinkedCanvasManagedState;
 }
@@ -68,7 +63,6 @@ export function createLinkedCanvasProfile(canvasPath: string, rootPath = ""): Li
 		includeOutgoing: true,
 		includeBacklinks: true,
 		autoExpandDroppedMarkdown: true,
-		relationSync: "visual-only",
 		excludedPaths: [],
 		managed: { filesByNodeId: {}, edgeIds: [] },
 	};
@@ -114,7 +108,6 @@ export function parseLinkedCanvasProfile(source: string): LinkedCanvasProfile | 
 			includeOutgoing: value.includeOutgoing !== false,
 			includeBacklinks: value.includeBacklinks !== false,
 			autoExpandDroppedMarkdown: value.autoExpandDroppedMarkdown !== false,
-			relationSync: value.relationSync === "frontmatter-additive" ? "frontmatter-additive" : "visual-only",
 			excludedPaths: uniquePaths(value.excludedPaths),
 			managed: managedState(value.managed),
 		};
@@ -205,40 +198,4 @@ export function manualMarkdownSeeds(profile: LinkedCanvasProfile, canvas: JsonCa
 		.filter((node): node is JsonCanvasFileNode => node.type === "file" && isMarkdownPath(node.file))
 		.filter((node) => !managedIds.has(node.id) && !known.has(node.file))
 		.map((node) => node.file);
-}
-
-export interface ManualCanvasRelation {
-	fromPath: string;
-	toPath: string;
-	label?: ContextRelationType;
-}
-
-/** Only user-owned directed edges between Markdown file cards can become note relations. */
-export function manualCanvasRelations(profile: LinkedCanvasProfile, canvas: JsonCanvasDocument): ManualCanvasRelation[] {
-	if (profile.relationSync !== "frontmatter-additive") return [];
-	const managedEdgeIds = new Set(profile.managed.edgeIds);
-	const markdownByNodeId = new Map(canvas.nodes
-		.filter((node): node is JsonCanvasFileNode => node.type === "file" && isMarkdownPath(node.file))
-		.map((node) => [node.id, node.file]));
-	const seen = new Set<string>();
-	const relations: ManualCanvasRelation[] = [];
-	for (const edge of canvas.edges) {
-		if (managedEdgeIds.has(edge.id)) continue;
-		// Unsupported labels remain meaningful visual language. Do not silently
-		// coerce them to `related` in a source note. An unlabeled edge maps to the
-		// default relationship type at the write boundary.
-		const rawLabel = edge.label;
-		if (rawLabel && !isContextRelationType(rawLabel)) continue;
-		const label: ContextRelationType | undefined = rawLabel && isContextRelationType(rawLabel)
-			? rawLabel
-			: undefined;
-		const fromPath = markdownByNodeId.get(edge.fromNode);
-		const toPath = markdownByNodeId.get(edge.toNode);
-		if (!fromPath || !toPath || fromPath === toPath) continue;
-		const key = `${fromPath}\u0000${toPath}\u0000${edge.label ?? ""}`;
-		if (seen.has(key)) continue;
-		seen.add(key);
-		relations.push({ fromPath, toPath, ...(label ? { label } : {}) });
-	}
-	return relations;
 }
