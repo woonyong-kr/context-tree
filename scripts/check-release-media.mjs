@@ -3,7 +3,6 @@ import { readFile } from "node:fs/promises";
 
 const repository = new URL("../", import.meta.url);
 const requiredAssets = [
-	"docs/assets/linked-canvas-00-help.png",
 	"docs/assets/linked-canvas-01-canvas.png",
 	"docs/assets/linked-canvas-02-map.png",
 	"docs/assets/linked-canvas-03-reading.png",

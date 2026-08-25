@@ -31,8 +31,6 @@ If the flow is unclear after installation, run **Show how to explore note connec
 from the Command palette or open **Settings → Linked Canvas → How it works**.
 The guide explains note navigation, the one-hop graph, optional Canvas use, and ownership.
 
-![The in-app guide explains creating a space, placing Vault material, link assistance, and file ownership](docs/assets/linked-canvas-00-help.png)
-
 ## Why this plugin exists
 
 Obsidian already has a Local Graph and Canvas. Each is good at a different job:
@@ -410,23 +408,21 @@ Users of the pre-0.4.0 local build should move `data.json`, `main.js`,
 
 ## Installation
 
-From Obsidian Community plugins:
+Linked Canvas is not yet listed in Obsidian's Community directory. Install the
+published GitHub release without building the repository:
 
-1. Open **Settings → Community plugins → Browse**.
-2. Search for **Linked Canvas**.
-3. Select **Install**, then **Enable**.
-4. Select the Linked Canvas ribbon icon from any workspace. Start blank, start
-   with the active Markdown note when one exists, or open any existing Canvas.
-
-For a manual release install, download `main.js`, `manifest.json`, and
-`styles.css` from the same GitHub release and place them in:
+1. Download `main.js`, `manifest.json`, and `styles.css` from the same
+   [Linked Canvas release](https://github.com/woonyong-kr/linked-canvas/releases/latest).
+2. Place all three files in:
 
 ```text
 <vault>/.obsidian/plugins/context-graph/
 ```
 
-Reload Obsidian and enable **Linked Canvas** under **Settings → Community
-plugins**.
+3. Reload Obsidian and enable **Linked Canvas** under **Settings → Community
+   plugins**.
+4. Select the Linked Canvas ribbon icon. Start blank, start with the active
+   Markdown note, or open an existing Canvas.
 
 ## Development and verification
 

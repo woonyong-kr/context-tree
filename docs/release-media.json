@@ -5,12 +5,6 @@
 	"publicSafeSample": true,
 	"assets": [
 		{
-			"path": "docs/assets/linked-canvas-00-help.png",
-			"width": 984,
-			"height": 768,
-			"sha256": "0a2778427bf073ead7a7e6df8a9563532a472623597853704f2d18344ff770c1"
-		},
-		{
 			"path": "docs/assets/linked-canvas-01-canvas.png",
 			"width": 984,
 			"height": 768,
@@ -38,7 +32,7 @@
 			"path": "docs/assets/linked-canvas-tour.gif",
 			"width": 984,
 			"height": 768,
-			"sha256": "32d2f4a953315ba459f629d104473ef95e28f98d75413292110852806cc897ce"
+			"sha256": "4b186d4383d9ea2521418575fdaaaea49be62a73ace8742a581295ea4d803ed5"
 		}
 	]
 }
