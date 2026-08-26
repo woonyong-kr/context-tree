@@ -54,6 +54,8 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /ResizeObserver/);
 	assert.match(graph, /stage\.clientWidth/);
 	assert.match(graph, /registerDrag\(rootElement, this\.root\)/);
+	assert.match(graph, /options\.parent[\s\S]*createEl\("button"[\s\S]*createDiv\(/);
+	assert.doesNotMatch(graph, /"aria-disabled"/);
 	assert.match(graph, /onOpenParent/);
 	assert.match(graph, /pointerenter/);
 	assert.match(graph, /onPreview/);
@@ -73,8 +75,8 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 
 test("graph edges stay readable while preview edges remain visually secondary", async () => {
 	const styles = await readFile(new URL("styles.css", repository), "utf8");
-	assert.match(styles, /\.linked-graph-network-edge \{[\s\S]*var\(--lg-muted\) 46%[\s\S]*stroke-width: 1\.25/);
-	assert.match(styles, /\.linked-graph-network-edge\.is-preview \{[\s\S]*var\(--lg-muted\) 38%[\s\S]*stroke-dasharray: 4 5[\s\S]*stroke-width: 1\.1/);
+	assert.match(styles, /\.linked-graph-network-edge \{[\s\S]*var\(--lg-muted\) 64%[\s\S]*stroke-width: 1\.4/);
+	assert.match(styles, /\.linked-graph-network-edge\.is-preview \{[\s\S]*var\(--lg-muted\) 50%[\s\S]*stroke-dasharray: 4 5[\s\S]*stroke-width: 1\.15/);
 	assert.match(styles, /stroke-linecap: round/);
 });
 

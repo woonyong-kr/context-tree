@@ -114,20 +114,30 @@ export class OneHopForceGraph {
 		this.edgeLayer.setAttribute("aria-hidden", "true");
 		this.world.append(this.edgeLayer);
 
-		const rootElement = this.world.createEl("button", {
-			cls: `linked-graph-network-root${options.parent ? " has-parent" : ""}`,
-			attr: {
-				"aria-label": options.parent ? options.controls.openParent(options.parent.label) : options.title,
-				"aria-disabled": String(!options.parent),
-				"data-node-kind": options.rootKind,
-				title: options.parent ? options.controls.openParent(options.parent.label) : options.title,
-				type: "button",
-			},
-		});
+		const rootElement = options.parent
+			? this.world.createEl("button", {
+					cls: "linked-graph-network-root has-parent",
+					attr: {
+						"aria-label": options.controls.openParent(options.parent.label),
+						"data-node-kind": options.rootKind,
+						title: options.controls.openParent(options.parent.label),
+						type: "button",
+					},
+				})
+			: this.world.createDiv({
+					cls: "linked-graph-network-root",
+					attr: {
+						"aria-label": options.title,
+						"data-node-kind": options.rootKind,
+						title: options.title,
+					},
+				});
 		rootElement.createSpan({ cls: "linked-graph-network-root-dot", attr: { "aria-hidden": "true" } });
 		rootElement.createSpan({ cls: "linked-graph-network-root-label", text: options.title });
-		const parentIcon = rootElement.createSpan({ cls: "linked-graph-network-root-parent-icon", attr: { "aria-hidden": "true" } });
-		setIcon(parentIcon, "corner-up-left");
+		if (options.parent) {
+			const parentIcon = rootElement.createSpan({ cls: "linked-graph-network-root-parent-icon", attr: { "aria-hidden": "true" } });
+			setIcon(parentIcon, "corner-up-left");
+		}
 		this.root = {
 			id: "__current__",
 			depth: 0,
@@ -138,10 +148,12 @@ export class OneHopForceGraph {
 			element: rootElement,
 		};
 		this.registerDrag(rootElement, this.root);
-		rootElement.addEventListener("click", (event) => {
-			if (this.consumeSuppressedClick(event)) return;
-			if (options.parent) options.onOpenParent(options.parent);
-		});
+		if (options.parent) {
+			rootElement.addEventListener("click", (event) => {
+				if (this.consumeSuppressedClick(event as MouseEvent)) return;
+				options.onOpenParent(options.parent!);
+			});
+		}
 
 		const radius = Math.min(176, Math.max(118, 92 + options.items.length * 7));
 		this.leaves = options.items.map((item, index) => this.createLeaf(item, index, radius));
