@@ -349,13 +349,14 @@
 .linked-graph-network-root {
 	--lg-node-color: var(--lg-kind-unknown);
 	display: inline-flex;
+	flex-direction: column;
 	align-items: center;
-	gap: var(--lg-space-2);
+	gap: var(--lg-space-1);
 	width: max-content;
 	max-width: 190px;
 	min-height: 32px;
 	margin: 0;
-	padding: 0 var(--lg-space-2);
+	padding: 0 var(--lg-space-1);
 	border: 0;
 	border-radius: var(--radius-s);
 	transform: translate(-50%, -50%);
@@ -404,13 +405,14 @@
 .linked-graph-view button.linked-graph-network-node {
 	--lg-node-color: var(--lg-kind-unknown);
 	display: inline-flex;
+	flex-direction: column;
 	align-items: center;
-	gap: var(--lg-space-2);
+	gap: var(--lg-space-1);
 	width: max-content;
 	max-width: 190px;
 	min-height: 30px;
 	margin: 0;
-	padding: 0 var(--lg-space-2);
+	padding: 0 var(--lg-space-1);
 	border: 0;
 	border-radius: 0;
 	color: var(--lg-text);
@@ -418,7 +420,7 @@
 	box-shadow: none;
 	font-size: var(--lg-font-normal);
 	font-weight: var(--font-medium);
-	text-align: left;
+	text-align: center;
 	cursor: pointer;
 	touch-action: none;
 }
@@ -451,6 +453,7 @@
 .linked-graph-network-node-label {
 	display: block;
 	max-width: 158px;
+	text-align: center;
 }
 
 .linked-graph-network-preview-node {
@@ -459,8 +462,9 @@
 	top: 0;
 	left: 0;
 	display: inline-flex;
+	flex-direction: column;
 	align-items: center;
-	gap: 6px;
+	gap: 3px;
 	width: max-content;
 	max-width: 132px;
 	min-height: 24px;
@@ -468,6 +472,7 @@
 	color: var(--lg-text);
 	font-size: var(--lg-font-small);
 	font-weight: var(--font-medium);
+	text-align: center;
 	opacity: 1;
 	pointer-events: none;
 	transition: opacity var(--anim-duration-fast) var(--anim-motion-smooth);

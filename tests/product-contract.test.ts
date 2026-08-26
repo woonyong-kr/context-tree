@@ -106,4 +106,7 @@ test("graph uses an edge-to-edge canvas and node-only hover affordances", async 
 	assert.match(styles, /\.linked-graph-network-node\.is-preview-source \{[\s\S]*background: transparent/);
 	assert.match(styles, /\.linked-graph-network-node\.is-preview-source \.linked-graph-network-node-dot \{[\s\S]*transform: scale\(1\.18\)/);
 	assert.match(styles, /\.linked-graph-view \.linked-graph-network-root:focus-visible,[\s\S]*outline: none;[\s\S]*box-shadow: none/);
+	assert.match(styles, /\.linked-graph-network-root \{[\s\S]*flex-direction: column/);
+	assert.match(styles, /button\.linked-graph-network-node \{[\s\S]*flex-direction: column[\s\S]*text-align: center/);
+	assert.match(styles, /\.linked-graph-network-preview-node \{[\s\S]*flex-direction: column[\s\S]*text-align: center/);
 });
