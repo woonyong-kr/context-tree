@@ -26,7 +26,8 @@ Keep the canonical Markdown note visible while providing the shortest readable r
 - Outline: deterministic vertical order with hairline separators and blue navigation titles.
 - Plain-text bullet groups: collapsible labels plus descendant link count.
 - Graph: movable current note, force-positioned direct authored links, parent navigation, hover-only outgoing preview, metadata colours, drag, pan, zoom, and no saved positions.
-- Graph spacing: compact sidebars keep the minimum readable radius; wider panes expand link and preview distances to use the available canvas.
+- Graph spacing: the leaf is a viewport over an unbounded ephemeral world. Compact sidebars keep a readable minimum radius; wider panes and denser link sets expand force distance beyond the viewport when necessary. Pan and zoom, not viewport-edge clamping, reveal the rest of the graph.
+- Graph motion: node drag reheats one shared simulation; link, charge, collision, and gentle centering forces settle continuously instead of snapping nodes to a fixed ring or panel edge. Fit computes the current node bounds and never rewrites positions.
 - Empty and error states: short action-oriented text, no decorative cards.
 
 ## Fold boundary

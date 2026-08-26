@@ -56,6 +56,10 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /graphLayoutMetrics/);
 	assert.match(graph, /updateResponsiveLayout/);
 	assert.match(graph, /nodeAnchorOffset/);
+	assert.match(graph, /private fitGraph\(\)/);
+	assert.match(graph, /this\.stage\.clientWidth \/ graphWidth/);
+	assert.doesNotMatch(graph, /const maxX = Math\.max/);
+	assert.doesNotMatch(graph, /const maxY = Math\.max/);
 	assert.match(graph, /const sourceAnchor = this\.nodeAnchor\(link\.source\)/);
 	assert.match(graph, /registerDrag\(rootElement, this\.root\)/);
 	assert.match(graph, /options\.parent[\s\S]*createEl\("button"[\s\S]*createDiv\(/);

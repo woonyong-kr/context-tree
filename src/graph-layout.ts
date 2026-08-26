@@ -15,20 +15,18 @@ export function graphLayoutMetrics(width: number, height: number, itemCount: num
 	const safeWidth = width > 0 ? width : 640;
 	const safeHeight = height > 0 ? height : 640;
 	const shortSide = Math.min(safeWidth, safeHeight);
-	const densityAllowance = Math.min(30, Math.max(0, itemCount - 8) * 1.5);
-	const horizontalLimit = Math.max(158, safeWidth / 2 - 108);
-	const verticalLimit = Math.max(158, safeHeight / 2 - 64);
-	const directLimit = Math.min(280, horizontalLimit, verticalLimit);
-	const directDistance = Math.round(clamp(shortSide * 0.28 + densityAllowance, 158, directLimit));
-	const previewDistance = Math.round(clamp(shortSide * 0.19, 116, 164));
-	const previewRingGap = Math.round(clamp(shortSide * 0.1, 72, 92));
+	const viewportDistance = shortSide * 0.4;
+	const densityDistance = Math.sqrt(Math.max(itemCount, 1)) * 55;
+	const directDistance = Math.round(Math.max(158, viewportDistance, densityDistance));
+	const previewDistance = Math.round(clamp(shortSide * 0.2, 116, 190));
+	const previewRingGap = Math.round(clamp(shortSide * 0.11, 72, 104));
 
 	return {
 		directDistance,
 		leafRadius: directDistance,
 		previewDistance,
 		previewRingGap,
-		chargeDistance: Math.round(Math.max(360, directDistance + previewDistance + previewRingGap)),
+		chargeDistance: Math.round(Math.max(480, directDistance * 2.4)),
 	};
 }
 

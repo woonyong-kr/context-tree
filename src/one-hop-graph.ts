@@ -80,7 +80,7 @@ interface PanState {
 	startPanY: number;
 }
 
-const MIN_SCALE = 0.55;
+const MIN_SCALE = 0.12;
 const MAX_SCALE = 2.4;
 
 export class OneHopForceGraph {
@@ -163,23 +163,23 @@ export class OneHopForceGraph {
 		this.linkForce = forceLink<PhysicsNode, PhysicsLink>(this.baseLinks)
 			.id((node) => node.id)
 			.distance((link) => link.distance)
-			.strength((link) => link.preview ? 0.32 : 0.5);
+			.strength((link) => link.preview ? 0.24 : 0.3);
 		this.simulation = forceSimulation<PhysicsNode, PhysicsLink>(this.allNodes())
 			.alpha(0.9)
-			.alphaDecay(0.035)
-			.velocityDecay(0.38)
+			.alphaDecay(0.022)
+			.velocityDecay(0.3)
 			.force("link", this.linkForce)
 			.force("charge", forceManyBody<PhysicsNode>()
-				.strength((node) => node.depth === 0 ? -120 : node.depth === 1 ? -210 : -74)
+				.strength((node) => node.depth === 0 ? -260 : node.depth === 1 ? -320 : -92)
 				.distanceMax(this.layout.chargeDistance))
 			.force("collision", forceCollide<PhysicsNode>()
 				.radius((node) => this.collisionRadius(node))
 				.strength(0.92)
 				.iterations(3))
 			.force("center-x", forceX<PhysicsNode>(0)
-				.strength((node) => node.depth === 0 ? 0.08 : node.depth === 1 ? 0.012 : 0.006))
+				.strength((node) => node.depth === 0 ? 0.025 : node.depth === 1 ? 0.002 : 0.001))
 			.force("center-y", forceY<PhysicsNode>(0)
-				.strength((node) => node.depth === 0 ? 0.08 : node.depth === 1 ? 0.012 : 0.006))
+				.strength((node) => node.depth === 0 ? 0.025 : node.depth === 1 ? 0.002 : 0.001))
 			.on("tick", () => this.updateNodes());
 		this.resizeObserver = new ResizeObserver(() => {
 			if (!this.updateResponsiveLayout()) return;
@@ -205,8 +205,10 @@ export class OneHopForceGraph {
 	}
 
 	private createLeaf(item: OneHopGraphNode, index: number, radius: number): PhysicsNode {
-		const angle = -Math.PI / 2 + (Math.PI * 2 * index) / Math.max(this.options.items.length, 1);
-		const initialRadius = radius + (index % 2 === 0 ? -10 : 10);
+		const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+		const angle = -Math.PI / 2 + goldenAngle * index;
+		const fill = Math.sqrt((index + 1) / Math.max(this.options.items.length, 1));
+		const initialRadius = radius * (0.68 + fill * 0.32);
 		const element = this.world.createEl("button", {
 			cls: "linked-graph-network-node",
 			attr: {
@@ -382,7 +384,7 @@ export class OneHopForceGraph {
 		controls.append(
 			this.iconButton("minus", labels.zoomOut, () => this.setScale(this.scale / 1.18)),
 			this.iconButton("plus", labels.zoomIn, () => this.setScale(this.scale * 1.18)),
-			this.iconButton("scan", labels.fitGraph, () => this.resetViewport()),
+			this.iconButton("scan", labels.fitGraph, () => this.fitGraph()),
 		);
 	}
 
@@ -401,16 +403,8 @@ export class OneHopForceGraph {
 
 	private updateNodes(): void {
 		for (const node of this.allNodes()) {
-			const halfNodeWidth = (node.element?.offsetWidth ?? 40) / 2;
-			const halfNodeHeight = (node.element?.offsetHeight ?? 30) / 2;
-			const maxX = Math.max(36, this.stage.clientWidth / 2 - halfNodeWidth - 12);
-			const maxY = Math.max(48, this.stage.clientHeight / 2 - halfNodeHeight - 12);
-			const x = Math.max(-maxX, Math.min(maxX, node.x ?? 0));
-			const y = Math.max(-maxY, Math.min(maxY, node.y ?? 0));
-			if (x !== node.x) node.vx = (node.vx ?? 0) * -0.2;
-			if (y !== node.y) node.vy = (node.vy ?? 0) * -0.2;
-			node.x = x;
-			node.y = y;
+			const x = node.x ?? 0;
+			const y = node.y ?? 0;
 			node.element?.style.setProperty("transform", `translate(${String(x)}px, ${String(y)}px) translate(-50%, -50%)`);
 		}
 		for (const link of this.allLinks()) {
@@ -525,10 +519,33 @@ export class OneHopForceGraph {
 		this.updateWorldTransform();
 	}
 
-	private resetViewport(): void {
-		this.panX = 0;
-		this.panY = 0;
-		this.scale = 1;
+	private fitGraph(): void {
+		const nodes = this.allNodes();
+		if (nodes.length === 0) return;
+		let minX = Number.POSITIVE_INFINITY;
+		let maxX = Number.NEGATIVE_INFINITY;
+		let minY = Number.POSITIVE_INFINITY;
+		let maxY = Number.NEGATIVE_INFINITY;
+		for (const node of nodes) {
+			const halfWidth = (node.element?.offsetWidth ?? 40) / 2;
+			const halfHeight = (node.element?.offsetHeight ?? 30) / 2;
+			minX = Math.min(minX, (node.x ?? 0) - halfWidth);
+			maxX = Math.max(maxX, (node.x ?? 0) + halfWidth);
+			minY = Math.min(minY, (node.y ?? 0) - halfHeight);
+			maxY = Math.max(maxY, (node.y ?? 0) + halfHeight);
+		}
+		const padding = 40;
+		const graphWidth = Math.max(1, maxX - minX + padding * 2);
+		const graphHeight = Math.max(1, maxY - minY + padding * 2);
+		this.scale = Math.min(
+			1,
+			Math.max(
+				MIN_SCALE,
+				Math.min(this.stage.clientWidth / graphWidth, this.stage.clientHeight / graphHeight),
+			),
+		);
+		this.panX = -((minX + maxX) / 2) * this.scale;
+		this.panY = -((minY + maxY) / 2) * this.scale;
 		this.updateWorldTransform();
 	}
 }
