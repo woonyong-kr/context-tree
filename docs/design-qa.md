@@ -8,27 +8,28 @@
 
 ## Compared reference
 
-The user-supplied captures, including the latest 938×508 edge-and-outline report, and the final 1115×768 Obsidian runtime were placed side by side locally. The latest comparison verified that persistent edges are visibly stronger and the resting `Wiki` centre has no rectangular outline, while retaining Obsidian's dot-and-label graph grammar.
+The user-supplied captures, including the latest native-Graph comparison, and the final 1115×768 Obsidian runtime were placed side by side locally. The latest comparison verified that edges inherit Obsidian's own `--graph-line` and `--graph-text` tokens, every line terminates at the visible dot centre, and the resting `Wiki` centre has no rectangular outline.
 
-The final implementation was captured in Obsidian 1.13.7 with `wiki/README.md` active and the Linked Graph leaf widened. The first capture shows the resting 1-hop graph. The second keyboard-focus capture exercises the same next-hop preview path used by pointer hover, while keeping the keyboard focus ring supplied by Obsidian. The local-only side-by-side comparison is stored outside release media.
+The final implementation was captured in Obsidian 1.13.7 with `wiki/README.md` active and the Linked Graph leaf widened. The first capture shows the resting responsive 1-hop graph. The second keyboard-focus capture exercises the same next-hop preview path used by pointer hover. The local-only side-by-side comparison is stored outside release media.
 
 ## Fidelity and interaction review
 
 | Surface | Result | Evidence |
 |---|---|---|
 | Graph grammar | passed | The current Markdown note is the movable centre, seven resolved outgoing links are surrounding nodes, and each authored link is one visible edge. |
-| Canvas use | passed | Graph mode removes body padding and gives the force surface the full remaining width and height below the compact 64px header. |
+| Canvas use | passed | Graph mode removes body padding, fills the remaining pane, and increases link distance from the compact minimum only when the measured panel can support it. |
 | Moving labels | passed | Every title is part of its force node; the removed group-label layer leaves no fixed captions behind the moving graph. |
 | Route labels | passed | Every direct route keeps a visible title; content-sized native buttons no longer collapse to bare dots. |
-| Motion | passed | `d3-force` link, charge, and collision forces apply equally to the current note and direct nodes. Dragging the current `책` node moved it 54px left and 30px down; release reheated and settled the neighbourhood. |
+| Motion | passed | `d3-force` link, charge, and collision forces apply equally to the current note and direct nodes. Duplicate `active-leaf-change` and `file-open` events are coalesced so one source change creates one graph. |
 | Viewport safety | passed | A dragged `Wiki` node remained visible after settling; moving nodes are bounded by measured node and sidebar dimensions, and resize reheats the layout. |
 | Navigation | passed | On `책`, the centre exposed `상위 문서로 이동: Wiki`; clicking it opened `wiki/README.md` and rebuilt the graph from two book links to seven Wiki routes. |
 | Hover preview | passed | Focusing a direct route exposed the same measured second-level graph used by pointer hover. The source stayed pinned, preview edges remained dashed and non-interactive, and leaving hover or focus removed the entire second level. |
-| Edge contrast | passed | Direct links use a higher-contrast 1.5px neutral stroke; preview links use a visibly secondary 1.2px round-capped dashed stroke. Both remain distinct from node type colours. |
+| Edge geometry | passed | Direct and preview SVG endpoints use the measured dot centre instead of the text-and-dot button centre. Every visible line joins dot to dot. |
+| Edge contrast | passed | Direct links use Obsidian's native `--graph-line` at 1px; preview links use the same theme token as a secondary dashed path. Both remain distinct from node type colours. |
 | Pan and zoom | passed | Background drag pans the world; icon controls zoom out, zoom in, and reset the viewport without writing layout state. |
-| Information hierarchy | passed | Current note title and route count remain in the compact header; the graph contains only moving dots, titles, edges, and quiet controls. No static category captions or filled hover cards remain. |
+| Information hierarchy | passed | Current note title and route count remain in the compact header; the graph contains only resolved-link dots, titles, edges, and quiet controls. No static category captions, native path tooltips, parent arrow, or filled hover cards remain. |
 | Colour and shape | passed | Obsidian theme color tokens differentiate only node dots from canonical `node_kind`, `entity_kind`, and `facets`; every label keeps the neutral host text colour. Titles are never used to infer a type. |
-| Settling stability | passed | Two captures taken three seconds apart after initial settling differed by mean absolute RGB `0.0061/0.0061/0.0063`; the only changed bounding box was the 18×32px pointer, not graph nodes. |
+| Settling stability | passed | Resize events reheat only after a meaningful panel-size change; source navigation refreshes once per distinct Markdown path. |
 | Canonical boundary | passed | Graph, outline, search, and motion are read-only projections; Markdown and Vault relationships are never modified. |
 | Accessibility | passed | Navigable route nodes and controls are native buttons with accessible names. A root without a canonical parent is a draggable, non-focusable graph node, so it does not expose a false action or host button outline. |
 
@@ -46,5 +47,9 @@ The final implementation was captured in Obsidian 1.13.7 with `wiki/README.md` a
 10. Replaced divider-dominant edge colours with neutral text-derived contrast: persistent direct links remain solid and preview links remain lighter dashed paths.
 11. Removed static category anchors and labels, expanded graph mode edge-to-edge, and replaced the filled hover/focus card with a dot-only emphasis while retaining the 2-hop preview.
 12. Increased direct and preview edge contrast, then removed false button semantics from roots without a canonical parent so the `Wiki` centre no longer receives an action outline.
+13. Coalesced duplicate workspace events, removed graph-path tooltips and parent-arrow decoration, and made plain bullet groups structurally impossible in Graph view.
+14. Replaced fixed link radii with viewport-responsive distances that preserve the compact sidebar minimum and use a widened pane.
+15. Moved every edge endpoint from the node container centre to the measured colour-dot centre.
+16. Replaced hand-tuned edge and label colours with Obsidian's native `--graph-line` and `--graph-text` tokens.
 
 final result: passed
