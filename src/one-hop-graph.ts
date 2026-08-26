@@ -68,6 +68,7 @@ export class OneHopForceGraph {
 	private readonly leaves: PhysicsNode[];
 	private readonly groupAnchors = new Map<string, { x: number; y: number }>();
 	private readonly simulation: Simulation<PhysicsNode, PhysicsLink>;
+	private readonly resizeObserver: ResizeObserver;
 	private panX = 0;
 	private panY = 0;
 	private scale = 1;
@@ -174,6 +175,11 @@ export class OneHopForceGraph {
 			.force("group-y", forceY<PhysicsNode>((node) => this.groupTarget(node).y)
 				.strength((node) => node.root ? 0 : node.graph?.group ? 0.045 : 0.006))
 			.on("tick", () => this.updateNodes());
+		this.resizeObserver = new ResizeObserver(() => {
+			this.updateNodes();
+			this.simulation.alpha(0.18).restart();
+		});
+		this.resizeObserver.observe(this.stage);
 
 		this.renderControls(controlLabels);
 		this.stage.addEventListener("pointerdown", (event) => this.startPan(event));
@@ -186,6 +192,7 @@ export class OneHopForceGraph {
 	}
 
 	destroy(): void {
+		this.resizeObserver.disconnect();
 		this.simulation.stop();
 	}
 
@@ -223,8 +230,16 @@ export class OneHopForceGraph {
 
 	private updateNodes(): void {
 		for (const node of this.leaves) {
-			const x = node.x ?? 0;
-			const y = node.y ?? 0;
+			const halfNodeWidth = (node.element?.offsetWidth ?? 40) / 2;
+			const halfNodeHeight = (node.element?.offsetHeight ?? 30) / 2;
+			const maxX = Math.max(36, this.stage.clientWidth / 2 - halfNodeWidth - 12);
+			const maxY = Math.max(48, this.stage.clientHeight / 2 - halfNodeHeight - 12);
+			const x = Math.max(-maxX, Math.min(maxX, node.x ?? 0));
+			const y = Math.max(-maxY, Math.min(maxY, node.y ?? 0));
+			if (x !== node.x) node.vx = (node.vx ?? 0) * -0.2;
+			if (y !== node.y) node.vy = (node.vy ?? 0) * -0.2;
+			node.x = x;
+			node.y = y;
 			node.element?.style.setProperty("transform", `translate(${String(x)}px, ${String(y)}px) translate(-50%, -50%)`);
 			node.edge?.setAttribute("x2", String(x));
 			node.edge?.setAttribute("y2", String(y));

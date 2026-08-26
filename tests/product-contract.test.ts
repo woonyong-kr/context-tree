@@ -46,6 +46,8 @@ test("one-hop graph supports direct links, drag, zoom, and ephemeral layout only
 	assert.match(graph, /forceLink/);
 	assert.match(graph, /forceCollide/);
 	assert.match(graph, /alphaTarget\(0\.22\)\.restart/);
+	assert.match(graph, /ResizeObserver/);
+	assert.match(graph, /stage\.clientWidth/);
 	assert.match(graph, /onOpen\(item\)/);
 	assert.doesNotMatch(graph, /localStorage|saveData|vault\.modify/);
 });

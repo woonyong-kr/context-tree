@@ -6,6 +6,7 @@
 - Add ephemeral force positioning, drag, pan, zoom, fit controls, and canonical node navigation.
 - Use `d3-force` link, charge, collision, and reheating behaviour so nearby nodes respond naturally while dragging and settle without becoming permanently pinned.
 - Keep every node title visible with content-sized native buttons instead of collapsing routes to unlabeled dots.
+- Keep moving nodes inside the current sidebar viewport and reheat the layout after pane resizing.
 - Use Markdown bullet groups as semantic cluster anchors without creating group entities or saved layout state.
 - Keep the deterministic outline as a secondary view over the exact same link set.
 
