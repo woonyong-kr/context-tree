@@ -15,10 +15,10 @@ test("runtime is a read-only projection with no second knowledge store", async (
 	}
 });
 
-test("runtime contains no Canvas, backlink expansion, external force dependency, or relationship editor", async () => {
+test("runtime contains no Canvas, backlink expansion, or relationship editor", async () => {
 	const files = ["src/main.ts", "src/model.ts", "src/one-hop-graph.ts", "src/view.ts", "src/ui/copy-ko.ts", "src/ui/copy-en.ts"];
 	const runtime = (await Promise.all(files.map((path) => readFile(new URL(path, repository), "utf8")))).join("\n");
-	for (const forbidden of [/canvas/i, /backlink/i, /d3-force/i, /relation(?:ship)? editor/i]) {
+	for (const forbidden of [/canvas/i, /backlink/i, /relation(?:ship)? editor/i]) {
 		assert.equal(forbidden.test(runtime), false, `runtime must not match ${forbidden}`);
 	}
 });
@@ -42,7 +42,10 @@ test("one-hop graph supports direct links, drag, zoom, and ephemeral layout only
 	const graph = await readFile(new URL("src/one-hop-graph.ts", repository), "utf8");
 	assert.match(graph, /pointerdown/);
 	assert.match(graph, /wheel/);
-	assert.match(graph, /requestAnimationFrame/);
+	assert.match(graph, /forceSimulation/);
+	assert.match(graph, /forceLink/);
+	assert.match(graph, /forceCollide/);
+	assert.match(graph, /alphaTarget\(0\.22\)\.restart/);
 	assert.match(graph, /onOpen\(item\)/);
 	assert.doesNotMatch(graph, /localStorage|saveData|vault\.modify/);
 });

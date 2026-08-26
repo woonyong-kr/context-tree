@@ -1,3 +1,14 @@
+import {
+	forceCollide,
+	forceLink,
+	forceManyBody,
+	forceSimulation,
+	forceX,
+	forceY,
+	type Simulation,
+	type SimulationLinkDatum,
+	type SimulationNodeDatum,
+} from "d3-force";
 import { setIcon } from "obsidian";
 
 export interface OneHopGraphNode {
@@ -14,17 +25,23 @@ export interface OneHopGraphControls {
 	fitGraph: string;
 }
 
-interface SimulatedNode extends OneHopGraphNode {
+interface PhysicsNode extends SimulationNodeDatum {
+	id: string;
+	root: boolean;
 	x: number;
 	y: number;
-	vx: number;
-	vy: number;
-	element: HTMLButtonElement;
-	edge: SVGLineElement;
+	graph?: OneHopGraphNode;
+	element?: HTMLButtonElement;
+	edge?: SVGLineElement;
+}
+
+interface PhysicsLink extends SimulationLinkDatum<PhysicsNode> {
+	source: PhysicsNode;
+	target: PhysicsNode;
 }
 
 interface DragState {
-	node: SimulatedNode;
+	node: PhysicsNode;
 	pointerId: number;
 	startClientX: number;
 	startClientY: number;
@@ -47,10 +64,10 @@ const MAX_SCALE = 2.4;
 export class OneHopForceGraph {
 	private readonly stage: HTMLElement;
 	private readonly world: HTMLElement;
-	private readonly nodes: SimulatedNode[];
+	private readonly root: PhysicsNode;
+	private readonly leaves: PhysicsNode[];
 	private readonly groupAnchors = new Map<string, { x: number; y: number }>();
-	private frame = 0;
-	private ticks = 0;
+	private readonly simulation: Simulation<PhysicsNode, PhysicsLink>;
 	private panX = 0;
 	private panY = 0;
 	private scale = 1;
@@ -75,29 +92,32 @@ export class OneHopForceGraph {
 		edgeLayer.setAttribute("class", "linked-graph-network-edges");
 		edgeLayer.setAttribute("aria-hidden", "true");
 		this.world.append(edgeLayer);
-		const root = this.world.createDiv({ cls: "linked-graph-network-root" });
-		root.createSpan({ cls: "linked-graph-network-root-dot", attr: { "aria-hidden": "true" } });
-		root.createSpan({ cls: "linked-graph-network-root-label", text: title });
 
-		const radius = Math.min(180, Math.max(112, 92 + items.length * 5));
+		const rootElement = this.world.createDiv({ cls: "linked-graph-network-root" });
+		rootElement.createSpan({ cls: "linked-graph-network-root-dot", attr: { "aria-hidden": "true" } });
+		rootElement.createSpan({ cls: "linked-graph-network-root-label", text: title });
+		this.root = { id: "__current__", root: true, x: 0, y: 0, fx: 0, fy: 0 };
+
+		const radius = Math.min(176, Math.max(118, 92 + items.length * 7));
 		const grouped = [...new Set(items.map((item) => item.group).filter(Boolean))];
 		for (const [index, group] of grouped.entries()) {
 			const angle = -Math.PI / 2 + (Math.PI * 2 * index) / grouped.length;
-			this.groupAnchors.set(group, {
-				x: Math.cos(angle) * radius,
-				y: Math.sin(angle) * radius,
-			});
+			const anchor = { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
+			this.groupAnchors.set(group, anchor);
 			const label = this.world.createDiv({ cls: "linked-graph-network-group-label", text: group });
-			label.style.transform = `translate(${String(Math.cos(angle) * (radius + 58))}px, ${String(Math.sin(angle) * (radius + 58))}px) translate(-50%, -50%)`;
+			label.style.transform = `translate(${String(Math.cos(angle) * (radius + 62))}px, ${String(Math.sin(angle) * (radius + 62))}px) translate(-50%, -50%)`;
 		}
-		this.nodes = items.map((item, index) => {
-			const groupItems = item.group ? items.filter((candidate) => candidate.group === item.group) : items.filter((candidate) => !candidate.group);
+
+		this.leaves = items.map((item, index) => {
+			const groupItems = item.group
+				? items.filter((candidate) => candidate.group === item.group)
+				: items.filter((candidate) => !candidate.group);
 			const groupItemIndex = groupItems.findIndex((candidate) => candidate.key === item.key);
 			const anchor = item.group ? this.groupAnchors.get(item.group) : undefined;
 			const angle = anchor
-				? Math.atan2(anchor.y, anchor.x) + (groupItemIndex - (groupItems.length - 1) / 2) * 0.18
+				? Math.atan2(anchor.y, anchor.x) + (groupItemIndex - (groupItems.length - 1) / 2) * 0.22
 				: -Math.PI / 2 + (Math.PI * 2 * index) / Math.max(items.length, 1);
-			const nodeRadius = anchor ? radius + (groupItemIndex % 2) * 22 - 11 : radius;
+			const initialRadius = anchor ? radius + (groupItemIndex % 2) * 18 - 9 : radius;
 			const edge = createSvg("line");
 			edge.setAttribute("class", "linked-graph-network-edge");
 			edge.setAttribute("x1", "0");
@@ -105,16 +125,16 @@ export class OneHopForceGraph {
 			edgeLayer.append(edge);
 			const element = this.world.createEl("button", {
 				cls: "linked-graph-network-node",
-				attr: { title: item.path, type: "button" },
+				attr: { "aria-label": item.label, title: item.path, type: "button" },
 			});
 			element.createSpan({ cls: "linked-graph-network-node-dot", attr: { "aria-hidden": "true" } });
 			element.createSpan({ cls: "linked-graph-network-node-label", text: item.label });
-			const node: SimulatedNode = {
-				...item,
-				x: Math.cos(angle) * nodeRadius,
-				y: Math.sin(angle) * nodeRadius,
-				vx: 0,
-				vy: 0,
+			const node: PhysicsNode = {
+				id: item.key,
+				root: false,
+				x: Math.cos(angle) * initialRadius,
+				y: Math.sin(angle) * initialRadius,
+				graph: item,
 				element,
 				edge,
 			};
@@ -133,6 +153,28 @@ export class OneHopForceGraph {
 			return node;
 		});
 
+		const links: PhysicsLink[] = this.leaves.map((node) => ({ source: this.root, target: node }));
+		this.simulation = forceSimulation<PhysicsNode, PhysicsLink>([this.root, ...this.leaves])
+			.alpha(0.9)
+			.alphaDecay(0.035)
+			.velocityDecay(0.28)
+			.force("link", forceLink<PhysicsNode, PhysicsLink>(links)
+				.id((node) => node.id)
+				.distance(132)
+				.strength(0.5))
+			.force("charge", forceManyBody<PhysicsNode>()
+				.strength((node) => node.root ? -90 : -210)
+				.distanceMax(360))
+			.force("collision", forceCollide<PhysicsNode>()
+				.radius((node) => node.root ? 42 : this.collisionRadius(node))
+				.strength(0.92)
+				.iterations(2))
+			.force("group-x", forceX<PhysicsNode>((node) => this.groupTarget(node).x)
+				.strength((node) => node.root ? 0 : node.graph?.group ? 0.045 : 0.006))
+			.force("group-y", forceY<PhysicsNode>((node) => this.groupTarget(node).y)
+				.strength((node) => node.root ? 0 : node.graph?.group ? 0.045 : 0.006))
+			.on("tick", () => this.updateNodes());
+
 		this.renderControls(controlLabels);
 		this.stage.addEventListener("pointerdown", (event) => this.startPan(event));
 		this.stage.addEventListener("pointermove", (event) => this.movePan(event));
@@ -141,12 +183,20 @@ export class OneHopForceGraph {
 		this.stage.addEventListener("wheel", (event) => this.zoomWithWheel(event), { passive: false });
 		this.updateWorldTransform();
 		this.updateNodes();
-		this.frame = window.requestAnimationFrame(() => this.simulate());
 	}
 
 	destroy(): void {
-		if (this.frame) window.cancelAnimationFrame(this.frame);
-		this.frame = 0;
+		this.simulation.stop();
+	}
+
+	private collisionRadius(node: PhysicsNode): number {
+		const labelLength = node.graph?.label.length ?? 0;
+		return Math.min(88, 38 + labelLength * 2.2);
+	}
+
+	private groupTarget(node: PhysicsNode): { x: number; y: number } {
+		if (node.root) return { x: 0, y: 0 };
+		return this.groupAnchors.get(node.graph?.group ?? "") ?? { x: 0, y: 0 };
 	}
 
 	private renderControls(labels: OneHopGraphControls): void {
@@ -171,60 +221,13 @@ export class OneHopForceGraph {
 		return button;
 	}
 
-	private simulate(): void {
-		if (this.drag) {
-			this.frame = window.requestAnimationFrame(() => this.simulate());
-			return;
-		}
-		const targetRadius = Math.min(180, Math.max(112, 92 + this.nodes.length * 5));
-		for (let index = 0; index < this.nodes.length; index += 1) {
-			const node = this.nodes[index]!;
-			for (let otherIndex = index + 1; otherIndex < this.nodes.length; otherIndex += 1) {
-				const other = this.nodes[otherIndex]!;
-				const dx = node.x - other.x;
-				const dy = node.y - other.y;
-				const distanceSquared = Math.max(160, dx * dx + dy * dy);
-				const distance = Math.sqrt(distanceSquared);
-				const force = Math.min(0.9, 920 / distanceSquared);
-				const forceX = (dx / distance) * force;
-				const forceY = (dy / distance) * force;
-				node.vx += forceX;
-				node.vy += forceY;
-				other.vx -= forceX;
-				other.vy -= forceY;
-			}
-			const distance = Math.max(1, Math.hypot(node.x, node.y));
-			const spring = (distance - targetRadius) * 0.012;
-			node.vx -= (node.x / distance) * spring;
-			node.vy -= (node.y / distance) * spring;
-			const anchor = this.groupAnchors.get(node.group);
-			if (anchor) {
-				node.vx += (anchor.x - node.x) * 0.006;
-				node.vy += (anchor.y - node.y) * 0.006;
-			}
-		}
-		let motion = 0;
-		for (const node of this.nodes) {
-			node.vx *= 0.84;
-			node.vy *= 0.84;
-			node.x += node.vx;
-			node.y += node.vy;
-			motion += Math.abs(node.vx) + Math.abs(node.vy);
-		}
-		this.updateNodes();
-		this.ticks += 1;
-		if (this.ticks < 220 && motion > 0.008) {
-			this.frame = window.requestAnimationFrame(() => this.simulate());
-		} else {
-			this.frame = 0;
-		}
-	}
-
 	private updateNodes(): void {
-		for (const node of this.nodes) {
-			node.element.style.transform = `translate(${String(node.x)}px, ${String(node.y)}px) translate(-50%, -50%)`;
-			node.edge.setAttribute("x2", String(node.x));
-			node.edge.setAttribute("y2", String(node.y));
+		for (const node of this.leaves) {
+			const x = node.x ?? 0;
+			const y = node.y ?? 0;
+			node.element?.style.setProperty("transform", `translate(${String(x)}px, ${String(y)}px) translate(-50%, -50%)`);
+			node.edge?.setAttribute("x2", String(x));
+			node.edge?.setAttribute("y2", String(y));
 		}
 	}
 
@@ -232,18 +235,21 @@ export class OneHopForceGraph {
 		this.world.style.transform = `translate(${String(this.panX)}px, ${String(this.panY)}px) scale(${String(this.scale)})`;
 	}
 
-	private startNodeDrag(event: PointerEvent, node: SimulatedNode): void {
+	private startNodeDrag(event: PointerEvent, node: PhysicsNode): void {
 		event.stopPropagation();
 		this.drag = {
 			node,
 			pointerId: event.pointerId,
 			startClientX: event.clientX,
 			startClientY: event.clientY,
-			startNodeX: node.x,
-			startNodeY: node.y,
+			startNodeX: node.x ?? 0,
+			startNodeY: node.y ?? 0,
 			moved: false,
 		};
-		node.element.setPointerCapture(event.pointerId);
+		node.fx = node.x;
+		node.fy = node.y;
+		this.simulation.alphaTarget(0.22).restart();
+		node.element?.setPointerCapture(event.pointerId);
 	}
 
 	private moveNode(event: PointerEvent): void {
@@ -251,17 +257,20 @@ export class OneHopForceGraph {
 		const deltaX = (event.clientX - this.drag.startClientX) / this.scale;
 		const deltaY = (event.clientY - this.drag.startClientY) / this.scale;
 		this.drag.moved ||= Math.hypot(deltaX, deltaY) > 4;
-		this.drag.node.x = this.drag.startNodeX + deltaX;
-		this.drag.node.y = this.drag.startNodeY + deltaY;
-		this.drag.node.vx = 0;
-		this.drag.node.vy = 0;
+		this.drag.node.fx = this.drag.startNodeX + deltaX;
+		this.drag.node.fy = this.drag.startNodeY + deltaY;
+		this.drag.node.x = this.drag.node.fx;
+		this.drag.node.y = this.drag.node.fy;
 		this.updateNodes();
 	}
 
 	private endNodeDrag(event: PointerEvent): void {
 		if (!this.drag || this.drag.pointerId !== event.pointerId) return;
 		this.suppressClick = this.drag.moved;
+		this.drag.node.fx = null;
+		this.drag.node.fy = null;
 		this.drag = null;
+		this.simulation.alphaTarget(0);
 	}
 
 	private startPan(event: PointerEvent): void {

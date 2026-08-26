@@ -303,8 +303,8 @@
 }
 
 .linked-graph-network-edge {
-	stroke: color-mix(in srgb, var(--lg-border) 80%, transparent);
-	stroke-width: 1;
+	stroke: color-mix(in srgb, var(--lg-border) 92%, var(--lg-muted));
+	stroke-width: 1.15;
 	vector-effect: non-scaling-stroke;
 }
 
@@ -320,6 +320,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--lg-space-2);
+	width: max-content;
 	max-width: 190px;
 	transform: translate(-50%, -50%);
 	color: var(--lg-text);
@@ -345,11 +346,12 @@
 }
 
 .linked-graph-view button.linked-graph-network-node {
-	display: grid;
+	display: inline-grid;
 	grid-template-columns: auto minmax(0, 1fr);
 	align-items: center;
 	gap: var(--lg-space-2);
-	max-width: 170px;
+	width: max-content;
+	max-width: 190px;
 	min-height: 30px;
 	margin: 0;
 	padding: 0 var(--lg-space-2);
@@ -358,7 +360,7 @@
 	color: var(--lg-text);
 	background: transparent;
 	box-shadow: none;
-	font-size: var(--lg-font-small);
+	font-size: var(--lg-font-normal);
 	font-weight: var(--font-medium);
 	text-align: left;
 	cursor: pointer;
@@ -372,8 +374,8 @@
 }
 
 .linked-graph-network-node-dot {
-	width: 7px;
-	height: 7px;
+	width: 8px;
+	height: 8px;
 	border-radius: 50%;
 	background: var(--lg-accent);
 }

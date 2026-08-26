@@ -16,7 +16,7 @@
 - Outline group: medium label, count, disclosure chevron
 - Outline link: file icon, blue text, and hover-only open indicator
 - Graph root: one accent dot and title
-- Graph: fixed current-note centre, force-positioned direct-link nodes, real link edges, and quiet Markdown group labels
+- Graph: fixed current-note centre, `d3-force` link/charge/collision movement, content-sized direct-link nodes, real link edges, and quiet Markdown group labels
 - Focus: visible two-pixel host-derived ring
 - State text: muted and compact
 
