@@ -16,7 +16,7 @@ The final implementation was captured in Obsidian 1.13.7 with `wiki/README.md` a
 
 | Surface | Result | Evidence |
 |---|---|---|
-| Graph grammar | passed | The current Markdown note is the movable centre, seven resolved outgoing links are surrounding nodes, and each authored link is one visible edge. |
+| Graph grammar | passed | The current Markdown note is the movable centre, its resolved outgoing links are surrounding nodes, and each authored link is one visible edge. Every root, direct, and preview title is centred below its dot as in Obsidian Graph. |
 | Canvas use | passed | Graph mode removes body padding, fills the remaining pane, and increases link distance from the compact minimum only when the measured panel can support it. |
 | Moving labels | passed | Every title is part of its force node; the removed group-label layer leaves no fixed captions behind the moving graph. |
 | Route labels | passed | Every direct route keeps a visible title; content-sized native buttons no longer collapse to bare dots. |
@@ -51,5 +51,6 @@ The final implementation was captured in Obsidian 1.13.7 with `wiki/README.md` a
 14. Replaced fixed link radii with viewport-responsive distances that preserve the compact sidebar minimum and use a widened pane.
 15. Moved every edge endpoint from the node container centre to the measured colour-dot centre.
 16. Replaced hand-tuned edge and label colours with Obsidian's native `--graph-line` and `--graph-text` tokens.
+17. Moved every root, direct, and preview title below its dot while preserving dot-centred edge geometry.
 
 final result: passed
