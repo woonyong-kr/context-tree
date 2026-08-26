@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.0
+
+- Let dense current-note graphs expand into an unbounded world while the viewport remains an edge-to-edge navigation surface.
+- Keep force motion responsive without shrinking the graph to the initial panel bounds.
+- Anchor every edge to the visible node dot and keep labels below nodes in the Obsidian graph visual language.
+- Preserve hover-only second-hop previews, movable root navigation, metadata colours, pan, zoom, and fit without writing layout state to the Vault.
+
 ## 1.2.0
 
 - Make the current-note graph the default with one real edge per authored outgoing link.
