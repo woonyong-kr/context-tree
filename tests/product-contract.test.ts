@@ -91,8 +91,10 @@ test("navigation coalesces duplicate workspace events into one graph refresh", a
 
 test("graph edges stay readable while preview edges remain visually secondary", async () => {
 	const styles = await readFile(new URL("styles.css", repository), "utf8");
-	assert.match(styles, /\.linked-graph-network-edge \{[\s\S]*var\(--lg-muted\) 72%[\s\S]*stroke-width: 1\.5/);
-	assert.match(styles, /\.linked-graph-network-edge\.is-preview \{[\s\S]*var\(--lg-muted\) 56%[\s\S]*stroke-dasharray: 4 5[\s\S]*stroke-width: 1\.2/);
+	assert.match(styles, /--lg-graph-line: var\(--graph-line/);
+	assert.match(styles, /--lg-graph-text: var\(--graph-text/);
+	assert.match(styles, /\.linked-graph-network-edge \{[\s\S]*stroke: var\(--lg-graph-line\)[\s\S]*stroke-width: 1/);
+	assert.match(styles, /\.linked-graph-network-edge\.is-preview \{[\s\S]*var\(--lg-graph-line\) 68%[\s\S]*stroke-dasharray: 4 5[\s\S]*stroke-width: 1/);
 	assert.match(styles, /stroke-linecap: round/);
 });
 

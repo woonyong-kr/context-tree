@@ -8,6 +8,8 @@
 	--lg-hover: var(--background-modifier-hover);
 	--lg-accent: var(--link-color);
 	--lg-focus: var(--background-modifier-border-focus);
+	--lg-graph-line: var(--graph-line, var(--color-base-35, var(--background-modifier-border-focus)));
+	--lg-graph-text: var(--graph-text, var(--text-normal));
 	--lg-kind-hub: var(--color-purple, var(--interactive-accent));
 	--lg-kind-project: var(--color-blue, var(--link-color));
 	--lg-kind-person: var(--color-pink, var(--color-red));
@@ -16,7 +18,7 @@
 	--lg-kind-entity: var(--color-blue, var(--link-color));
 	--lg-kind-topic: var(--color-green, var(--interactive-accent));
 	--lg-kind-detail: var(--color-yellow, var(--text-muted));
-	--lg-kind-unknown: var(--text-muted);
+	--lg-kind-unknown: var(--graph-node, var(--text-muted));
 	--lg-space-1: 4px;
 	--lg-space-2: 8px;
 	--lg-space-3: 12px;
@@ -325,16 +327,16 @@
 }
 
 .linked-graph-network-edge {
-	stroke: color-mix(in srgb, var(--lg-muted) 72%, var(--lg-border));
-	stroke-width: 1.5;
+	stroke: var(--lg-graph-line);
+	stroke-width: 1;
 	stroke-linecap: round;
 	vector-effect: non-scaling-stroke;
 }
 
 .linked-graph-network-edge.is-preview {
-	stroke: color-mix(in srgb, var(--lg-muted) 56%, transparent);
+	stroke: color-mix(in srgb, var(--lg-graph-line) 68%, transparent);
 	stroke-dasharray: 4 5;
-	stroke-width: 1.2;
+	stroke-width: 1;
 }
 
 .linked-graph-network-root,
@@ -388,7 +390,7 @@
 .linked-graph-network-root-label,
 .linked-graph-network-node-label {
 	overflow: hidden;
-	color: var(--text-normal);
+	color: var(--lg-graph-text);
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
@@ -396,7 +398,7 @@
 .linked-graph-view .linked-graph-network-root .linked-graph-network-root-label,
 .linked-graph-view .linked-graph-network-node .linked-graph-network-node-label,
 .linked-graph-view .linked-graph-network-preview-node .linked-graph-network-node-label {
-	color: var(--text-normal);
+	color: var(--lg-graph-text);
 }
 
 .linked-graph-view button.linked-graph-network-node {
