@@ -10,19 +10,22 @@ Keep the canonical Markdown note visible while providing the shortest readable r
 2. The panel follows the most recently active Markdown editor.
 3. Only resolved, non-embedded outgoing wikilinks are shown.
 4. Link order and plain-text bullet grouping follow the source.
-5. The graph is the default: current note at the centre, direct authored links around it, and one real edge per authored link.
-6. Force position, pan, zoom, and drag are ephemeral; Markdown group order provides semantic cluster anchors without creating group nodes.
-7. Outline view projects exactly the same links in authored order.
-8. Clicking a title or graph node navigates the main editor to the canonical note.
-9. Search, group collapse, view mode, pan, zoom, and node positions are ephemeral.
-10. No plugin action writes Markdown, Canvas, sidecars, maps, relationships, or layout state.
+5. The graph is the default: current note plus its direct authored links and one real edge per authored link.
+6. The current-note node and direct-link nodes share the force simulation and can all be dragged. Clicking the current-note node opens its resolved canonical `parent` when one exists.
+7. Hovering or focusing a direct-link node temporarily previews only that note's resolved outgoing links. Preview nodes and edges are translucent, non-interactive, and removed when hover or focus ends.
+8. Node colour follows existing `node_kind`, `entity_kind`, and `facets` metadata. Titles never determine type, and colour is not the only navigation signal.
+9. Force position, hover preview, pan, zoom, and drag are ephemeral; Markdown group order provides semantic cluster anchors without creating group nodes.
+10. Outline view projects exactly the default direct-link set in authored order.
+11. Clicking a title or direct graph node navigates the main editor to the canonical note.
+12. Search, group collapse, view mode, pan, zoom, hover preview, and node positions are ephemeral.
+13. No plugin action writes Markdown, Canvas, sidecars, maps, relationships, settings, or layout state.
 
 ## Right sidebar anatomy
 
 - Header: current note title, resolved route count, search icon, and view switch.
 - Outline: deterministic vertical order with hairline separators and blue navigation titles.
 - Plain-text bullet groups: collapsible labels plus descendant link count.
-- Graph: current note root plus force-positioned direct authored links, drag, pan, zoom, and no saved positions.
+- Graph: movable current note, force-positioned direct authored links, parent navigation, hover-only outgoing preview, metadata colours, drag, pan, zoom, and no saved positions.
 - Empty and error states: short action-oriented text, no decorative cards.
 
 ## Fold boundary
@@ -37,4 +40,5 @@ Obsidian's public plugin API does not expose the live fold ranges of the active 
 - Markdown editing
 - Canvas creation or synchronization
 - Saved maps, card positions, filters, or layout
+- Persistent graph groups, colour rules, or depth settings
 - Daily-note or history aggregation

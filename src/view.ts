@@ -185,26 +185,48 @@ export class LinkedGraphView extends ItemView {
 	}
 
 	private renderGraph(entries: readonly GraphEntry[]): void {
-		if (!this.body || !this.graph) return;
-		const nodes = flattenGraphEntries(entries);
-		this.graphSurface = new OneHopForceGraph(this.body, this.graph.title, COPY.labels.graphAria, {
-			zoomOut: COPY.actions.zoomOut,
-			zoomIn: COPY.actions.zoomIn,
-			fitGraph: COPY.actions.fitGraph,
-		}, nodes, (node) => {
-			void this.plugin.openLinkedNote(node.linkText, this.sourceFile?.path ?? "");
+		if (!this.body || !this.graph || !this.sourceFile) return;
+		const sourceFile = this.sourceFile;
+		const sourcePath = sourceFile.path;
+		const nodes = flattenGraphEntries(entries, (path) => this.plugin.nodeKindForPath(path));
+		this.graphSurface = new OneHopForceGraph(this.body, {
+			title: this.graph.title,
+			rootKind: this.plugin.nodeKindForPath(sourcePath),
+			parent: this.plugin.parentFor(sourceFile),
+			ariaLabel: COPY.labels.graphAria,
+			controls: {
+				zoomOut: COPY.actions.zoomOut,
+				zoomIn: COPY.actions.zoomIn,
+				fitGraph: COPY.actions.fitGraph,
+				openParent: COPY.actions.openParent,
+			},
+			items: nodes,
+			onOpen: (node) => {
+				void this.plugin.openLinkedNote(node.linkText, sourcePath);
+			},
+			onOpenParent: (parent) => {
+				void this.plugin.openLinkedNote(parent.linkText, sourcePath);
+			},
+			onPreview: async (node) => {
+				const file = this.plugin.fileForPath(node.path);
+				if (!file) return [];
+				const preview = await this.plugin.graphFor(file);
+				return flattenGraphEntries(preview.entries, (path) => this.plugin.nodeKindForPath(path))
+					.filter((candidate) => candidate.path !== sourcePath && candidate.path !== node.path);
+			},
 		});
 	}
 }
 
 function flattenGraphEntries(
 	entries: readonly GraphEntry[],
+	kindForPath: (path: string) => OneHopGraphNode["kind"],
 	group = "",
 	result: OneHopGraphNode[] = [],
 ): OneHopGraphNode[] {
 	for (const entry of entries) {
 		if (entry.kind === "group") {
-			flattenGraphEntries(entry.children, group || entry.label, result);
+			flattenGraphEntries(entry.children, kindForPath, group || entry.label, result);
 			continue;
 		}
 		result.push({
@@ -213,6 +235,7 @@ function flattenGraphEntries(
 			linkText: entry.linkText,
 			path: entry.path,
 			group,
+			kind: kindForPath(entry.path),
 		});
 	}
 	return result;

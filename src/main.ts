@@ -1,5 +1,6 @@
 import { MarkdownView, Notice, Plugin, TAbstractFile, TFile, WorkspaceLeaf } from "obsidian";
 import { parseDocumentLinks, type DocumentLinkGraph } from "./model";
+import { nodeVisualKind, parseParentLink, type GraphNavigationTarget, type NodeVisualKind } from "./navigation";
 import { COPY } from "./ui/copy";
 import { LinkedGraphView, VIEW_TYPE_LINKED_GRAPH } from "./view";
 
@@ -60,6 +61,23 @@ export default class LinkedGraphPlugin extends Plugin {
 	fileForPath(path: string): TFile | null {
 		const file = this.app.vault.getAbstractFileByPath(path);
 		return file instanceof TFile && file.extension === "md" ? file : null;
+	}
+
+	nodeKindForPath(path: string): NodeVisualKind {
+		const file = this.fileForPath(path);
+		return file ? nodeVisualKind(this.app.metadataCache.getFileCache(file)?.frontmatter) : "unknown";
+	}
+
+	parentFor(file: TFile): GraphNavigationTarget | null {
+		const parsed = parseParentLink(this.app.metadataCache.getFileCache(file)?.frontmatter?.parent);
+		if (!parsed) return null;
+		const destination = this.app.metadataCache.getFirstLinkpathDest(parsed.linkPath, file.path);
+		if (!(destination instanceof TFile) || destination.extension !== "md") return null;
+		return {
+			...parsed,
+			path: destination.path,
+			kind: this.nodeKindForPath(destination.path),
+		};
 	}
 
 	async openLinkedGraph(): Promise<void> {

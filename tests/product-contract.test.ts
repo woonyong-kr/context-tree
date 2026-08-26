@@ -38,8 +38,12 @@ test("view defaults to the current-note graph and keeps mode state session-only"
 	assert.doesNotMatch(view, /branchGraphs|expandedLinks/);
 });
 
-test("one-hop graph supports direct links, drag, zoom, and ephemeral layout only", async () => {
-	const graph = await readFile(new URL("src/one-hop-graph.ts", repository), "utf8");
+test("one-hop graph supports movable root, parent navigation, hover preview, and ephemeral layout only", async () => {
+	const [graph, main, navigation] = await Promise.all([
+		readFile(new URL("src/one-hop-graph.ts", repository), "utf8"),
+		readFile(new URL("src/main.ts", repository), "utf8"),
+		readFile(new URL("src/navigation.ts", repository), "utf8"),
+	]);
 	assert.match(graph, /pointerdown/);
 	assert.match(graph, /wheel/);
 	assert.match(graph, /forceSimulation/);
@@ -48,6 +52,13 @@ test("one-hop graph supports direct links, drag, zoom, and ephemeral layout only
 	assert.match(graph, /alphaTarget\(0\.22\)\.restart/);
 	assert.match(graph, /ResizeObserver/);
 	assert.match(graph, /stage\.clientWidth/);
-	assert.match(graph, /onOpen\(item\)/);
+	assert.match(graph, /registerDrag\(rootElement, this\.root\)/);
+	assert.match(graph, /onOpenParent/);
+	assert.match(graph, /pointerenter/);
+	assert.match(graph, /onPreview/);
+	assert.match(main, /frontmatter\?\.parent/);
+	assert.match(navigation, /node_kind/);
+	assert.match(navigation, /entity_kind/);
+	assert.match(navigation, /facets/);
 	assert.doesNotMatch(graph, /localStorage|saveData|vault\.modify/);
 });

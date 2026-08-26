@@ -15,8 +15,9 @@
 - Header: current note title, route count, icon-only search, and text-labelled view switch
 - Outline group: medium label, count, disclosure chevron
 - Outline link: file icon, blue text, and hover-only open indicator
-- Graph root: one accent dot and title
-- Graph: fixed current-note centre, `d3-force` link/charge/collision movement, content-sized direct-link nodes, real link edges, and quiet Markdown group labels
+- Graph root: one metadata-coloured dot, title, movable force node, and hover-only parent affordance
+- Graph: `d3-force` link/charge/collision movement, content-sized direct-link nodes, real link edges, quiet Markdown group labels, and translucent hover-only second-hop previews
+- Type colour: Obsidian theme colours selected only from canonical `node_kind`, `entity_kind`, or `facets`; unknown nodes remain neutral
 - Focus: visible two-pixel host-derived ring
 - State text: muted and compact
 
@@ -27,4 +28,5 @@
 - Tree, treeitem, group, level, and expanded semantics describe hierarchy.
 - Colour is not the only indicator: indentation, connectors, icons, and counts remain.
 - No motion is required to understand or use the panel.
-- Drag and wheel gestures have icon-button alternatives for zoom reset; every linked node remains a native button.
+- Drag and wheel gestures have icon-button alternatives for zoom reset; current and direct linked nodes remain native buttons.
+- Hover preview is also available on keyboard focus and is never required to reach a direct linked note.

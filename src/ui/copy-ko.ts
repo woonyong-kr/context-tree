@@ -9,6 +9,7 @@ export const COPY_KO = {
 		zoomOut: "축소",
 		zoomIn: "확대",
 		fitGraph: "그래프 맞춤",
+		openParent: (label: string) => `상위 문서로 이동: ${label}`,
 	},
 	labels: {
 		noCurrentDocument: "현재 Markdown 문서 없음", searchPlaceholder: "현재 경로 검색",

@@ -8,6 +8,15 @@
 	--lg-hover: var(--background-modifier-hover);
 	--lg-accent: var(--link-color);
 	--lg-focus: var(--background-modifier-border-focus);
+	--lg-kind-hub: var(--color-purple, var(--interactive-accent));
+	--lg-kind-project: var(--color-blue, var(--link-color));
+	--lg-kind-person: var(--color-pink, var(--color-red));
+	--lg-kind-book: var(--color-orange, var(--text-accent));
+	--lg-kind-resource: var(--color-cyan, var(--color-blue));
+	--lg-kind-entity: var(--color-blue, var(--link-color));
+	--lg-kind-topic: var(--color-green, var(--interactive-accent));
+	--lg-kind-detail: var(--color-yellow, var(--text-muted));
+	--lg-kind-unknown: var(--text-muted);
 	--lg-space-1: 4px;
 	--lg-space-2: 8px;
 	--lg-space-3: 12px;
@@ -92,6 +101,7 @@
 .linked-graph-view button.linked-graph-mode,
 .linked-graph-view button.linked-graph-group,
 .linked-graph-view button.linked-graph-link,
+.linked-graph-view button.linked-graph-network-root,
 .linked-graph-view button.linked-graph-network-node {
 	appearance: none;
 	border: 0;
@@ -264,6 +274,7 @@
 .linked-graph-mode:focus-visible,
 .linked-graph-group:focus-visible,
 .linked-graph-link:focus-visible,
+.linked-graph-network-root:focus-visible,
 .linked-graph-network-node:focus-visible {
 	outline: 2px solid var(--lg-focus);
 	outline-offset: -2px;
@@ -308,6 +319,12 @@
 	vector-effect: non-scaling-stroke;
 }
 
+.linked-graph-network-edge.is-preview {
+	stroke: color-mix(in srgb, var(--lg-border) 68%, transparent);
+	stroke-dasharray: 3 4;
+	stroke-width: 1;
+}
+
 .linked-graph-network-root,
 .linked-graph-network-node,
 .linked-graph-network-group-label {
@@ -317,25 +334,60 @@
 }
 
 .linked-graph-network-root {
-	display: flex;
+	--lg-node-color: var(--lg-kind-unknown);
+	display: inline-flex;
 	align-items: center;
 	gap: var(--lg-space-2);
 	width: max-content;
 	max-width: 190px;
+	min-height: 32px;
+	margin: 0;
+	padding: 0 var(--lg-space-2);
+	border: 0;
+	border-radius: var(--radius-s);
 	transform: translate(-50%, -50%);
 	color: var(--lg-text);
+	background: transparent;
+	box-shadow: none;
 	font-size: var(--lg-font-normal);
 	font-weight: var(--font-semibold);
-	pointer-events: none;
+	cursor: grab;
+	touch-action: none;
+}
+
+.linked-graph-network-root:active {
+	cursor: grabbing;
+}
+
+.linked-graph-network-root.has-parent:hover,
+.linked-graph-network-root.has-parent:focus-visible {
+	color: var(--lg-node-color);
+	background: color-mix(in srgb, var(--lg-node-color) 9%, transparent);
 }
 
 .linked-graph-network-root-dot {
 	flex: 0 0 auto;
 	width: 10px;
 	height: 10px;
-	border: 2px solid color-mix(in srgb, var(--lg-accent) 40%, var(--lg-surface));
+	border: 2px solid color-mix(in srgb, var(--lg-node-color) 40%, var(--lg-surface));
 	border-radius: 50%;
-	background: var(--lg-accent);
+	background: var(--lg-node-color);
+}
+
+.linked-graph-network-root-parent-icon {
+	display: inline-flex;
+	width: 14px;
+	height: 14px;
+	color: var(--lg-node-color);
+	opacity: 0;
+	transform: translateX(-2px);
+	transition: opacity var(--anim-duration-fast) var(--anim-motion-smooth), transform var(--anim-duration-fast) var(--anim-motion-smooth);
+}
+
+.linked-graph-network-root.has-parent:hover .linked-graph-network-root-parent-icon,
+.linked-graph-network-root.has-parent:focus-visible .linked-graph-network-root-parent-icon {
+	opacity: 0.82;
+	transform: translateX(0);
 }
 
 .linked-graph-network-root-label,
@@ -346,6 +398,7 @@
 }
 
 .linked-graph-view button.linked-graph-network-node {
+	--lg-node-color: var(--lg-kind-unknown);
 	display: inline-flex;
 	align-items: center;
 	gap: var(--lg-space-2);
@@ -367,9 +420,10 @@
 }
 
 .linked-graph-view button.linked-graph-network-node:hover,
-.linked-graph-view button.linked-graph-network-node:focus-visible {
-	color: var(--lg-accent);
-	background: transparent;
+.linked-graph-view button.linked-graph-network-node:focus-visible,
+.linked-graph-view button.linked-graph-network-node.is-preview-source {
+	color: var(--lg-node-color);
+	background: color-mix(in srgb, var(--lg-node-color) 8%, transparent);
 }
 
 .linked-graph-network-node-dot {
@@ -377,12 +431,89 @@
 	width: 8px;
 	height: 8px;
 	border-radius: 50%;
-	background: var(--lg-accent);
+	background: var(--lg-node-color);
 }
 
 .linked-graph-network-node-label {
 	display: block;
 	max-width: 158px;
+}
+
+.linked-graph-network-preview-node {
+	--lg-node-color: var(--lg-kind-unknown);
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	width: max-content;
+	max-width: 132px;
+	min-height: 24px;
+	padding: 0 6px;
+	color: color-mix(in srgb, var(--lg-node-color) 64%, var(--lg-muted));
+	font-size: var(--lg-font-small);
+	font-weight: var(--font-medium);
+	opacity: 0.48;
+	pointer-events: none;
+	transition: opacity var(--anim-duration-fast) var(--anim-motion-smooth);
+}
+
+.linked-graph-network-preview-node .linked-graph-network-node-dot {
+	width: 6px;
+	height: 6px;
+}
+
+.linked-graph-network-preview-node .linked-graph-network-node-label {
+	max-width: 108px;
+}
+
+.linked-graph-network-root[data-node-kind="hub"],
+.linked-graph-network-node[data-node-kind="hub"],
+.linked-graph-network-preview-node[data-node-kind="hub"] {
+	--lg-node-color: var(--lg-kind-hub);
+}
+
+.linked-graph-network-root[data-node-kind="project"],
+.linked-graph-network-node[data-node-kind="project"],
+.linked-graph-network-preview-node[data-node-kind="project"] {
+	--lg-node-color: var(--lg-kind-project);
+}
+
+.linked-graph-network-root[data-node-kind="person"],
+.linked-graph-network-node[data-node-kind="person"],
+.linked-graph-network-preview-node[data-node-kind="person"] {
+	--lg-node-color: var(--lg-kind-person);
+}
+
+.linked-graph-network-root[data-node-kind="book"],
+.linked-graph-network-node[data-node-kind="book"],
+.linked-graph-network-preview-node[data-node-kind="book"] {
+	--lg-node-color: var(--lg-kind-book);
+}
+
+.linked-graph-network-root[data-node-kind="resource"],
+.linked-graph-network-node[data-node-kind="resource"],
+.linked-graph-network-preview-node[data-node-kind="resource"] {
+	--lg-node-color: var(--lg-kind-resource);
+}
+
+.linked-graph-network-root[data-node-kind="entity"],
+.linked-graph-network-node[data-node-kind="entity"],
+.linked-graph-network-preview-node[data-node-kind="entity"] {
+	--lg-node-color: var(--lg-kind-entity);
+}
+
+.linked-graph-network-root[data-node-kind="topic"],
+.linked-graph-network-node[data-node-kind="topic"],
+.linked-graph-network-preview-node[data-node-kind="topic"] {
+	--lg-node-color: var(--lg-kind-topic);
+}
+
+.linked-graph-network-root[data-node-kind="detail"],
+.linked-graph-network-node[data-node-kind="detail"],
+.linked-graph-network-preview-node[data-node-kind="detail"] {
+	--lg-node-color: var(--lg-kind-detail);
 }
 
 .linked-graph-network-group-label {

@@ -4,6 +4,7 @@ export const COPY_EN = {
 		search: "Search current links", showGraph: "Graph view", showOutline: "Outline view",
 		expand: (label: string) => `Expand ${label}`, collapse: (label: string) => `Collapse ${label}`,
 		zoomOut: "Zoom out", zoomIn: "Zoom in", fitGraph: "Fit graph",
+		openParent: (label: string) => `Open parent note: ${label}`,
 	},
 	labels: {
 		noCurrentDocument: "No current Markdown note", searchPlaceholder: "Search current routes",
