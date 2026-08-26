@@ -4,25 +4,29 @@
 
 ![Obsidian 1.13.7 runtime](assets/linked-graph-runtime.png)
 
+![Obsidian 1.13.7 next-hop preview](assets/linked-graph-runtime-preview.png)
+
 ## Compared reference
 
-The user-supplied 565×552 high-density preview capture and the final 565×552 graph-stage crop were placed side by side locally. The reference exposed four faults across the first hover implementations: fixed collision radii ignored title width, the moving hover source could repeatedly leave and re-enter the pointer, metadata colour leaked from dots into labels, and edge colours inherited too much of the dark divider token to remain readable.
+The two user-supplied captures (792×808 and 379×269) and the final 1115×768 Obsidian runtime were placed side by side locally. The references exposed three remaining faults: the graph did not use the full leaf body, static category captions floated behind moving nodes, and hover painted the route as a card instead of preserving Obsidian's dot-and-label graph grammar.
 
-The final implementation was captured in Obsidian 1.13.7 with `wiki/concepts/README.md` active and the Linked Graph sidebar widened before taking the same 565×552 graph-stage crop. The `플러그인 가치는 연결된 원문 탐색 경험에 둔다` node was keyboard-focused to expose direct and preview edges together. The local-only side-by-side comparison is stored outside release media.
+The final implementation was captured in Obsidian 1.13.7 with `wiki/README.md` active and the Linked Graph leaf widened. The first capture shows the resting 1-hop graph. The second keyboard-focus capture exercises the same next-hop preview path used by pointer hover, while keeping the keyboard focus ring supplied by Obsidian. The local-only side-by-side comparison is stored outside release media.
 
 ## Fidelity and interaction review
 
 | Surface | Result | Evidence |
 |---|---|---|
 | Graph grammar | passed | The current Markdown note is the movable centre, seven resolved outgoing links are surrounding nodes, and each authored link is one visible edge. |
+| Canvas use | passed | Graph mode removes body padding and gives the force surface the full remaining width and height below the compact 64px header. |
+| Moving labels | passed | Every title is part of its force node; the removed group-label layer leaves no fixed captions behind the moving graph. |
 | Route labels | passed | Every direct route keeps a visible title; content-sized native buttons no longer collapse to bare dots. |
 | Motion | passed | `d3-force` link, charge, and collision forces apply equally to the current note and direct nodes. Dragging the current `책` node moved it 54px left and 30px down; release reheated and settled the neighbourhood. |
 | Viewport safety | passed | A dragged `Wiki` node remained visible after settling; moving nodes are bounded by measured node and sidebar dimensions, and resize reheats the layout. |
 | Navigation | passed | On `책`, the centre exposed `상위 문서로 이동: Wiki`; clicking it opened `wiki/README.md` and rebuilt the graph from two book links to seven Wiki routes. |
-| Hover preview | passed | Focusing a direct route exposed its actual outgoing notes in measured-width collision rings. The source stayed pinned under hover, preview edges remained dashed and non-interactive, and leaving focus removed the entire second level. |
+| Hover preview | passed | Focusing a direct route exposed the same measured second-level graph used by pointer hover. The source stayed pinned, preview edges remained dashed and non-interactive, and leaving hover or focus removed the entire second level. |
 | Edge contrast | passed | Direct links use an opaque 1.25px neutral stroke; preview links use a visibly secondary 1.1px round-capped dashed stroke. Both remained readable in the dark Obsidian theme without borrowing node type colours. |
 | Pan and zoom | passed | Background drag pans the world; icon controls zoom out, zoom in, and reset the viewport without writing layout state. |
-| Information hierarchy | passed | Current note title and route count remain in the header; the graph itself contains only dots, titles, edges, and quiet controls. |
+| Information hierarchy | passed | Current note title and route count remain in the compact header; the graph contains only moving dots, titles, edges, and quiet controls. No static category captions or filled hover cards remain. |
 | Colour and shape | passed | Obsidian theme color tokens differentiate only node dots from canonical `node_kind`, `entity_kind`, and `facets`; every label keeps the neutral host text colour. Titles are never used to infer a type. |
 | Settling stability | passed | Two captures taken three seconds apart after initial settling differed by mean absolute RGB `0.0061/0.0061/0.0063`; the only changed bounding box was the 18×32px pointer, not graph nodes. |
 | Canonical boundary | passed | Graph, outline, search, and motion are read-only projections; Markdown and Vault relationships are never modified. |
@@ -40,5 +44,6 @@ The final implementation was captured in Obsidian 1.13.7 with `wiki/concepts/REA
 8. Replaced the fixed 30px preview collision with measured label widths, split dense previews into eight-node rings, pinned the hover source, and increased damping.
 9. Kept metadata colour on dots only and forced all direct and preview labels back to neutral `--text-normal`.
 10. Replaced divider-dominant edge colours with neutral text-derived contrast: persistent direct links remain solid and preview links remain lighter dashed paths.
+11. Removed static category anchors and labels, expanded graph mode edge-to-edge, and replaced the filled hover/focus card with a dot-only emphasis while retaining the 2-hop preview.
 
 final result: passed

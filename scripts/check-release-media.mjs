@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 const repository = new URL("../", import.meta.url);
 const requiredAssets = [
 	"docs/assets/linked-graph-runtime.png",
+	"docs/assets/linked-graph-runtime-preview.png",
 ];
 
 const readJson = async (path) => JSON.parse(await readFile(new URL(path, repository), "utf8"));

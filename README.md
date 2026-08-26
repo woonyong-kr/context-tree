@@ -4,6 +4,8 @@ Linked Graph is a focused right-sidebar navigator for the Markdown note you are 
 
 ![Linked Graph following the canonical Wiki note](docs/assets/linked-graph-runtime.png)
 
+![Linked Graph previewing the focused route's next hop](docs/assets/linked-graph-runtime-preview.png)
+
 It reads resolved `[[wikilinks]]` in authored order and presents the same current-note routes as a quiet outline or a one-hop graph. Clicking a title opens the canonical Markdown note; clicking the movable current-note node opens its canonical parent.
 
 ## Why use this instead of Obsidian Graph view?
