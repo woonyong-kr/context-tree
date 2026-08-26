@@ -49,6 +49,7 @@ export class LinkedGraphView extends ItemView {
 			if (generation !== this.generation) return;
 			this.graph = graph;
 			this.contextLabel?.setText(`${COPY.labels.currentDocument} · ${graph.title}`);
+			this.expandedLinks.clear();
 			this.branchGraphs.clear();
 			this.render();
 		} catch (error) {

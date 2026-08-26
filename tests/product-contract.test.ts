@@ -29,3 +29,12 @@ test("manifest exposes the renamed product and no desktop-only dependency", asyn
 	assert.equal(manifest.name, "Linked Graph");
 	assert.equal(manifest.isDesktopOnly, false);
 });
+
+test("refresh clears expanded branches together with their cached graphs", async () => {
+	const view = await readFile(new URL("src/view.ts", repository), "utf8");
+	assert.match(
+		view,
+		/this\.expandedLinks\.clear\(\);\s*this\.branchGraphs\.clear\(\);\s*this\.render\(\);/,
+		"an expanded branch must never survive after its graph cache is cleared",
+	);
+});
