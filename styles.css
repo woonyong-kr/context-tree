@@ -89,6 +89,16 @@
 	font-weight: var(--font-medium);
 }
 
+.linked-graph-view button.linked-graph-mode,
+.linked-graph-view button.linked-graph-group,
+.linked-graph-view button.linked-graph-link,
+.linked-graph-view button.linked-graph-node {
+	appearance: none;
+	border: 0;
+	background-color: transparent;
+	box-shadow: none;
+}
+
 .linked-graph-mode:hover {
 	background: var(--lg-hover);
 }
@@ -341,6 +351,10 @@
 	white-space: nowrap;
 }
 
+.linked-graph-branch-label:empty {
+	display: none;
+}
+
 .linked-graph-branch-links {
 	display: flex;
 	flex-direction: column;
@@ -365,8 +379,9 @@
 	text-align: left;
 }
 
-.linked-graph-node:hover {
-	background: var(--lg-hover);
+.linked-graph-view button.linked-graph-node:hover {
+	color: var(--link-color-hover);
+	background-color: transparent;
 }
 
 .linked-graph-node-dot {

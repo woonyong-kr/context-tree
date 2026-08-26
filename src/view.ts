@@ -183,7 +183,7 @@ export class LinkedGraphView extends ItemView {
 		root.createSpan({ cls: "linked-graph-map-root-label", text: this.graph.title });
 		const branches = graph.createDiv({ cls: "linked-graph-branches" });
 		for (const entry of entries) {
-			if (entry.kind === "link") this.renderGraphBranch(branches, entry.label, [entry]);
+			if (entry.kind === "link") this.renderGraphBranch(branches, "", [entry]);
 			else if (!this.collapsedGroups.has(entry.key)) this.renderGraphBranch(branches, entry.label, entry.children);
 		}
 	}
