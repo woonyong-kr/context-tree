@@ -1,5 +1,5 @@
 {
-	"version": "1.3.0",
+	"version": "1.3.1",
 	"capturedWith": "Obsidian 1.13.7",
 	"capturedAt": "2026-08-26",
 	"publicSafeSample": true,
@@ -8,7 +8,7 @@
 			"path": "docs/assets/linked-graph-runtime.png",
 			"width": 1115,
 			"height": 768,
-			"sha256": "d60c8b512f861d9cee1a8e90990eca92c66c5a95eaab74c42ac94c743a301ad8"
+			"sha256": "c75e5dcf6541aa9b261578f3ed7dd1a06af2051b6c02dbc385dfd19b0fc292c7"
 		}
 	]
 }
