@@ -284,9 +284,10 @@
 	outline-offset: -2px;
 }
 
-.linked-graph-network-root:focus-visible,
-.linked-graph-network-node:focus-visible {
+.linked-graph-view button.linked-graph-network-root:focus-visible,
+.linked-graph-view button.linked-graph-network-node:focus-visible {
 	outline: none;
+	box-shadow: none;
 }
 
 .linked-graph-network {
