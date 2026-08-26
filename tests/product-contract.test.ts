@@ -75,8 +75,8 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 
 test("graph edges stay readable while preview edges remain visually secondary", async () => {
 	const styles = await readFile(new URL("styles.css", repository), "utf8");
-	assert.match(styles, /\.linked-graph-network-edge \{[\s\S]*var\(--lg-muted\) 64%[\s\S]*stroke-width: 1\.4/);
-	assert.match(styles, /\.linked-graph-network-edge\.is-preview \{[\s\S]*var\(--lg-muted\) 50%[\s\S]*stroke-dasharray: 4 5[\s\S]*stroke-width: 1\.15/);
+	assert.match(styles, /\.linked-graph-network-edge \{[\s\S]*var\(--lg-muted\) 72%[\s\S]*stroke-width: 1\.5/);
+	assert.match(styles, /\.linked-graph-network-edge\.is-preview \{[\s\S]*var\(--lg-muted\) 56%[\s\S]*stroke-dasharray: 4 5[\s\S]*stroke-width: 1\.2/);
 	assert.match(styles, /stroke-linecap: round/);
 });
 

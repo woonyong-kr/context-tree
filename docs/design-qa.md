@@ -24,7 +24,7 @@ The final implementation was captured in Obsidian 1.13.7 with `wiki/README.md` a
 | Viewport safety | passed | A dragged `Wiki` node remained visible after settling; moving nodes are bounded by measured node and sidebar dimensions, and resize reheats the layout. |
 | Navigation | passed | On `책`, the centre exposed `상위 문서로 이동: Wiki`; clicking it opened `wiki/README.md` and rebuilt the graph from two book links to seven Wiki routes. |
 | Hover preview | passed | Focusing a direct route exposed the same measured second-level graph used by pointer hover. The source stayed pinned, preview edges remained dashed and non-interactive, and leaving hover or focus removed the entire second level. |
-| Edge contrast | passed | Direct links use a higher-contrast 1.4px neutral stroke; preview links use a visibly secondary 1.15px round-capped dashed stroke. Both remain distinct from node type colours. |
+| Edge contrast | passed | Direct links use a higher-contrast 1.5px neutral stroke; preview links use a visibly secondary 1.2px round-capped dashed stroke. Both remain distinct from node type colours. |
 | Pan and zoom | passed | Background drag pans the world; icon controls zoom out, zoom in, and reset the viewport without writing layout state. |
 | Information hierarchy | passed | Current note title and route count remain in the compact header; the graph contains only moving dots, titles, edges, and quiet controls. No static category captions or filled hover cards remain. |
 | Colour and shape | passed | Obsidian theme color tokens differentiate only node dots from canonical `node_kind`, `entity_kind`, and `facets`; every label keeps the neutral host text colour. Titles are never used to infer a type. |
