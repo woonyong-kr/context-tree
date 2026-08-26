@@ -141,6 +141,7 @@ export class LinkedGraphView extends ItemView {
 			else this.collapsedGroups.add(group.key);
 			this.render();
 		});
+		setIcon(row.createSpan({ cls: "linked-graph-entry-icon", attr: { "aria-hidden": "true" } }), "folder");
 		row.createSpan({ cls: "linked-graph-group-label", text: group.label });
 		row.createSpan({ cls: "linked-graph-count", text: String(countLinks(group.children)) });
 		if (collapsed) return;
@@ -159,6 +160,7 @@ export class LinkedGraphView extends ItemView {
 		setIcon(toggle, cycle ? "corner-down-left" : (expanded ? "chevron-down" : "chevron-right"));
 		toggle.disabled = cycle;
 		toggle.addEventListener("click", () => void this.toggleLinkedBranch(link));
+		setIcon(row.createSpan({ cls: "linked-graph-entry-icon", attr: { "aria-hidden": "true" } }), "file-text");
 		const open = row.createEl("button", { cls: "linked-graph-link", text: link.label, attr: { title: link.path } });
 		open.addEventListener("click", () => void this.plugin.openLinkedNote(link.linkText, this.sourceFile?.path ?? ""));
 		if (!expanded) return;
