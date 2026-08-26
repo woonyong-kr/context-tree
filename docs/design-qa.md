@@ -8,7 +8,7 @@
 
 ## Compared reference
 
-The two user-supplied captures (792×808 and 379×269) and the final 1115×768 Obsidian runtime were placed side by side locally. The references exposed three remaining faults: the graph did not use the full leaf body, static category captions floated behind moving nodes, and hover painted the route as a card instead of preserving Obsidian's dot-and-label graph grammar.
+The user-supplied captures, including the latest 938×508 edge-and-outline report, and the final 1115×768 Obsidian runtime were placed side by side locally. The latest comparison verified that persistent edges are visibly stronger and the resting `Wiki` centre has no rectangular outline, while retaining Obsidian's dot-and-label graph grammar.
 
 The final implementation was captured in Obsidian 1.13.7 with `wiki/README.md` active and the Linked Graph leaf widened. The first capture shows the resting 1-hop graph. The second keyboard-focus capture exercises the same next-hop preview path used by pointer hover, while keeping the keyboard focus ring supplied by Obsidian. The local-only side-by-side comparison is stored outside release media.
 
