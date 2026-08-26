@@ -132,6 +132,7 @@ export class OneHopForceGraph {
 						title: options.title,
 					},
 				});
+		if (!options.parent) rootElement.tabIndex = -1;
 		rootElement.createSpan({ cls: "linked-graph-network-root-dot", attr: { "aria-hidden": "true" } });
 		rootElement.createSpan({ cls: "linked-graph-network-root-label", text: options.title });
 		if (options.parent) {

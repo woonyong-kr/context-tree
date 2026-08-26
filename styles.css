@@ -284,7 +284,8 @@
 	outline-offset: -2px;
 }
 
-.linked-graph-view button.linked-graph-network-root:focus-visible,
+.linked-graph-view .linked-graph-network-root:focus,
+.linked-graph-view .linked-graph-network-root:focus-visible,
 .linked-graph-view button.linked-graph-network-node:focus-visible {
 	outline: none;
 	box-shadow: none;

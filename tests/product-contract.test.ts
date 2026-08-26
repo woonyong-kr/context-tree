@@ -56,6 +56,7 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /registerDrag\(rootElement, this\.root\)/);
 	assert.match(graph, /options\.parent[\s\S]*createEl\("button"[\s\S]*createDiv\(/);
 	assert.doesNotMatch(graph, /"aria-disabled"/);
+	assert.match(graph, /if \(!options\.parent\) rootElement\.tabIndex = -1/);
 	assert.match(graph, /onOpenParent/);
 	assert.match(graph, /pointerenter/);
 	assert.match(graph, /onPreview/);
@@ -87,5 +88,5 @@ test("graph uses an edge-to-edge canvas and node-only hover affordances", async 
 	assert.doesNotMatch(styles, /\.linked-graph-network-group-label/);
 	assert.match(styles, /\.linked-graph-network-node\.is-preview-source \{[\s\S]*background: transparent/);
 	assert.match(styles, /\.linked-graph-network-node\.is-preview-source \.linked-graph-network-node-dot \{[\s\S]*transform: scale\(1\.18\)/);
-	assert.match(styles, /\.linked-graph-view button\.linked-graph-network-node:focus-visible \{[\s\S]*box-shadow: none/);
+	assert.match(styles, /\.linked-graph-view \.linked-graph-network-root:focus-visible,[\s\S]*outline: none;[\s\S]*box-shadow: none/);
 });
