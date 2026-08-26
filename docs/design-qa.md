@@ -6,28 +6,30 @@
 
 ## Compared reference
 
-The private product reference was checked locally at 1487×1059 and was not copied into this public repository. It establishes five surfaces: a plain Wiki heading, a route count, hairline link rows, one compact `그래프 보기` action, and no card container.
+The user-supplied 455×400 failure capture and the final 455×400 graph-stage crop were placed side by side locally. The reference exposed two blocking faults: direct-link titles collapsed to unlabeled dots, and the custom over-damped layout stopped responding like a force graph.
 
-The implementation was captured in Obsidian 1.13.7 at 1115×768 with `wiki/README.md` active. A local-only 2480×494 side-by-side comparison preserves the supplied reference and the runtime evidence without publishing private workspace context.
+The final implementation was captured in Obsidian 1.13.7 at 1115×768 with `wiki/README.md` active and the Linked Graph sidebar widened to the same 455px reference width. The local-only comparison is stored outside release media.
 
-## Fidelity review
+## Fidelity and interaction review
 
 | Surface | Result | Evidence |
 |---|---|---|
-| Information hierarchy | passed | `Wiki` and `현재 문서 · 7개 경로` lead directly into seven authored routes. |
-| Typography and density | passed | One title, one muted count, and 36px rows remain readable without descriptions or metadata cards. |
-| Shape and separation | passed | Hairline separators define rows; no root card, route card, badge, shadow, or rounded panel remains. |
-| Colour and state | passed | Only canonical links and the active graph node use the host accent; all other hierarchy uses theme text and divider tokens. |
-| Interaction | passed | Outline is the default; `그래프 보기` projects the same seven links as a one-hop graph and `목차 보기` returns without saved layout state. |
-| Canonical navigation | passed | Outline links and graph nodes open the original Markdown note in the main editor. |
-| Docking boundary | passed | The selected product contract keeps the navigator in the right sidebar so the canonical editor remains visible; it does not reproduce the reference's bottom docking. |
-| Narrow pane | passed | Titles truncate without overlap and the graph uses labels plus connector lines rather than resizable cards. |
-| Accessibility | passed | The outline exposes list semantics, every route is a native button, and the view switch has an accessible label and pressed state. |
+| Graph grammar | passed | The current Markdown note is the fixed centre, seven resolved outgoing links are surrounding nodes, and each authored link is one visible edge. |
+| Route labels | passed | Every direct route keeps a visible title; content-sized native buttons no longer collapse to bare dots. |
+| Motion | passed | `d3-force` link, charge, and collision forces replace the stopped custom loop. Dragging reheats the simulation and releasing a node lets the neighbourhood settle again. |
+| Viewport safety | passed | A dragged `Wiki` node remained visible after settling; moving nodes are bounded by measured node and sidebar dimensions, and resize reheats the layout. |
+| Navigation | passed | Clicking the `Wiki` graph node opened `wiki/README.md`, and the sidebar immediately changed from eight home routes to seven Wiki routes. |
+| Pan and zoom | passed | Background drag pans the world; icon controls zoom out, zoom in, and reset the viewport without writing layout state. |
+| Information hierarchy | passed | Current note title and route count remain in the header; the graph itself contains only dots, titles, edges, and quiet controls. |
+| Colour and shape | passed | Host theme text, divider, and accent tokens are used; nodes have no cards, fills, shadows, badges, or plugin-owned palette. |
+| Canonical boundary | passed | Graph, outline, search, and motion are read-only projections; Markdown and Vault relationships are never modified. |
+| Accessibility | passed | Route nodes and controls are native buttons with accessible names, the graph has a labelled group, and focus styling follows the host theme. |
 
 ## Iterations
 
 1. Rejected expandable cards and cached descendant previews because they duplicated Wiki structure.
-2. Rejected the first one-hop render because native button surfaces still appeared as cards.
-3. Removed button fills, rounded borders, counts, and duplicate labels; retained only dots, connectors, and canonical titles.
+2. Rejected the first static branch layout because it only looked graph-like and did not implement force motion.
+3. Replaced the over-damped custom loop with `d3-force`, drag reheating, collision, and natural settling.
+4. Replaced zero-width label tracks with content-sized flex nodes and added viewport bounds for dragged and resized states.
 
-final result: pending runtime verification for 1.2.0
+final result: passed
