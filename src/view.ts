@@ -5,16 +5,19 @@ import { COPY } from "./ui/copy";
 
 export const VIEW_TYPE_LINKED_GRAPH = "linked-graph-view";
 
+type ViewMode = "graph" | "outline";
+
 export class LinkedGraphView extends ItemView {
 	private sourceFile: TFile | null = null;
 	private graph: DocumentLinkGraph | null = null;
 	private generation = 0;
 	private query = "";
+	private mode: ViewMode = "outline";
 	private readonly collapsedGroups = new Set<string>();
-	private readonly expandedLinks = new Set<string>();
-	private readonly branchGraphs = new Map<string, DocumentLinkGraph>();
 	private body: HTMLElement | null = null;
+	private title: HTMLElement | null = null;
 	private contextLabel: HTMLElement | null = null;
+	private modeButton: HTMLButtonElement | null = null;
 
 	constructor(leaf: WorkspaceLeaf, private readonly plugin: LinkedGraphPlugin) {
 		super(leaf);
@@ -31,15 +34,11 @@ export class LinkedGraphView extends ItemView {
 
 	async refresh(file: TFile | null): Promise<void> {
 		const generation = this.generation += 1;
-		if (file?.path !== this.sourceFile?.path) {
-			this.collapsedGroups.clear();
-			this.expandedLinks.clear();
-			this.branchGraphs.clear();
-		}
+		if (file?.path !== this.sourceFile?.path) this.collapsedGroups.clear();
 		this.sourceFile = file;
-		this.contextLabel?.setText(file ? `${COPY.labels.currentDocument} · ${file.basename}` : COPY.labels.noCurrentDocument);
 		if (!file) {
 			this.graph = null;
+			this.updateHeading();
 			this.render();
 			return;
 		}
@@ -48,9 +47,7 @@ export class LinkedGraphView extends ItemView {
 			const graph = await this.plugin.graphFor(file);
 			if (generation !== this.generation) return;
 			this.graph = graph;
-			this.contextLabel?.setText(`${COPY.labels.currentDocument} · ${graph.title}`);
-			this.expandedLinks.clear();
-			this.branchGraphs.clear();
+			this.updateHeading();
 			this.render();
 		} catch (error) {
 			console.error("Linked Graph: failed to read the current Markdown note", error);
@@ -64,14 +61,14 @@ export class LinkedGraphView extends ItemView {
 		const container = this.containerEl.children[1] as HTMLElement;
 		container.empty();
 		container.addClass("linked-graph-view");
-		const header = container.createDiv({ cls: "linked-graph-header" });
-		header.createEl("h4", { text: COPY.view.title });
+		const header = container.createEl("header", { cls: "linked-graph-header" });
+		const heading = header.createDiv({ cls: "linked-graph-heading" });
+		this.title = heading.createEl("h2", { text: COPY.view.title });
+		this.contextLabel = heading.createDiv({ cls: "linked-graph-context" });
 		const actions = header.createDiv({ cls: "linked-graph-header-actions" });
-		const search = actions.createEl("button", { cls: "clickable-icon", attr: { "aria-label": COPY.actions.search } });
+		const search = actions.createEl("button", { cls: "clickable-icon", attr: { "aria-label": COPY.actions.search, type: "button" } });
 		setIcon(search, "search");
-		const collapse = actions.createEl("button", { cls: "clickable-icon", attr: { "aria-label": COPY.actions.collapseAll } });
-		setIcon(collapse, "list-collapse");
-		this.contextLabel = container.createDiv({ cls: "linked-graph-context" });
+		this.modeButton = actions.createEl("button", { cls: "linked-graph-mode", attr: { type: "button" } });
 		const searchRow = container.createDiv({ cls: "linked-graph-search" });
 		setIcon(searchRow.createSpan({ cls: "linked-graph-search-icon" }), "search");
 		const input = searchRow.createEl("input", { type: "search", placeholder: COPY.labels.searchPlaceholder, attr: { "aria-label": COPY.actions.search } });
@@ -82,15 +79,35 @@ export class LinkedGraphView extends ItemView {
 			container.toggleClass("is-searching", searching);
 			if (searching) input.focus();
 		});
-		collapse.addEventListener("click", () => {
-			if (this.graph) this.collectGroupKeys(this.graph.entries, this.collapsedGroups);
-			this.expandedLinks.clear();
+		this.modeButton.addEventListener("click", () => {
+			this.mode = this.mode === "outline" ? "graph" : "outline";
 			this.render();
 		});
 		input.addEventListener("input", () => {
 			this.query = input.value;
 			this.render();
 		});
+		this.updateHeading();
+	}
+
+	private updateHeading(): void {
+		this.title?.setText(this.graph?.title ?? COPY.view.title);
+		if (!this.contextLabel) return;
+		if (!this.sourceFile || !this.graph) {
+			this.contextLabel.setText(COPY.labels.noCurrentDocument);
+			return;
+		}
+		this.contextLabel.setText(COPY.labels.routeCount(this.graph.linkCount));
+	}
+
+	private updateModeButton(): void {
+		if (!this.modeButton) return;
+		this.modeButton.empty();
+		const graphMode = this.mode === "graph";
+		setIcon(this.modeButton.createSpan({ cls: "linked-graph-mode-icon" }), graphMode ? "list-tree" : "git-branch");
+		this.modeButton.createSpan({ text: graphMode ? COPY.actions.showOutline : COPY.actions.showGraph });
+		this.modeButton.ariaLabel = graphMode ? COPY.actions.showOutline : COPY.actions.showGraph;
+		this.modeButton.ariaPressed = String(graphMode);
 	}
 
 	private renderLoading(): void {
@@ -100,6 +117,7 @@ export class LinkedGraphView extends ItemView {
 	}
 
 	private render(): void {
+		this.updateModeButton();
 		if (!this.body) return;
 		this.body.empty();
 		if (!this.sourceFile || !this.graph) {
@@ -110,100 +128,83 @@ export class LinkedGraphView extends ItemView {
 			this.body.createDiv({ cls: "linked-graph-state", text: COPY.labels.noLinks });
 			return;
 		}
-		const tree = this.body.createDiv({ cls: "linked-graph-tree", attr: { role: "tree", "aria-label": COPY.labels.treeAria } });
-		const root = tree.createDiv({ cls: "linked-graph-root", attr: { role: "treeitem", "aria-level": "1" } });
-		setIcon(root.createSpan({ cls: "linked-graph-root-icon" }), "file-text");
-		root.createSpan({ cls: "linked-graph-root-label", text: this.graph.title });
-		root.createSpan({ cls: "linked-graph-count", text: String(this.graph.linkCount) });
 		const entries = this.graph.entries.filter((entry) => graphMatches(entry, this.query));
 		if (entries.length === 0) {
-			tree.createDiv({ cls: "linked-graph-state", text: COPY.labels.noSearchResults });
+			this.body.createDiv({ cls: "linked-graph-state", text: COPY.labels.noSearchResults });
 			return;
 		}
-		const list = tree.createDiv({ cls: "linked-graph-list", attr: { role: "group" } });
-		this.renderEntries(list, entries, 2, new Set([this.sourceFile.path]));
+		if (this.mode === "graph") this.renderGraph(entries);
+		else this.renderOutline(entries);
 	}
 
-	private renderEntries(container: HTMLElement, entries: readonly GraphEntry[], level: number, ancestors: Set<string>): void {
+	private renderOutline(entries: readonly GraphEntry[]): void {
+		if (!this.body) return;
+		const outline = this.body.createDiv({ cls: "linked-graph-outline", attr: { role: "tree", "aria-label": COPY.labels.treeAria } });
+		this.renderOutlineEntries(outline, entries, 1);
+	}
+
+	private renderOutlineEntries(container: HTMLElement, entries: readonly GraphEntry[], level: number): void {
 		for (const entry of entries) {
-			if (!graphMatches(entry, this.query)) continue;
-			if (entry.kind === "group") this.renderGroup(container, entry, level, ancestors);
-			else this.renderLink(container, entry, level, ancestors);
-		}
-	}
-
-	private renderGroup(container: HTMLElement, group: Extract<GraphEntry, { kind: "group" }>, level: number, ancestors: Set<string>): void {
-		const collapsed = this.collapsedGroups.has(group.key) && !this.query.trim();
-		const row = container.createDiv({ cls: "linked-graph-row is-group", attr: { role: "treeitem", "aria-level": String(level), "aria-expanded": String(!collapsed) } });
-		const toggle = row.createEl("button", { cls: "linked-graph-toggle", attr: { "aria-label": collapsed ? COPY.actions.expand(group.label) : COPY.actions.collapse(group.label) } });
-		setIcon(toggle, collapsed ? "chevron-right" : "chevron-down");
-		toggle.addEventListener("click", () => {
-			if (collapsed) this.collapsedGroups.delete(group.key);
-			else this.collapsedGroups.add(group.key);
-			this.render();
-		});
-		setIcon(row.createSpan({ cls: "linked-graph-entry-icon", attr: { "aria-hidden": "true" } }), "folder");
-		row.createSpan({ cls: "linked-graph-group-label", text: group.label });
-		row.createSpan({ cls: "linked-graph-count", text: String(countLinks(group.children)) });
-		if (collapsed) return;
-		const children = container.createDiv({ cls: "linked-graph-list", attr: { role: "group" } });
-		this.renderEntries(children, group.children, level + 1, ancestors);
-	}
-
-	private renderLink(container: HTMLElement, link: LinkedNote, level: number, ancestors: Set<string>): void {
-		const row = container.createDiv({ cls: "linked-graph-row is-link", attr: { role: "treeitem", "aria-level": String(level) } });
-		const cycle = ancestors.has(link.path);
-		const expanded = this.expandedLinks.has(link.key) && !cycle;
-		const toggle = row.createEl("button", { cls: "linked-graph-toggle", attr: {
-			"aria-label": cycle ? COPY.labels.cycle : (expanded ? COPY.actions.collapse(link.label) : COPY.actions.preview(link.label)),
-			"aria-expanded": String(expanded),
-		} });
-		setIcon(toggle, cycle ? "corner-down-left" : (expanded ? "chevron-down" : "chevron-right"));
-		toggle.disabled = cycle;
-		toggle.addEventListener("click", () => void this.toggleLinkedBranch(link));
-		setIcon(row.createSpan({ cls: "linked-graph-entry-icon", attr: { "aria-hidden": "true" } }), "file-text");
-		const open = row.createEl("button", { cls: "linked-graph-link", text: link.label, attr: { title: link.path } });
-		open.addEventListener("click", () => void this.plugin.openLinkedNote(link.linkText, this.sourceFile?.path ?? ""));
-		if (!expanded) return;
-		const branch = this.branchGraphs.get(link.key);
-		const children = container.createDiv({ cls: "linked-graph-list", attr: { role: "group" } });
-		if (!branch) {
-			children.createDiv({ cls: "linked-graph-state is-inline", text: COPY.labels.loading });
-			return;
-		}
-		if (branch.entries.length === 0) {
-			children.createDiv({ cls: "linked-graph-state is-inline", text: COPY.labels.branchEmpty });
-			return;
-		}
-		const nextAncestors = new Set(ancestors);
-		nextAncestors.add(link.path);
-		this.renderEntries(children, branch.entries, level + 1, nextAncestors);
-	}
-
-	private async toggleLinkedBranch(link: LinkedNote): Promise<void> {
-		if (this.expandedLinks.has(link.key)) {
-			this.expandedLinks.delete(link.key);
-			this.render();
-			return;
-		}
-		this.expandedLinks.add(link.key);
-		this.render();
-		if (!this.branchGraphs.has(link.key)) {
-			const file = this.plugin.fileForPath(link.path);
-			if (file) {
-				const graph = await this.plugin.graphFor(file);
-				this.branchGraphs.set(link.key, graph);
-				this.collectGroupKeys(graph.entries, this.collapsedGroups);
+			if (entry.kind === "link") {
+				this.renderOutlineLink(container, entry, level);
+				continue;
+			}
+			const collapsed = this.collapsedGroups.has(entry.key) && !this.query.trim();
+			const section = container.createDiv({ cls: "linked-graph-section", attr: { role: "treeitem", "aria-level": String(level), "aria-expanded": String(!collapsed) } });
+			const heading = section.createEl("button", { cls: "linked-graph-group", attr: { type: "button", "aria-label": collapsed ? COPY.actions.expand(entry.label) : COPY.actions.collapse(entry.label) } });
+			setIcon(heading.createSpan({ cls: "linked-graph-disclosure" }), collapsed ? "chevron-right" : "chevron-down");
+			heading.createSpan({ cls: "linked-graph-group-label", text: entry.label });
+			heading.createSpan({ cls: "linked-graph-count", text: String(countLinks(entry.children)) });
+			heading.addEventListener("click", () => {
+				if (collapsed) this.collapsedGroups.delete(entry.key);
+				else this.collapsedGroups.add(entry.key);
+				this.render();
+			});
+			if (!collapsed) {
+				const children = section.createDiv({ cls: "linked-graph-children", attr: { role: "group" } });
+				this.renderOutlineEntries(children, entry.children, level + 1);
 			}
 		}
-		this.render();
 	}
 
-	private collectGroupKeys(entries: readonly GraphEntry[], target: Set<string>): void {
+	private renderOutlineLink(container: HTMLElement, link: LinkedNote, level: number): void {
+		const row = container.createDiv({ cls: "linked-graph-link-row", attr: { role: "treeitem", "aria-level": String(level) } });
+		setIcon(row.createSpan({ cls: "linked-graph-entry-icon", attr: { "aria-hidden": "true" } }), "file-text");
+		const open = row.createEl("button", { cls: "linked-graph-link", text: link.label, attr: { title: link.path, type: "button" } });
+		open.addEventListener("click", () => void this.plugin.openLinkedNote(link.linkText, this.sourceFile?.path ?? ""));
+		setIcon(row.createSpan({ cls: "linked-graph-open-icon", attr: { "aria-hidden": "true" } }), "arrow-up-right");
+	}
+
+	private renderGraph(entries: readonly GraphEntry[]): void {
+		if (!this.body || !this.graph) return;
+		const graph = this.body.createDiv({ cls: "linked-graph-map", attr: { role: "group", "aria-label": COPY.labels.graphAria } });
+		const root = graph.createDiv({ cls: "linked-graph-map-root" });
+		root.createSpan({ cls: "linked-graph-root-dot", attr: { "aria-hidden": "true" } });
+		root.createSpan({ cls: "linked-graph-map-root-label", text: this.graph.title });
+		const branches = graph.createDiv({ cls: "linked-graph-branches" });
 		for (const entry of entries) {
-			if (entry.kind !== "group") continue;
-			target.add(entry.key);
-			this.collectGroupKeys(entry.children, target);
+			if (entry.kind === "link") this.renderGraphBranch(branches, entry.label, [entry]);
+			else if (!this.collapsedGroups.has(entry.key)) this.renderGraphBranch(branches, entry.label, entry.children);
+		}
+	}
+
+	private renderGraphBranch(container: HTMLElement, label: string, entries: readonly GraphEntry[]): void {
+		const branch = container.createDiv({ cls: "linked-graph-branch" });
+		branch.createDiv({ cls: "linked-graph-branch-label", text: label });
+		const links = branch.createDiv({ cls: "linked-graph-branch-links" });
+		this.renderGraphLinks(links, entries);
+	}
+
+	private renderGraphLinks(container: HTMLElement, entries: readonly GraphEntry[]): void {
+		for (const entry of entries) {
+			if (entry.kind === "group") {
+				if (!this.collapsedGroups.has(entry.key)) this.renderGraphLinks(container, entry.children);
+				continue;
+			}
+			const node = container.createEl("button", { cls: "linked-graph-node", attr: { title: entry.path, type: "button" } });
+			node.createSpan({ cls: "linked-graph-node-dot", attr: { "aria-hidden": "true" } });
+			node.createSpan({ cls: "linked-graph-node-label", text: entry.label });
+			node.addEventListener("click", () => void this.plugin.openLinkedNote(entry.linkText, this.sourceFile?.path ?? ""));
 		}
 	}
 }

@@ -1,9 +1,9 @@
 {
 	"id": "linked-graph",
 	"name": "Linked Graph",
-	"version": "1.0.1",
+	"version": "1.1.0",
 	"minAppVersion": "1.8.0",
-	"description": "Follow the current Markdown note through its authored links in a focused right sidebar.",
+	"description": "Browse the current Markdown note as an outline or one-hop graph.",
 	"author": "woonyong-kr",
 	"authorUrl": "https://github.com/woonyong-kr",
 	"isDesktopOnly": false

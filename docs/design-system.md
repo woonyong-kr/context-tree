@@ -3,18 +3,20 @@
 ## Principles
 
 - The Markdown editor remains visually dominant.
-- The graph must work in a narrow right sidebar.
+- The outline and graph must work in a narrow right sidebar and a wider docked pane.
 - Titles look and behave like links; controls use Obsidian/Lucide icons.
-- Structure comes from indentation and a quiet connector line, not cards.
+- Structure comes from hairline separators and connector lines, never cards.
 - All colours derive from the active Obsidian theme.
 
 ## Components
 
 - Row height: `--lg-row-height` (36px)
 - Spacing: 4, 8, 12, and 16px tokens
-- Root: one quiet bordered row
-- Group: medium label, count, disclosure chevron
-- Link: blue text button, disclosure chevron
+- Header: current note title, route count, icon-only search, and text-labelled view switch
+- Outline group: medium label, count, disclosure chevron
+- Outline link: file icon, blue text, and hover-only open indicator
+- Graph root: one accent dot and title
+- Graph branch: quiet connector, group label, and blue linked nodes
 - Focus: visible two-pixel host-derived ring
 - State text: muted and compact
 

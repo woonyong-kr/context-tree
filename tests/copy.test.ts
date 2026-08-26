@@ -10,8 +10,9 @@ test("names one read-only current-note product in both languages", () => {
 	assert.match(COPY_EN.view.openCommand, /current note/i);
 });
 
-test("labels progressive disclosure as preview instead of editing", () => {
-	assert.match(COPY_KO.actions.preview("책"), /펼치기/);
-	assert.match(COPY_EN.actions.preview("Books"), /Preview/);
+test("labels the outline and one-hop graph as views instead of editing", () => {
+	assert.equal(COPY_KO.actions.showGraph, "그래프 보기");
+	assert.equal(COPY_KO.actions.showOutline, "목차 보기");
+	assert.match(COPY_EN.actions.showGraph, /Graph/);
 	assert.doesNotMatch(JSON.stringify(COPY_KO), /Canvas|카드|편집|저장된 그래프/);
 });

@@ -4,7 +4,7 @@ Linked Graph is a focused right-sidebar navigator for the Markdown note you are 
 
 ![Linked Graph following the canonical Wiki note](docs/assets/linked-graph-runtime.png)
 
-It reads resolved `[[wikilinks]]` in authored order, preserves plain-text bullet groups, and lets you preview the next link level without leaving the note. Clicking a title opens the canonical Markdown note.
+It reads resolved `[[wikilinks]]` in authored order and presents the same current-note routes as a quiet outline or a one-hop graph. Clicking a title opens the canonical Markdown note.
 
 ## Why use this instead of Obsidian Graph view?
 
@@ -16,18 +16,18 @@ Obsidian Graph answers “how is the whole vault connected?” Linked Graph answ
 | Direction | Authored outgoing links | Connected notes in multiple directions |
 | Order | Markdown order and bullet groups | Force-directed spatial layout |
 | Location | Persistent right sidebar | Separate graph view |
-| Action | Open a note or preview one next level | Inspect a network |
+| Action | Open a note or switch between outline and one-hop graph | Inspect a network |
 | Knowledge writes | None | None |
 
 ## Use
 
 1. Open a Markdown note.
 2. Run **Open Linked Graph for the current note** or select its ribbon icon.
-3. Click a blue title to navigate the main editor.
-4. Select a chevron to preview the next authored links in the sidebar.
-5. Use search to filter the current routes.
+3. Use the outline as a table of contents and click a blue title to navigate the main editor.
+4. Select **Graph view** to see the same current-note routes as one-hop branches.
+5. Use search to filter both views.
 
-Linked Graph follows the active Markdown editor. Expansion, collapse, and search are session-only UI state. It does not create maps, Canvas files, backlinks, relationships, sidecars, or duplicated notes.
+Linked Graph follows the active Markdown editor. View mode, group collapse, and search are session-only UI state. It does not create maps, Canvas files, backlinks, relationships, sidecars, or duplicated notes.
 
 ## Ownership contract
 
