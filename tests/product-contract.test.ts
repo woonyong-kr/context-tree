@@ -53,6 +53,8 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /alphaTarget\(0\.22\)\.restart/);
 	assert.match(graph, /ResizeObserver/);
 	assert.match(graph, /stage\.clientWidth/);
+	assert.match(graph, /graphLayoutMetrics/);
+	assert.match(graph, /updateResponsiveLayout/);
 	assert.match(graph, /registerDrag\(rootElement, this\.root\)/);
 	assert.match(graph, /options\.parent[\s\S]*createEl\("button"[\s\S]*createDiv\(/);
 	assert.doesNotMatch(graph, /"aria-disabled"/);
@@ -66,12 +68,23 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /force\("center-x"/);
 	assert.match(graph, /force\("center-y"/);
 	assert.doesNotMatch(graph, /network-group-label|groupAnchors|groupTarget/);
+	assert.doesNotMatch(graph, /root-parent-icon|corner-up-left/);
+	assert.doesNotMatch(graph, /title: item\.path/);
 	assert.match(view, /toggleClass\("is-graph", this\.mode === "graph"\)/);
+	assert.doesNotMatch(view, /group:|group,/);
 	assert.match(main, /frontmatter\?\.parent/);
 	assert.match(navigation, /node_kind/);
 	assert.match(navigation, /entity_kind/);
 	assert.match(navigation, /facets/);
 	assert.doesNotMatch(graph, /localStorage|saveData|vault\.modify/);
+});
+
+test("navigation coalesces duplicate workspace events into one graph refresh", async () => {
+	const main = await readFile(new URL("src/main.ts", repository), "utf8");
+	assert.match(main, /const sourceChanged = file\.path !== this\.currentFile\?\.path/);
+	assert.match(main, /if \(sourceChanged\) this\.scheduleViewRefresh\(0\)/);
+	assert.match(main, /private scheduleViewRefresh\(delay: number\)/);
+	assert.doesNotMatch(main, /revealLeaf\(leaf\);\s*this\.refreshViews\(\)/);
 });
 
 test("graph edges stay readable while preview edges remain visually secondary", async () => {

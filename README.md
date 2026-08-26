@@ -16,7 +16,7 @@ Obsidian Graph answers “how is the whole vault connected?” Linked Graph answ
 |---|---|---|
 | Scope | Current note | Vault or local neighbourhood |
 | Direction | Authored outgoing links | Connected notes in multiple directions |
-| Layout | Force layout anchored by Markdown order and bullet groups | Relationship-only force layout |
+| Layout | Responsive force layout using only resolved links | Relationship-only force layout |
 | Location | Persistent right sidebar | Separate graph view |
 | Action | Open a note, move to its parent, or preview the next outgoing hop | Inspect a network |
 | Knowledge writes | None | None |
@@ -37,7 +37,7 @@ Linked Graph follows the active Markdown editor. View mode, group collapse, and 
 
 - Markdown is the only knowledge source of truth.
 - A visible route exists only when the source Markdown contains a resolved wikilink.
-- Plain bullet text is a display group, not a stored entity.
+- Plain bullet text appears only in Outline view; it never becomes a graph node or caption.
 - Removing the plugin removes no knowledge.
 - The plugin never edits Vault content.
 

@@ -385,22 +385,6 @@
 	background: var(--lg-node-color);
 }
 
-.linked-graph-network-root-parent-icon {
-	display: inline-flex;
-	width: 14px;
-	height: 14px;
-	color: var(--lg-node-color);
-	opacity: 0;
-	transform: translateX(-2px);
-	transition: opacity var(--anim-duration-fast) var(--anim-motion-smooth), transform var(--anim-duration-fast) var(--anim-motion-smooth);
-}
-
-.linked-graph-network-root.has-parent:hover .linked-graph-network-root-parent-icon,
-.linked-graph-network-root.has-parent:focus-visible .linked-graph-network-root-parent-icon {
-	opacity: 0.82;
-	transform: translateX(0);
-}
-
 .linked-graph-network-root-label,
 .linked-graph-network-node-label {
 	overflow: hidden;

@@ -222,12 +222,11 @@ export class LinkedGraphView extends ItemView {
 function flattenGraphEntries(
 	entries: readonly GraphEntry[],
 	kindForPath: (path: string) => OneHopGraphNode["kind"],
-	group = "",
 	result: OneHopGraphNode[] = [],
 ): OneHopGraphNode[] {
 	for (const entry of entries) {
 		if (entry.kind === "group") {
-			flattenGraphEntries(entry.children, kindForPath, group || entry.label, result);
+			flattenGraphEntries(entry.children, kindForPath, result);
 			continue;
 		}
 		result.push({
@@ -235,7 +234,6 @@ function flattenGraphEntries(
 			label: entry.label,
 			linkText: entry.linkText,
 			path: entry.path,
-			group,
 			kind: kindForPath(entry.path),
 		});
 	}

@@ -28,8 +28,7 @@ export default class LinkedGraphPlugin extends Plugin {
 
 		const scheduleRefresh = (file: TAbstractFile): void => {
 			if (!(file instanceof TFile) || file.extension !== "md") return;
-			if (this.refreshTimer !== undefined) window.clearTimeout(this.refreshTimer);
-			this.refreshTimer = window.setTimeout(() => this.refreshViews(), 120);
+			this.scheduleViewRefresh(120);
 		};
 		this.registerEvent(this.app.vault.on("create", scheduleRefresh));
 		this.registerEvent(this.app.vault.on("modify", scheduleRefresh));
@@ -91,7 +90,6 @@ export default class LinkedGraphPlugin extends Plugin {
 		}
 		const leaf = await this.app.workspace.ensureSideLeaf(VIEW_TYPE_LINKED_GRAPH, "right", { active: true, reveal: true, split: false });
 		await this.app.workspace.revealLeaf(leaf);
-		this.refreshViews();
 	}
 
 	async openLinkedNote(linkText: string, sourcePath: string): Promise<void> {
@@ -101,9 +99,18 @@ export default class LinkedGraphPlugin extends Plugin {
 
 	private setCurrentSource(file: TFile, leaf: WorkspaceLeaf | null): void {
 		if (file.extension !== "md") return;
+		const sourceChanged = file.path !== this.currentFile?.path;
 		this.currentFile = file;
 		if (leaf && leaf.view instanceof MarkdownView) this.sourceLeaf = leaf;
-		this.refreshViews();
+		if (sourceChanged) this.scheduleViewRefresh(0);
+	}
+
+	private scheduleViewRefresh(delay: number): void {
+		if (this.refreshTimer !== undefined) window.clearTimeout(this.refreshTimer);
+		this.refreshTimer = window.setTimeout(() => {
+			this.refreshTimer = undefined;
+			this.refreshViews();
+		}, delay);
 	}
 
 	private refreshViews(): void {

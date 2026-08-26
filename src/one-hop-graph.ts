@@ -11,6 +11,7 @@ import {
 	type SimulationNodeDatum,
 } from "d3-force";
 import { setIcon } from "obsidian";
+import { graphLayoutMetrics, type GraphLayoutMetrics } from "./graph-layout";
 import type { GraphNavigationTarget, NodeVisualKind } from "./navigation";
 
 export interface OneHopGraphNode {
@@ -18,7 +19,6 @@ export interface OneHopGraphNode {
 	label: string;
 	linkText: string;
 	path: string;
-	group: string;
 	kind: NodeVisualKind;
 }
 
@@ -92,6 +92,9 @@ export class OneHopForceGraph {
 	private readonly simulation: Simulation<PhysicsNode, PhysicsLink>;
 	private readonly linkForce: ForceLink<PhysicsNode, PhysicsLink>;
 	private readonly resizeObserver: ResizeObserver;
+	private layout: GraphLayoutMetrics;
+	private layoutWidth = 0;
+	private layoutHeight = 0;
 	private previewNodes: PhysicsNode[] = [];
 	private previewLinks: PhysicsLink[] = [];
 	private previewOwnerId: string | null = null;
@@ -120,7 +123,6 @@ export class OneHopForceGraph {
 					attr: {
 						"aria-label": options.controls.openParent(options.parent.label),
 						"data-node-kind": options.rootKind,
-						title: options.controls.openParent(options.parent.label),
 						type: "button",
 					},
 				})
@@ -129,16 +131,11 @@ export class OneHopForceGraph {
 					attr: {
 						"aria-label": options.title,
 						"data-node-kind": options.rootKind,
-						title: options.title,
 					},
 				});
 		if (!options.parent) rootElement.tabIndex = -1;
 		rootElement.createSpan({ cls: "linked-graph-network-root-dot", attr: { "aria-hidden": "true" } });
 		rootElement.createSpan({ cls: "linked-graph-network-root-label", text: options.title });
-		if (options.parent) {
-			const parentIcon = rootElement.createSpan({ cls: "linked-graph-network-root-parent-icon", attr: { "aria-hidden": "true" } });
-			setIcon(parentIcon, "corner-up-left");
-		}
 		this.root = {
 			id: "__current__",
 			depth: 0,
@@ -156,9 +153,11 @@ export class OneHopForceGraph {
 			});
 		}
 
-		const radius = Math.min(176, Math.max(118, 92 + options.items.length * 7));
-		this.leaves = options.items.map((item, index) => this.createLeaf(item, index, radius));
-		this.baseLinks = this.leaves.map((node) => this.createLink(this.root, node, false, 158));
+		this.layoutWidth = this.stage.clientWidth || host.clientWidth;
+		this.layoutHeight = this.stage.clientHeight || host.clientHeight;
+		this.layout = graphLayoutMetrics(this.layoutWidth, this.layoutHeight, options.items.length);
+		this.leaves = options.items.map((item, index) => this.createLeaf(item, index, this.layout.leafRadius));
+		this.baseLinks = this.leaves.map((node) => this.createLink(this.root, node, false, this.layout.directDistance));
 		this.linkForce = forceLink<PhysicsNode, PhysicsLink>(this.baseLinks)
 			.id((node) => node.id)
 			.distance((link) => link.distance)
@@ -170,7 +169,7 @@ export class OneHopForceGraph {
 			.force("link", this.linkForce)
 			.force("charge", forceManyBody<PhysicsNode>()
 				.strength((node) => node.depth === 0 ? -120 : node.depth === 1 ? -210 : -74)
-				.distanceMax(360))
+				.distanceMax(this.layout.chargeDistance))
 			.force("collision", forceCollide<PhysicsNode>()
 				.radius((node) => this.collisionRadius(node))
 				.strength(0.92)
@@ -181,8 +180,9 @@ export class OneHopForceGraph {
 				.strength((node) => node.depth === 0 ? 0.08 : node.depth === 1 ? 0.012 : 0.006))
 			.on("tick", () => this.updateNodes());
 		this.resizeObserver = new ResizeObserver(() => {
+			if (!this.updateResponsiveLayout()) return;
 			this.updateNodes();
-			this.simulation.alpha(0.18).restart();
+			this.simulation.alpha(0.12).restart();
 		});
 		this.resizeObserver.observe(this.stage);
 
@@ -210,7 +210,6 @@ export class OneHopForceGraph {
 			attr: {
 				"aria-label": item.label,
 				"data-node-kind": item.kind,
-				title: item.path,
 				type: "button",
 			},
 		});
@@ -304,7 +303,7 @@ export class OneHopForceGraph {
 			const ringPosition = index - ringStart;
 			const spread = Math.min(Math.PI * 0.95, 0.34 * Math.max(ringCount - 1, 1));
 			const angle = outwardAngle - spread / 2 + spread * (ringPosition / Math.max(ringCount - 1, 1));
-			const distance = 116 + ring * 72;
+			const distance = this.layout.previewDistance + ring * this.layout.previewRingGap;
 			const element = this.world.createDiv({
 				cls: "linked-graph-network-preview-node",
 				attr: { "aria-hidden": "true", "data-node-kind": item.kind },
@@ -327,7 +326,7 @@ export class OneHopForceGraph {
 			node,
 			preview,
 			true,
-			116 + Math.floor(index / 8) * 72,
+			this.layout.previewDistance + Math.floor(index / 8) * this.layout.previewRingGap,
 		));
 		this.restartSimulation(0.3);
 	}
@@ -356,6 +355,22 @@ export class OneHopForceGraph {
 		this.simulation.nodes(this.allNodes());
 		this.linkForce.links(this.allLinks());
 		this.simulation.alpha(alpha).restart();
+	}
+
+	private updateResponsiveLayout(): boolean {
+		const width = this.stage.clientWidth;
+		const height = this.stage.clientHeight;
+		if (width <= 0 || height <= 0) return false;
+		if (Math.abs(width - this.layoutWidth) < 8 && Math.abs(height - this.layoutHeight) < 8) return false;
+		this.layoutWidth = width;
+		this.layoutHeight = height;
+		this.layout = graphLayoutMetrics(width, height, this.options.items.length);
+		for (const link of this.baseLinks) link.distance = this.layout.directDistance;
+		for (const [index, link] of this.previewLinks.entries()) {
+			link.distance = this.layout.previewDistance + Math.floor(index / 8) * this.layout.previewRingGap;
+		}
+		this.linkForce.distance((link) => link.distance);
+		return true;
 	}
 
 	private renderControls(labels: OneHopGraphControls): void {
