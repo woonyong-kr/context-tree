@@ -89,7 +89,6 @@ export class OneHopForceGraph {
 	private readonly root: PhysicsNode;
 	private readonly leaves: PhysicsNode[];
 	private readonly baseLinks: PhysicsLink[];
-	private readonly groupAnchors = new Map<string, { x: number; y: number }>();
 	private readonly simulation: Simulation<PhysicsNode, PhysicsLink>;
 	private readonly linkForce: ForceLink<PhysicsNode, PhysicsLink>;
 	private readonly resizeObserver: ResizeObserver;
@@ -145,15 +144,6 @@ export class OneHopForceGraph {
 		});
 
 		const radius = Math.min(176, Math.max(118, 92 + options.items.length * 7));
-		const grouped = [...new Set(options.items.map((item) => item.group).filter(Boolean))];
-		for (const [index, group] of grouped.entries()) {
-			const angle = -Math.PI / 2 + (Math.PI * 2 * index) / grouped.length;
-			const anchor = { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
-			this.groupAnchors.set(group, anchor);
-			const label = this.world.createDiv({ cls: "linked-graph-network-group-label", text: group });
-			label.style.transform = `translate(${String(Math.cos(angle) * (radius + 62))}px, ${String(Math.sin(angle) * (radius + 62))}px) translate(-50%, -50%)`;
-		}
-
 		this.leaves = options.items.map((item, index) => this.createLeaf(item, index, radius));
 		this.baseLinks = this.leaves.map((node) => this.createLink(this.root, node, false, 158));
 		this.linkForce = forceLink<PhysicsNode, PhysicsLink>(this.baseLinks)
@@ -172,10 +162,10 @@ export class OneHopForceGraph {
 				.radius((node) => this.collisionRadius(node))
 				.strength(0.92)
 				.iterations(3))
-			.force("group-x", forceX<PhysicsNode>((node) => this.groupTarget(node).x)
-				.strength((node) => node.depth === 0 ? 0.045 : node.depth === 1 && node.graph?.group ? 0.045 : 0.006))
-			.force("group-y", forceY<PhysicsNode>((node) => this.groupTarget(node).y)
-				.strength((node) => node.depth === 0 ? 0.045 : node.depth === 1 && node.graph?.group ? 0.045 : 0.006))
+			.force("center-x", forceX<PhysicsNode>(0)
+				.strength((node) => node.depth === 0 ? 0.08 : node.depth === 1 ? 0.012 : 0.006))
+			.force("center-y", forceY<PhysicsNode>(0)
+				.strength((node) => node.depth === 0 ? 0.08 : node.depth === 1 ? 0.012 : 0.006))
 			.on("tick", () => this.updateNodes());
 		this.resizeObserver = new ResizeObserver(() => {
 			this.updateNodes();
@@ -200,15 +190,8 @@ export class OneHopForceGraph {
 	}
 
 	private createLeaf(item: OneHopGraphNode, index: number, radius: number): PhysicsNode {
-		const groupItems = item.group
-			? this.options.items.filter((candidate) => candidate.group === item.group)
-			: this.options.items.filter((candidate) => !candidate.group);
-		const groupItemIndex = groupItems.findIndex((candidate) => candidate.key === item.key);
-		const anchor = item.group ? this.groupAnchors.get(item.group) : undefined;
-		const angle = anchor
-			? Math.atan2(anchor.y, anchor.x) + (groupItemIndex - (groupItems.length - 1) / 2) * 0.22
-			: -Math.PI / 2 + (Math.PI * 2 * index) / Math.max(this.options.items.length, 1);
-		const initialRadius = anchor ? radius + (groupItemIndex % 2) * 18 - 9 : radius;
+		const angle = -Math.PI / 2 + (Math.PI * 2 * index) / Math.max(this.options.items.length, 1);
+		const initialRadius = radius + (index % 2 === 0 ? -10 : 10);
 		const element = this.world.createEl("button", {
 			cls: "linked-graph-network-node",
 			attr: {
@@ -280,12 +263,6 @@ export class OneHopForceGraph {
 		const minimum = node.depth === 2 ? 34 : 42;
 		const maximum = node.depth === 2 ? 82 : 112;
 		return Math.min(maximum, Math.max(minimum, halfWidth + padding));
-	}
-
-	private groupTarget(node: PhysicsNode): { x: number; y: number } {
-		if (node.depth === 0) return { x: 0, y: 0 };
-		if (node.depth === 2 && node.previewParent) return { x: node.previewParent.x, y: node.previewParent.y };
-		return this.groupAnchors.get(node.graph?.group ?? "") ?? { x: 0, y: 0 };
 	}
 
 	private async showPreview(node: PhysicsNode): Promise<void> {

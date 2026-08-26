@@ -126,6 +126,7 @@ export class LinkedGraphView extends ItemView {
 	private render(): void {
 		this.updateModeButton();
 		if (!this.body) return;
+		this.body.toggleClass("is-graph", this.mode === "graph");
 		this.graphSurface?.destroy();
 		this.graphSurface = null;
 		this.body.empty();

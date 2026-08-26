@@ -47,8 +47,8 @@
 	align-items: flex-end;
 	justify-content: space-between;
 	gap: var(--lg-space-4);
-	min-height: 92px;
-	padding: var(--lg-space-5) var(--lg-space-6) var(--lg-space-4);
+	min-height: 64px;
+	padding: var(--lg-space-3) var(--lg-space-4);
 	border-bottom: 1px solid var(--lg-border);
 }
 
@@ -155,8 +155,14 @@
 
 .linked-graph-body {
 	flex: 1;
+	min-height: 0;
 	padding: 0 var(--lg-space-6) var(--lg-space-6);
 	overflow: auto;
+}
+
+.linked-graph-body.is-graph {
+	padding: 0;
+	overflow: hidden;
 }
 
 .linked-graph-outline {
@@ -273,18 +279,21 @@
 
 .linked-graph-mode:focus-visible,
 .linked-graph-group:focus-visible,
-.linked-graph-link:focus-visible,
-.linked-graph-network-root:focus-visible,
-.linked-graph-network-node:focus-visible {
+.linked-graph-link:focus-visible {
 	outline: 2px solid var(--lg-focus);
 	outline-offset: -2px;
+}
+
+.linked-graph-network-root:focus-visible,
+.linked-graph-network-node:focus-visible {
+	outline: none;
 }
 
 .linked-graph-network {
 	position: relative;
 	width: 100%;
 	height: 100%;
-	min-height: 320px;
+	min-height: 420px;
 	overflow: hidden;
 	touch-action: none;
 	cursor: grab;
@@ -327,8 +336,7 @@
 }
 
 .linked-graph-network-root,
-.linked-graph-network-node,
-.linked-graph-network-group-label {
+.linked-graph-network-node {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -363,7 +371,7 @@
 .linked-graph-network-root.has-parent:hover,
 .linked-graph-network-root.has-parent:focus-visible {
 	color: var(--lg-text);
-	background: color-mix(in srgb, var(--lg-node-color) 9%, transparent);
+	background: transparent;
 }
 
 .linked-graph-network-root-dot {
@@ -431,7 +439,7 @@
 .linked-graph-view button.linked-graph-network-node:focus-visible,
 .linked-graph-view button.linked-graph-network-node.is-preview-source {
 	color: var(--lg-text);
-	background: color-mix(in srgb, var(--lg-node-color) 8%, transparent);
+	background: transparent;
 }
 
 .linked-graph-network-node-dot {
@@ -440,6 +448,16 @@
 	height: 8px;
 	border-radius: 50%;
 	background: var(--lg-node-color);
+	transition: box-shadow var(--anim-duration-fast) var(--anim-motion-smooth), transform var(--anim-duration-fast) var(--anim-motion-smooth);
+}
+
+.linked-graph-network-root:hover .linked-graph-network-root-dot,
+.linked-graph-network-root:focus-visible .linked-graph-network-root-dot,
+.linked-graph-network-node:hover .linked-graph-network-node-dot,
+.linked-graph-network-node:focus-visible .linked-graph-network-node-dot,
+.linked-graph-network-node.is-preview-source .linked-graph-network-node-dot {
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--lg-node-color) 22%, transparent);
+	transform: scale(1.18);
 }
 
 .linked-graph-network-node-label {
@@ -526,17 +544,6 @@
 	--lg-node-color: var(--lg-kind-detail);
 }
 
-.linked-graph-network-group-label {
-	max-width: 140px;
-	overflow: hidden;
-	color: var(--lg-faint);
-	font-size: var(--lg-font-small);
-	font-weight: var(--font-medium);
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	pointer-events: none;
-}
-
 .linked-graph-network-controls {
 	position: absolute;
 	right: var(--lg-space-2);
@@ -601,16 +608,13 @@
 	}
 
 	.linked-graph-network {
-		min-height: 360px;
-	}
-
-	.linked-graph-network-group-label {
-		display: none;
+		min-height: 420px;
 	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.linked-graph-open-icon {
+	.linked-graph-open-icon,
+	.linked-graph-network-node-dot {
 		transition: none;
 	}
 }

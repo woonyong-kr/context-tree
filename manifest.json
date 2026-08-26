@@ -1,7 +1,7 @@
 {
 	"id": "linked-graph",
 	"name": "Linked Graph",
-	"version": "1.3.2",
+	"version": "1.3.3",
 	"minAppVersion": "1.8.0",
 	"description": "Browse the current Markdown note as an outline or one-hop graph.",
 	"author": "woonyong-kr",

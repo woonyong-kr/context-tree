@@ -39,10 +39,11 @@ test("view defaults to the current-note graph and keeps mode state session-only"
 });
 
 test("one-hop graph supports movable root, parent navigation, hover preview, and ephemeral layout only", async () => {
-	const [graph, main, navigation] = await Promise.all([
+	const [graph, main, navigation, view] = await Promise.all([
 		readFile(new URL("src/one-hop-graph.ts", repository), "utf8"),
 		readFile(new URL("src/main.ts", repository), "utf8"),
 		readFile(new URL("src/navigation.ts", repository), "utf8"),
+		readFile(new URL("src/view.ts", repository), "utf8"),
 	]);
 	assert.match(graph, /pointerdown/);
 	assert.match(graph, /wheel/);
@@ -59,6 +60,10 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /node\.fx = node\.x/);
 	assert.match(graph, /offsetWidth/);
 	assert.match(graph, /ringSize = 8/);
+	assert.match(graph, /force\("center-x"/);
+	assert.match(graph, /force\("center-y"/);
+	assert.doesNotMatch(graph, /network-group-label|groupAnchors|groupTarget/);
+	assert.match(view, /toggleClass\("is-graph", this\.mode === "graph"\)/);
 	assert.match(main, /frontmatter\?\.parent/);
 	assert.match(navigation, /node_kind/);
 	assert.match(navigation, /entity_kind/);
@@ -71,4 +76,13 @@ test("graph edges stay readable while preview edges remain visually secondary", 
 	assert.match(styles, /\.linked-graph-network-edge \{[\s\S]*var\(--lg-muted\) 46%[\s\S]*stroke-width: 1\.25/);
 	assert.match(styles, /\.linked-graph-network-edge\.is-preview \{[\s\S]*var\(--lg-muted\) 38%[\s\S]*stroke-dasharray: 4 5[\s\S]*stroke-width: 1\.1/);
 	assert.match(styles, /stroke-linecap: round/);
+});
+
+test("graph uses an edge-to-edge canvas and node-only hover affordances", async () => {
+	const styles = await readFile(new URL("styles.css", repository), "utf8");
+	assert.match(styles, /\.linked-graph-body\.is-graph \{[\s\S]*padding: 0;[\s\S]*overflow: hidden/);
+	assert.match(styles, /\.linked-graph-network \{[\s\S]*min-height: 420px/);
+	assert.doesNotMatch(styles, /\.linked-graph-network-group-label/);
+	assert.match(styles, /\.linked-graph-network-node\.is-preview-source \{[\s\S]*background: transparent/);
+	assert.match(styles, /\.linked-graph-network-node\.is-preview-source \.linked-graph-network-node-dot \{[\s\S]*transform: scale\(1\.18\)/);
 });
