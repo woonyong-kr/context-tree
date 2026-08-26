@@ -11,7 +11,7 @@ import {
 	type SimulationNodeDatum,
 } from "d3-force";
 import { setIcon } from "obsidian";
-import { graphLayoutMetrics, type GraphLayoutMetrics } from "./graph-layout";
+import { graphLayoutMetrics, nodeAnchorOffset, type GraphLayoutMetrics, type NodeAnchorOffset } from "./graph-layout";
 import type { GraphNavigationTarget, NodeVisualKind } from "./navigation";
 
 export interface OneHopGraphNode {
@@ -51,6 +51,7 @@ interface PhysicsNode extends SimulationNodeDatum {
 	graph?: OneHopGraphNode;
 	previewParent?: PhysicsNode;
 	element?: HTMLElement;
+	dot?: HTMLElement;
 }
 
 interface PhysicsLink extends SimulationLinkDatum<PhysicsNode> {
@@ -134,7 +135,7 @@ export class OneHopForceGraph {
 					},
 				});
 		if (!options.parent) rootElement.tabIndex = -1;
-		rootElement.createSpan({ cls: "linked-graph-network-root-dot", attr: { "aria-hidden": "true" } });
+		const rootDot = rootElement.createSpan({ cls: "linked-graph-network-root-dot", attr: { "aria-hidden": "true" } });
 		rootElement.createSpan({ cls: "linked-graph-network-root-label", text: options.title });
 		this.root = {
 			id: "__current__",
@@ -144,6 +145,7 @@ export class OneHopForceGraph {
 			x: 0,
 			y: 0,
 			element: rootElement,
+			dot: rootDot,
 		};
 		this.registerDrag(rootElement, this.root);
 		if (options.parent) {
@@ -213,7 +215,7 @@ export class OneHopForceGraph {
 				type: "button",
 			},
 		});
-		element.createSpan({ cls: "linked-graph-network-node-dot", attr: { "aria-hidden": "true" } });
+		const dot = element.createSpan({ cls: "linked-graph-network-node-dot", attr: { "aria-hidden": "true" } });
 		element.createSpan({ cls: "linked-graph-network-node-label", text: item.label });
 		const node: PhysicsNode = {
 			id: item.key,
@@ -224,6 +226,7 @@ export class OneHopForceGraph {
 			y: Math.sin(angle) * initialRadius,
 			graph: item,
 			element,
+			dot,
 		};
 		this.registerDrag(element, node);
 		element.addEventListener("pointerenter", () => void this.showPreview(node));
@@ -308,7 +311,7 @@ export class OneHopForceGraph {
 				cls: "linked-graph-network-preview-node",
 				attr: { "aria-hidden": "true", "data-node-kind": item.kind },
 			});
-			element.createSpan({ cls: "linked-graph-network-node-dot", attr: { "aria-hidden": "true" } });
+			const dot = element.createSpan({ cls: "linked-graph-network-node-dot", attr: { "aria-hidden": "true" } });
 			element.createSpan({ cls: "linked-graph-network-node-label", text: item.label });
 			return {
 				id: `preview:${node.id}:${item.key}`,
@@ -320,6 +323,7 @@ export class OneHopForceGraph {
 				graph: item,
 				previewParent: node,
 				element,
+				dot,
 			};
 		});
 		this.previewLinks = this.previewNodes.map((preview, index) => this.createLink(
@@ -410,11 +414,25 @@ export class OneHopForceGraph {
 			node.element?.style.setProperty("transform", `translate(${String(x)}px, ${String(y)}px) translate(-50%, -50%)`);
 		}
 		for (const link of this.allLinks()) {
-			link.element.setAttribute("x1", String(link.source.x));
-			link.element.setAttribute("y1", String(link.source.y));
-			link.element.setAttribute("x2", String(link.target.x));
-			link.element.setAttribute("y2", String(link.target.y));
+			const sourceAnchor = this.nodeAnchor(link.source);
+			const targetAnchor = this.nodeAnchor(link.target);
+			link.element.setAttribute("x1", String((link.source.x ?? 0) + sourceAnchor.x));
+			link.element.setAttribute("y1", String((link.source.y ?? 0) + sourceAnchor.y));
+			link.element.setAttribute("x2", String((link.target.x ?? 0) + targetAnchor.x));
+			link.element.setAttribute("y2", String((link.target.y ?? 0) + targetAnchor.y));
 		}
+	}
+
+	private nodeAnchor(node: PhysicsNode): NodeAnchorOffset {
+		if (!node.element || !node.dot) return { x: 0, y: 0 };
+		return nodeAnchorOffset(
+			node.element.offsetWidth,
+			node.element.offsetHeight,
+			node.dot.offsetLeft,
+			node.dot.offsetTop,
+			node.dot.offsetWidth,
+			node.dot.offsetHeight,
+		);
 	}
 
 	private updateWorldTransform(): void {

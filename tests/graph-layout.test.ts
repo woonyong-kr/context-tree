@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { graphLayoutMetrics } from "../src/graph-layout";
+import { graphLayoutMetrics, nodeAnchorOffset } from "../src/graph-layout";
 
 test("uses more of a large graph panel without shrinking compact sidebars", () => {
 	const compact = graphLayoutMetrics(400, 620, 8);
@@ -19,4 +19,10 @@ test("adds bounded spacing for dense one-hop graphs", () => {
 	assert.ok(dense.directDistance > sparse.directDistance);
 	assert.ok(dense.directDistance <= 253);
 	assert.ok(dense.chargeDistance >= dense.directDistance + dense.previewDistance);
+});
+
+test("anchors graph edges to the visible dot instead of the label group centre", () => {
+	const anchor = nodeAnchorOffset(90, 30, 8, 10, 8, 8);
+
+	assert.deepEqual(anchor, { x: -33, y: -1 });
 });

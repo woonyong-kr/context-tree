@@ -6,6 +6,11 @@ export interface GraphLayoutMetrics {
 	chargeDistance: number;
 }
 
+export interface NodeAnchorOffset {
+	x: number;
+	y: number;
+}
+
 export function graphLayoutMetrics(width: number, height: number, itemCount: number): GraphLayoutMetrics {
 	const safeWidth = width > 0 ? width : 640;
 	const safeHeight = height > 0 ? height : 640;
@@ -24,6 +29,20 @@ export function graphLayoutMetrics(width: number, height: number, itemCount: num
 		previewDistance,
 		previewRingGap,
 		chargeDistance: Math.round(Math.max(360, directDistance + previewDistance + previewRingGap)),
+	};
+}
+
+export function nodeAnchorOffset(
+	nodeWidth: number,
+	nodeHeight: number,
+	dotLeft: number,
+	dotTop: number,
+	dotWidth: number,
+	dotHeight: number,
+): NodeAnchorOffset {
+	return {
+		x: -nodeWidth / 2 + dotLeft + dotWidth / 2,
+		y: -nodeHeight / 2 + dotTop + dotHeight / 2,
 	};
 }
 

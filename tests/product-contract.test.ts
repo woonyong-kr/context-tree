@@ -55,6 +55,8 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /stage\.clientWidth/);
 	assert.match(graph, /graphLayoutMetrics/);
 	assert.match(graph, /updateResponsiveLayout/);
+	assert.match(graph, /nodeAnchorOffset/);
+	assert.match(graph, /const sourceAnchor = this\.nodeAnchor\(link\.source\)/);
 	assert.match(graph, /registerDrag\(rootElement, this\.root\)/);
 	assert.match(graph, /options\.parent[\s\S]*createEl\("button"[\s\S]*createDiv\(/);
 	assert.doesNotMatch(graph, /"aria-disabled"/);
