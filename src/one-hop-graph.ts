@@ -157,7 +157,7 @@ export class OneHopForceGraph {
 		this.baseLinks = this.leaves.map((node) => this.createLink(this.root, node, false));
 		this.linkForce = forceLink<PhysicsNode, PhysicsLink>(this.baseLinks)
 			.id((node) => node.id)
-			.distance((link) => link.preview ? 88 : 132)
+			.distance((link) => link.preview ? 96 : 158)
 			.strength((link) => link.preview ? 0.42 : 0.5);
 		this.simulation = forceSimulation<PhysicsNode, PhysicsLink>(this.allNodes())
 			.alpha(0.9)
