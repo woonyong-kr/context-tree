@@ -1,6 +1,7 @@
 import { ItemView, setIcon, TFile, WorkspaceLeaf } from "obsidian";
 import type LinkedGraphPlugin from "./main";
 import { countLinks, graphMatches, type DocumentLinkGraph, type GraphEntry, type LinkedNote } from "./model";
+import { OneHopForceGraph, type OneHopGraphNode } from "./one-hop-graph";
 import { COPY } from "./ui/copy";
 
 export const VIEW_TYPE_LINKED_GRAPH = "linked-graph-view";
@@ -12,8 +13,9 @@ export class LinkedGraphView extends ItemView {
 	private graph: DocumentLinkGraph | null = null;
 	private generation = 0;
 	private query = "";
-	private mode: ViewMode = "outline";
+	private mode: ViewMode = "graph";
 	private readonly collapsedGroups = new Set<string>();
+	private graphSurface: OneHopForceGraph | null = null;
 	private body: HTMLElement | null = null;
 	private title: HTMLElement | null = null;
 	private contextLabel: HTMLElement | null = null;
@@ -30,6 +32,11 @@ export class LinkedGraphView extends ItemView {
 	async onOpen(): Promise<void> {
 		this.renderShell();
 		await this.refresh(this.plugin.activeSource());
+	}
+
+	async onClose(): Promise<void> {
+		this.graphSurface?.destroy();
+		this.graphSurface = null;
 	}
 
 	async refresh(file: TFile | null): Promise<void> {
@@ -119,6 +126,8 @@ export class LinkedGraphView extends ItemView {
 	private render(): void {
 		this.updateModeButton();
 		if (!this.body) return;
+		this.graphSurface?.destroy();
+		this.graphSurface = null;
 		this.body.empty();
 		if (!this.sourceFile || !this.graph) {
 			this.body.createDiv({ cls: "linked-graph-state", text: COPY.labels.openMarkdown });
@@ -177,34 +186,34 @@ export class LinkedGraphView extends ItemView {
 
 	private renderGraph(entries: readonly GraphEntry[]): void {
 		if (!this.body || !this.graph) return;
-		const graph = this.body.createDiv({ cls: "linked-graph-map", attr: { role: "group", "aria-label": COPY.labels.graphAria } });
-		const root = graph.createDiv({ cls: "linked-graph-map-root" });
-		root.createSpan({ cls: "linked-graph-root-dot", attr: { "aria-hidden": "true" } });
-		root.createSpan({ cls: "linked-graph-map-root-label", text: this.graph.title });
-		const branches = graph.createDiv({ cls: "linked-graph-branches" });
-		for (const entry of entries) {
-			if (entry.kind === "link") this.renderGraphBranch(branches, "", [entry]);
-			else if (!this.collapsedGroups.has(entry.key)) this.renderGraphBranch(branches, entry.label, entry.children);
-		}
+		const nodes = flattenGraphEntries(entries);
+		this.graphSurface = new OneHopForceGraph(this.body, this.graph.title, COPY.labels.graphAria, {
+			zoomOut: COPY.actions.zoomOut,
+			zoomIn: COPY.actions.zoomIn,
+			fitGraph: COPY.actions.fitGraph,
+		}, nodes, (node) => {
+			void this.plugin.openLinkedNote(node.linkText, this.sourceFile?.path ?? "");
+		});
 	}
+}
 
-	private renderGraphBranch(container: HTMLElement, label: string, entries: readonly GraphEntry[]): void {
-		const branch = container.createDiv({ cls: "linked-graph-branch" });
-		branch.createDiv({ cls: "linked-graph-branch-label", text: label });
-		const links = branch.createDiv({ cls: "linked-graph-branch-links" });
-		this.renderGraphLinks(links, entries);
-	}
-
-	private renderGraphLinks(container: HTMLElement, entries: readonly GraphEntry[]): void {
-		for (const entry of entries) {
-			if (entry.kind === "group") {
-				if (!this.collapsedGroups.has(entry.key)) this.renderGraphLinks(container, entry.children);
-				continue;
-			}
-			const node = container.createEl("button", { cls: "linked-graph-node", attr: { title: entry.path, type: "button" } });
-			node.createSpan({ cls: "linked-graph-node-dot", attr: { "aria-hidden": "true" } });
-			node.createSpan({ cls: "linked-graph-node-label", text: entry.label });
-			node.addEventListener("click", () => void this.plugin.openLinkedNote(entry.linkText, this.sourceFile?.path ?? ""));
+function flattenGraphEntries(
+	entries: readonly GraphEntry[],
+	group = "",
+	result: OneHopGraphNode[] = [],
+): OneHopGraphNode[] {
+	for (const entry of entries) {
+		if (entry.kind === "group") {
+			flattenGraphEntries(entry.children, group || entry.label, result);
+			continue;
 		}
+		result.push({
+			key: entry.key,
+			label: entry.label,
+			linkText: entry.linkText,
+			path: entry.path,
+			group,
+		});
 	}
+	return result;
 }

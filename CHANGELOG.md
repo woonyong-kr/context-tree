@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0
+
+- Make the current-note graph the default with one real edge per authored outgoing link.
+- Add ephemeral force positioning, drag, pan, zoom, fit controls, and canonical node navigation.
+- Use Markdown bullet groups as semantic cluster anchors without creating group entities or saved layout state.
+- Keep the deterministic outline as a secondary view over the exact same link set.
+
 ## 1.0.1
 
 - Refined the sidebar hierarchy, spacing, icons, selection surfaces, and narrow-width behaviour.

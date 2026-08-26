@@ -6,6 +6,9 @@ export const COPY_KO = {
 		showOutline: "목차 보기",
 		expand: (label: string) => `${label} 펼치기`,
 		collapse: (label: string) => `${label} 접기`,
+		zoomOut: "축소",
+		zoomIn: "확대",
+		fitGraph: "그래프 맞춤",
 	},
 	labels: {
 		noCurrentDocument: "현재 Markdown 문서 없음", searchPlaceholder: "현재 경로 검색",

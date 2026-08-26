@@ -14,7 +14,7 @@ Obsidian Graph answers “how is the whole vault connected?” Linked Graph answ
 |---|---|---|
 | Scope | Current note | Vault or local neighbourhood |
 | Direction | Authored outgoing links | Connected notes in multiple directions |
-| Order | Markdown order and bullet groups | Force-directed spatial layout |
+| Layout | Force layout anchored by Markdown order and bullet groups | Relationship-only force layout |
 | Location | Persistent right sidebar | Separate graph view |
 | Action | Open a note or switch between outline and one-hop graph | Inspect a network |
 | Knowledge writes | None | None |
@@ -23,8 +23,8 @@ Obsidian Graph answers “how is the whole vault connected?” Linked Graph answ
 
 1. Open a Markdown note.
 2. Run **Open Linked Graph for the current note** or select its ribbon icon.
-3. Use the outline as a table of contents and click a blue title to navigate the main editor.
-4. Select **Graph view** to see the same current-note routes as one-hop branches.
+3. The default graph shows the current note at the centre and only its direct authored links around it.
+4. Drag nodes, pan or zoom the graph, click a node to open the canonical note, or switch to **Outline view** for the same links in Markdown order.
 5. Use search to filter both views.
 
 Linked Graph follows the active Markdown editor. View mode, group collapse, and search are session-only UI state. It does not create maps, Canvas files, backlinks, relationships, sidecars, or duplicated notes.

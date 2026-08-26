@@ -30,4 +30,4 @@ The implementation was captured in Obsidian 1.13.7 at 1115×768 with `wiki/READM
 2. Rejected the first one-hop render because native button surfaces still appeared as cards.
 3. Removed button fills, rounded borders, counts, and duplicate labels; retained only dots, connectors, and canonical titles.
 
-final result: passed
+final result: pending runtime verification for 1.2.0

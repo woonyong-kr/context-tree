@@ -16,7 +16,7 @@
 - Outline group: medium label, count, disclosure chevron
 - Outline link: file icon, blue text, and hover-only open indicator
 - Graph root: one accent dot and title
-- Graph branch: quiet connector, group label, and blue linked nodes
+- Graph: fixed current-note centre, force-positioned direct-link nodes, real link edges, and quiet Markdown group labels
 - Focus: visible two-pixel host-derived ring
 - State text: muted and compact
 
@@ -27,3 +27,4 @@
 - Tree, treeitem, group, level, and expanded semantics describe hierarchy.
 - Colour is not the only indicator: indentation, connectors, icons, and counts remain.
 - No motion is required to understand or use the panel.
+- Drag and wheel gestures have icon-button alternatives for zoom reset; every linked node remains a native button.
