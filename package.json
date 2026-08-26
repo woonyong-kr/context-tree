@@ -1,6 +1,6 @@
 {
 	"name": "linked-graph",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "A focused current-note link navigator for Obsidian's right sidebar.",
 	"main": "main.js",
 	"type": "module",

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+- Refined the sidebar hierarchy, spacing, icons, selection surfaces, and narrow-width behaviour.
+- Prevented an expanded branch from remaining stuck in a loading state after its cached graph is refreshed.
+- Replaced the compressed runtime image with a lossless native Obsidian capture.
+
 ## 1.0.0
 
 - Renamed the product and plugin ID to Linked Graph.

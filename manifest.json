@@ -1,7 +1,7 @@
 {
 	"id": "linked-graph",
 	"name": "Linked Graph",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"minAppVersion": "1.8.0",
 	"description": "Follow the current Markdown note through its authored links in a focused right sidebar.",
 	"author": "woonyong-kr",
