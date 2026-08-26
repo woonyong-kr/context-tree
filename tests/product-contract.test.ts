@@ -56,6 +56,9 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /onOpenParent/);
 	assert.match(graph, /pointerenter/);
 	assert.match(graph, /onPreview/);
+	assert.match(graph, /node\.fx = node\.x/);
+	assert.match(graph, /offsetWidth/);
+	assert.match(graph, /ringSize = 8/);
 	assert.match(main, /frontmatter\?\.parent/);
 	assert.match(navigation, /node_kind/);
 	assert.match(navigation, /entity_kind/);

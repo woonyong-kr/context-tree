@@ -58,6 +58,7 @@ interface PhysicsLink extends SimulationLinkDatum<PhysicsNode> {
 	target: PhysicsNode;
 	element: SVGLineElement;
 	preview: boolean;
+	distance: number;
 }
 
 interface DragState {
@@ -154,23 +155,23 @@ export class OneHopForceGraph {
 		}
 
 		this.leaves = options.items.map((item, index) => this.createLeaf(item, index, radius));
-		this.baseLinks = this.leaves.map((node) => this.createLink(this.root, node, false));
+		this.baseLinks = this.leaves.map((node) => this.createLink(this.root, node, false, 158));
 		this.linkForce = forceLink<PhysicsNode, PhysicsLink>(this.baseLinks)
 			.id((node) => node.id)
-			.distance((link) => link.preview ? 96 : 158)
-			.strength((link) => link.preview ? 0.42 : 0.5);
+			.distance((link) => link.distance)
+			.strength((link) => link.preview ? 0.32 : 0.5);
 		this.simulation = forceSimulation<PhysicsNode, PhysicsLink>(this.allNodes())
 			.alpha(0.9)
 			.alphaDecay(0.035)
-			.velocityDecay(0.28)
+			.velocityDecay(0.38)
 			.force("link", this.linkForce)
 			.force("charge", forceManyBody<PhysicsNode>()
 				.strength((node) => node.depth === 0 ? -120 : node.depth === 1 ? -210 : -74)
 				.distanceMax(360))
 			.force("collision", forceCollide<PhysicsNode>()
-				.radius((node) => node.depth === 2 ? 30 : this.collisionRadius(node))
+				.radius((node) => this.collisionRadius(node))
 				.strength(0.92)
-				.iterations(2))
+				.iterations(3))
 			.force("group-x", forceX<PhysicsNode>((node) => this.groupTarget(node).x)
 				.strength((node) => node.depth === 0 ? 0.045 : node.depth === 1 && node.graph?.group ? 0.045 : 0.006))
 			.force("group-y", forceY<PhysicsNode>((node) => this.groupTarget(node).y)
@@ -241,11 +242,11 @@ export class OneHopForceGraph {
 		return node;
 	}
 
-	private createLink(source: PhysicsNode, target: PhysicsNode, preview: boolean): PhysicsLink {
+	private createLink(source: PhysicsNode, target: PhysicsNode, preview: boolean, distance: number): PhysicsLink {
 		const element = createSvg("line");
 		element.setAttribute("class", `linked-graph-network-edge${preview ? " is-preview" : ""}`);
 		this.edgeLayer.append(element);
-		return { source, target, element, preview };
+		return { source, target, element, preview, distance };
 	}
 
 	private registerDrag(element: HTMLElement, node: PhysicsNode): void {
@@ -271,7 +272,14 @@ export class OneHopForceGraph {
 	}
 
 	private collisionRadius(node: PhysicsNode): number {
-		return Math.min(92, 40 + node.label.length * 2.2);
+		const fallbackWidth = node.depth === 2
+			? Math.min(132, 26 + node.label.length * 7)
+			: Math.min(190, 34 + node.label.length * 8);
+		const halfWidth = (node.element?.offsetWidth || fallbackWidth) / 2;
+		const padding = node.depth === 2 ? 10 : 12;
+		const minimum = node.depth === 2 ? 34 : 42;
+		const maximum = node.depth === 2 ? 82 : 112;
+		return Math.min(maximum, Math.max(minimum, halfWidth + padding));
 	}
 
 	private groupTarget(node: PhysicsNode): { x: number; y: number } {
@@ -295,10 +303,18 @@ export class OneHopForceGraph {
 			return;
 		}
 		if (token !== this.previewToken || this.previewOwnerId !== node.id) return;
+		node.fx = node.x;
+		node.fy = node.y;
 		const outwardAngle = Math.atan2(node.y - this.root.y, node.x - this.root.x);
 		this.previewNodes = items.map((item, index) => {
-			const spread = Math.min(Math.PI * 1.1, 0.3 * Math.max(items.length - 1, 1));
-			const angle = outwardAngle - spread / 2 + spread * (index / Math.max(items.length - 1, 1));
+			const ringSize = 8;
+			const ring = Math.floor(index / ringSize);
+			const ringStart = ring * ringSize;
+			const ringCount = Math.min(ringSize, items.length - ringStart);
+			const ringPosition = index - ringStart;
+			const spread = Math.min(Math.PI * 0.95, 0.34 * Math.max(ringCount - 1, 1));
+			const angle = outwardAngle - spread / 2 + spread * (ringPosition / Math.max(ringCount - 1, 1));
+			const distance = 116 + ring * 72;
 			const element = this.world.createDiv({
 				cls: "linked-graph-network-preview-node",
 				attr: { "aria-hidden": "true", "data-node-kind": item.kind },
@@ -310,15 +326,20 @@ export class OneHopForceGraph {
 				depth: 2,
 				label: item.label,
 				kind: item.kind,
-				x: node.x + Math.cos(angle) * 88,
-				y: node.y + Math.sin(angle) * 88,
+				x: node.x + Math.cos(angle) * distance,
+				y: node.y + Math.sin(angle) * distance,
 				graph: item,
 				previewParent: node,
 				element,
 			};
 		});
-		this.previewLinks = this.previewNodes.map((preview) => this.createLink(node, preview, true));
-		this.restartSimulation(0.46);
+		this.previewLinks = this.previewNodes.map((preview, index) => this.createLink(
+			node,
+			preview,
+			true,
+			116 + Math.floor(index / 8) * 72,
+		));
+		this.restartSimulation(0.3);
 	}
 
 	private hidePreview(node: PhysicsNode): void {
@@ -327,13 +348,18 @@ export class OneHopForceGraph {
 
 	private clearPreview(): void {
 		this.previewToken += 1;
+		const previousOwner = this.leaves.find((leaf) => leaf.id === this.previewOwnerId);
+		if (previousOwner && this.drag?.node !== previousOwner) {
+			previousOwner.fx = null;
+			previousOwner.fy = null;
+		}
 		for (const leaf of this.leaves) leaf.element?.removeClass("is-preview-source");
 		for (const node of this.previewNodes) node.element?.remove();
 		for (const link of this.previewLinks) link.element.remove();
 		this.previewNodes = [];
 		this.previewLinks = [];
 		this.previewOwnerId = null;
-		if (this.simulation) this.restartSimulation(0.24);
+		if (this.simulation) this.restartSimulation(0.12);
 	}
 
 	private restartSimulation(alpha: number): void {
@@ -422,8 +448,13 @@ export class OneHopForceGraph {
 	private endNodeDrag(event: PointerEvent): void {
 		if (!this.drag || this.drag.pointerId !== event.pointerId) return;
 		this.suppressClick = this.drag.moved;
-		this.drag.node.fx = null;
-		this.drag.node.fy = null;
+		if (this.previewOwnerId === this.drag.node.id) {
+			this.drag.node.fx = this.drag.node.x;
+			this.drag.node.fy = this.drag.node.y;
+		} else {
+			this.drag.node.fx = null;
+			this.drag.node.fy = null;
+		}
 		this.drag = null;
 		this.simulation.alphaTarget(0).alpha(0.32).restart();
 	}

@@ -361,7 +361,7 @@
 
 .linked-graph-network-root.has-parent:hover,
 .linked-graph-network-root.has-parent:focus-visible {
-	color: var(--lg-node-color);
+	color: var(--lg-text);
 	background: color-mix(in srgb, var(--lg-node-color) 9%, transparent);
 }
 
@@ -393,8 +393,15 @@
 .linked-graph-network-root-label,
 .linked-graph-network-node-label {
 	overflow: hidden;
+	color: var(--text-normal);
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.linked-graph-view .linked-graph-network-root .linked-graph-network-root-label,
+.linked-graph-view .linked-graph-network-node .linked-graph-network-node-label,
+.linked-graph-view .linked-graph-network-preview-node .linked-graph-network-node-label {
+	color: var(--text-normal);
 }
 
 .linked-graph-view button.linked-graph-network-node {
@@ -422,7 +429,7 @@
 .linked-graph-view button.linked-graph-network-node:hover,
 .linked-graph-view button.linked-graph-network-node:focus-visible,
 .linked-graph-view button.linked-graph-network-node.is-preview-source {
-	color: var(--lg-node-color);
+	color: var(--lg-text);
 	background: color-mix(in srgb, var(--lg-node-color) 8%, transparent);
 }
 
@@ -451,10 +458,10 @@
 	max-width: 132px;
 	min-height: 24px;
 	padding: 0 6px;
-	color: color-mix(in srgb, var(--lg-node-color) 64%, var(--lg-muted));
+	color: var(--lg-text);
 	font-size: var(--lg-font-small);
 	font-weight: var(--font-medium);
-	opacity: 0.48;
+	opacity: 1;
 	pointer-events: none;
 	transition: opacity var(--anim-duration-fast) var(--anim-motion-smooth);
 }
@@ -462,10 +469,12 @@
 .linked-graph-network-preview-node .linked-graph-network-node-dot {
 	width: 6px;
 	height: 6px;
+	opacity: 0.62;
 }
 
 .linked-graph-network-preview-node .linked-graph-network-node-label {
 	max-width: 108px;
+	opacity: 1;
 }
 
 .linked-graph-network-root[data-node-kind="hub"],
