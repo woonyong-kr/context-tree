@@ -314,15 +314,16 @@
 }
 
 .linked-graph-network-edge {
-	stroke: color-mix(in srgb, var(--lg-border) 92%, var(--lg-muted));
-	stroke-width: 1.15;
+	stroke: color-mix(in srgb, var(--lg-muted) 46%, var(--lg-border));
+	stroke-width: 1.25;
+	stroke-linecap: round;
 	vector-effect: non-scaling-stroke;
 }
 
 .linked-graph-network-edge.is-preview {
-	stroke: color-mix(in srgb, var(--lg-border) 68%, transparent);
-	stroke-dasharray: 3 4;
-	stroke-width: 1;
+	stroke: color-mix(in srgb, var(--lg-muted) 38%, transparent);
+	stroke-dasharray: 4 5;
+	stroke-width: 1.1;
 }
 
 .linked-graph-network-root,
