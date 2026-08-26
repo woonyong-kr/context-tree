@@ -346,8 +346,7 @@
 }
 
 .linked-graph-view button.linked-graph-network-node {
-	display: inline-grid;
-	grid-template-columns: auto minmax(0, 1fr);
+	display: inline-flex;
 	align-items: center;
 	gap: var(--lg-space-2);
 	width: max-content;
@@ -374,10 +373,16 @@
 }
 
 .linked-graph-network-node-dot {
+	flex: 0 0 auto;
 	width: 8px;
 	height: 8px;
 	border-radius: 50%;
 	background: var(--lg-accent);
+}
+
+.linked-graph-network-node-label {
+	display: block;
+	max-width: 158px;
 }
 
 .linked-graph-network-group-label {
