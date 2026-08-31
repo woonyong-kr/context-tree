@@ -560,7 +560,6 @@ export class OneHopForceGraph {
 
 	private startNodeDrag(event: PointerEvent, node: PhysicsNode, captureTarget: HTMLElement): void {
 		if (!event.isPrimary || event.button !== 0) return;
-		event.stopPropagation();
 		if (this.drag) this.cancelNodeDrag();
 		this.drag = {
 			node,
@@ -668,7 +667,7 @@ export class OneHopForceGraph {
 
 	private startPan(event: PointerEvent): void {
 		if (!event.isPrimary || event.button !== 0) return;
-		if (event.target instanceof Element && event.target.closest("button")) return;
+		if (event.target instanceof Element && event.target.closest("button, .linked-graph-network-node-shell")) return;
 		this.viewportTouched = true;
 		this.pan = {
 			pointerId: event.pointerId,

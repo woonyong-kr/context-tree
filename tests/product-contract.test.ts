@@ -93,6 +93,9 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /registerDrag\(shell, node\)/);
 	assert.match(graph, /shell\.addEventListener\("click", \(event\) => \{[\s\S]*this\.options\.onOpen\(item\)/);
 	assert.doesNotMatch(graph, /element\.addEventListener\("click"/);
+	const startDrag = graph.slice(graph.indexOf("private startNodeDrag"), graph.indexOf("private moveNode"));
+	assert.doesNotMatch(startDrag, /event\.stopPropagation\(\)/);
+	assert.match(graph, /event\.target\.closest\("button, \.linked-graph-network-node-shell"\)/);
 	assert.match(graph, /options\.parent[\s\S]*createEl\("button"[\s\S]*createDiv\(/);
 	assert.doesNotMatch(graph, /"aria-disabled"/);
 	assert.match(graph, /if \(!options\.parent\) rootElement\.tabIndex = -1/);
