@@ -11,8 +11,8 @@ import {
 	type SimulationNodeDatum,
 } from "d3-force";
 import { setIcon } from "obsidian";
+import { GRAPH_MOTION, minimumSimulationAlpha } from "./graph-motion";
 import { graphLayoutMetrics, nodeAnchorOffset, type GraphLayoutMetrics, type NodeAnchorOffset } from "./graph-layout";
-import { boundedHoverMagnet } from "./hover-magnet";
 import { boundedItems, previewGraphNodeLimit } from "./limits";
 import type { GraphNavigationTarget, NodeVisualKind } from "./navigation";
 import { hasNodeDragIntent } from "./pointer-intent";
@@ -61,8 +61,6 @@ interface PhysicsNode extends SimulationNodeDatum {
 	previewParent?: PhysicsNode;
 	previewOffsetX?: number;
 	previewOffsetY?: number;
-	hoverOffsetX?: number;
-	hoverOffsetY?: number;
 	element?: HTMLElement;
 	dot?: HTMLElement;
 	anchor?: HTMLElement;
@@ -84,7 +82,9 @@ interface DragState {
 	startNodeX: number;
 	startNodeY: number;
 	startedPinned: boolean;
-	moved: boolean;
+	pointerType: string;
+	captureTarget: HTMLElement;
+	phase: "pressed" | "dragging";
 }
 
 interface PanState {
@@ -97,6 +97,10 @@ interface PanState {
 
 const MIN_SCALE = 0.12;
 const MAX_SCALE = 2.4;
+// Never shrink labels on first open. Compact sidebars can pan the unbounded
+// graph or explicitly press Fit; silent auto-shrinking makes every node an
+// unreadable thumbnail and hides the real information architecture.
+const AUTO_FIT_MIN_SCALE = 1;
 
 export class OneHopForceGraph {
 	private readonly stage: HTMLElement;
@@ -128,7 +132,10 @@ export class OneHopForceGraph {
 	private initialFitFrame: number | null = null;
 	private previewAnimationFrame: number | null = null;
 	private readonly previewRemovalTimers = new Set<number>();
-	private readonly cancelDragOnBlur = (): void => this.cancelNodeDrag();
+	private readonly cancelPointerInteractionsOnBlur = (): void => {
+		this.cancelNodeDrag();
+		this.cancelPan();
+	};
 
 	constructor(host: HTMLElement, private readonly options: OneHopForceGraphOptions) {
 		this.stage = host.createDiv({ cls: "linked-graph-network" });
@@ -193,9 +200,9 @@ export class OneHopForceGraph {
 			.distance((link) => link.distance)
 			.strength((link) => link.preview ? 0.24 : 0.3);
 		this.simulation = forceSimulation<PhysicsNode, PhysicsLink>(this.physicsNodes())
-			.alpha(0.9)
-			.alphaDecay(0.022)
-			.velocityDecay(0.3)
+			.alpha(GRAPH_MOTION.initialAlpha)
+			.alphaDecay(GRAPH_MOTION.alphaDecay)
+			.velocityDecay(GRAPH_MOTION.velocityDecay)
 			.force("link", this.linkForce)
 			.force("charge", forceManyBody<PhysicsNode>()
 				.strength((node) => node.depth === 0 ? -260 : node.depth === 1 ? -320 : -92)
@@ -216,7 +223,9 @@ export class OneHopForceGraph {
 			if (!this.updateResponsiveLayout()) return;
 			this.updateNodes();
 			if (!this.viewportTouched) this.fitGraph(false);
-			this.simulation.alpha(0.12).restart();
+			this.simulation
+				.alpha(minimumSimulationAlpha(this.simulation.alpha(), GRAPH_MOTION.resizeAlpha))
+				.restart();
 		});
 		this.resizeObserver.observe(this.stage);
 
@@ -226,8 +235,9 @@ export class OneHopForceGraph {
 		this.stage.addEventListener("pointermove", (event) => this.movePan(event));
 		this.stage.addEventListener("pointerup", (event) => this.endPan(event));
 		this.stage.addEventListener("pointercancel", (event) => this.endPan(event));
+		this.stage.addEventListener("lostpointercapture", (event) => this.endPan(event));
 		this.stage.addEventListener("wheel", (event) => this.zoomWithWheel(event), { passive: false });
-		window.addEventListener("blur", this.cancelDragOnBlur);
+		window.addEventListener("blur", this.cancelPointerInteractionsOnBlur);
 		this.updateWorldTransform();
 		this.updateNodes();
 		this.initialFitFrame = window.requestAnimationFrame(() => {
@@ -242,7 +252,7 @@ export class OneHopForceGraph {
 		if (this.previewAnimationFrame !== null) window.cancelAnimationFrame(this.previewAnimationFrame);
 		for (const timer of this.previewRemovalTimers) window.clearTimeout(timer);
 		if (this.suppressClickTimer !== null) window.clearTimeout(this.suppressClickTimer);
-		window.removeEventListener("blur", this.cancelDragOnBlur);
+		window.removeEventListener("blur", this.cancelPointerInteractionsOnBlur);
 		this.resizeObserver.disconnect();
 		this.simulation.stop();
 	}
@@ -261,8 +271,9 @@ export class OneHopForceGraph {
 				type: "button",
 			},
 		});
-		const dot = element.createSpan({ cls: "linked-graph-network-node-dot", attr: { "aria-hidden": "true" } });
-		element.createSpan({ cls: "linked-graph-network-node-label", text: item.label });
+		const visual = element.createSpan({ cls: "linked-graph-network-node-visual" });
+		const dot = visual.createSpan({ cls: "linked-graph-network-node-dot", attr: { "aria-hidden": "true" } });
+		visual.createSpan({ cls: "linked-graph-network-node-label", text: item.label });
 		const node: PhysicsNode = {
 			id: item.key,
 			depth: 1,
@@ -277,7 +288,6 @@ export class OneHopForceGraph {
 		};
 		this.registerDrag(element, node);
 		shell.addEventListener("pointerenter", () => void this.showPreview(node));
-		shell.addEventListener("pointermove", (event) => this.moveHoverMagnet(event, node));
 		shell.addEventListener("pointerleave", () => this.hidePreview(node));
 		element.addEventListener("focus", () => void this.showPreview(node));
 		shell.addEventListener("focusout", (event) => {
@@ -298,11 +308,11 @@ export class OneHopForceGraph {
 	}
 
 	private registerDrag(element: HTMLElement, node: PhysicsNode): void {
-		element.addEventListener("pointerdown", (event) => this.startNodeDrag(event, node));
+		element.addEventListener("pointerdown", (event) => this.startNodeDrag(event, node, element));
 		element.addEventListener("pointermove", (event) => this.moveNode(event));
 		element.addEventListener("pointerup", (event) => this.endNodeDrag(event));
-		element.addEventListener("pointercancel", () => this.cancelNodeDrag());
-		element.addEventListener("lostpointercapture", () => this.cancelNodeDrag());
+		element.addEventListener("pointercancel", (event) => this.cancelNodeDrag(event.pointerId));
+		element.addEventListener("lostpointercapture", (event) => this.cancelNodeDrag(event.pointerId));
 	}
 
 	private consumeSuppressedClick(event: MouseEvent, nodeId: string): boolean {
@@ -339,7 +349,7 @@ export class OneHopForceGraph {
 	}
 
 	private async showPreview(node: PhysicsNode): Promise<void> {
-		if (!node.graph || this.previewOwnerId === node.id) return;
+		if (!node.graph || this.previewOwnerId === node.id || this.drag?.phase === "dragging") return;
 		this.clearPreview();
 		this.previewOwnerId = node.id;
 		node.element?.addClass("is-preview-source");
@@ -412,8 +422,7 @@ export class OneHopForceGraph {
 	}
 
 	private hidePreview(node: PhysicsNode): void {
-		if (this.drag?.node === node) return;
-		this.resetHoverMagnet(node);
+		if (this.drag?.node === node && this.drag.phase === "dragging") return;
 		if (this.previewOwnerId === node.id) this.clearPreview(true);
 	}
 
@@ -507,8 +516,8 @@ export class OneHopForceGraph {
 	private updateNodes(): void {
 		for (const node of this.previewNodes) {
 			if (!node.previewParent) continue;
-			node.x = (node.previewParent.x ?? 0) + (node.previewParent.hoverOffsetX ?? 0) + (node.previewOffsetX ?? 0);
-			node.y = (node.previewParent.y ?? 0) + (node.previewParent.hoverOffsetY ?? 0) + (node.previewOffsetY ?? 0);
+			node.x = (node.previewParent.x ?? 0) + (node.previewOffsetX ?? 0);
+			node.y = (node.previewParent.y ?? 0) + (node.previewOffsetY ?? 0);
 		}
 		for (const node of this.visibleNodes()) {
 			const x = node.x ?? 0;
@@ -535,7 +544,7 @@ export class OneHopForceGraph {
 	private nodeAnchor(node: PhysicsNode): NodeAnchorOffset {
 		const anchor = node.anchor ?? node.element;
 		if (!anchor || !node.dot) return { x: 0, y: 0 };
-		const offset = nodeAnchorOffset(
+		return nodeAnchorOffset(
 			anchor.offsetWidth,
 			anchor.offsetHeight,
 			node.dot.offsetLeft,
@@ -543,45 +552,16 @@ export class OneHopForceGraph {
 			node.dot.offsetWidth,
 			node.dot.offsetHeight,
 		);
-		return {
-			x: offset.x + (node.hoverOffsetX ?? 0),
-			y: offset.y + (node.hoverOffsetY ?? 0),
-		};
-	}
-
-	private moveHoverMagnet(event: PointerEvent, node: PhysicsNode): void {
-		if (this.drag || this.previewOwnerId !== node.id || !node.anchor) return;
-		const bounds = node.element?.getBoundingClientRect();
-		if (!bounds) return;
-		const offset = boundedHoverMagnet(
-			{ clientX: bounds.left + bounds.width / 2, clientY: bounds.top + bounds.height / 2 },
-			event.clientX,
-			event.clientY,
-		);
-		node.hoverOffsetX = offset.x / this.scale;
-		node.hoverOffsetY = offset.y / this.scale;
-		this.setHoverCssOffset(node, node.hoverOffsetX, node.hoverOffsetY);
-		this.updateNodes();
-	}
-
-	private resetHoverMagnet(node: PhysicsNode): void {
-		node.hoverOffsetX = 0;
-		node.hoverOffsetY = 0;
-		this.setHoverCssOffset(node, 0, 0);
-		this.updateNodes();
-	}
-
-	private setHoverCssOffset(node: PhysicsNode, x: number, y: number): void {
-		node.anchor?.style.setProperty("--lg-hover-x", `${String(x)}px`);
-		node.anchor?.style.setProperty("--lg-hover-y", `${String(y)}px`);
 	}
 
 	private updateWorldTransform(): void {
 		this.world.style.transform = `translate(${String(this.panX)}px, ${String(this.panY)}px) scale(${String(this.scale)})`;
 	}
 
-	private startNodeDrag(event: PointerEvent, node: PhysicsNode): void {
+	private startNodeDrag(event: PointerEvent, node: PhysicsNode, captureTarget: HTMLElement): void {
+		if (!event.isPrimary || event.button !== 0) return;
 		event.stopPropagation();
+		if (this.drag) this.cancelNodeDrag();
 		this.drag = {
 			node,
 			pointerId: event.pointerId,
@@ -590,25 +570,32 @@ export class OneHopForceGraph {
 			startNodeX: node.x ?? 0,
 			startNodeY: node.y ?? 0,
 			startedPinned: this.pinnedNodeIds.has(node.id),
-			moved: false,
+			pointerType: event.pointerType,
+			captureTarget,
+			phase: "pressed",
 		};
-		node.element?.setPointerCapture(event.pointerId);
+		captureTarget.setPointerCapture(event.pointerId);
 	}
 
 	private moveNode(event: PointerEvent): void {
 		if (!this.drag || this.drag.pointerId !== event.pointerId) return;
-		if (!this.drag.moved) {
+		if (this.drag.phase === "pressed") {
 			if (!hasNodeDragIntent(
 				{ clientX: this.drag.startClientX, clientY: this.drag.startClientY },
 				event.clientX,
 				event.clientY,
+				this.drag.pointerType,
 			)) return;
-			this.drag.moved = true;
-			this.resetHoverMagnet(this.drag.node);
+			this.drag.phase = "dragging";
 			if (this.previewOwnerId === this.drag.node.id) this.clearPreview(true);
+			this.viewportTouched = true;
+			this.drag.node.element?.addClass("is-dragging");
 			this.drag.node.fx = this.drag.node.x;
 			this.drag.node.fy = this.drag.node.y;
-			this.simulation.alphaTarget(0.22).restart();
+			this.simulation
+				.alpha(minimumSimulationAlpha(this.simulation.alpha(), GRAPH_MOTION.dropAlpha))
+				.alphaTarget(GRAPH_MOTION.dragAlphaTarget)
+				.restart();
 		}
 		const deltaX = (event.clientX - this.drag.startClientX) / this.scale;
 		const deltaY = (event.clientY - this.drag.startClientY) / this.scale;
@@ -621,21 +608,27 @@ export class OneHopForceGraph {
 
 	private endNodeDrag(event: PointerEvent): void {
 		if (!this.drag || this.drag.pointerId !== event.pointerId) return;
-		if (!this.drag.moved) {
-			this.drag = null;
-			return;
-		}
-		this.suppressClickFor(this.drag.node.id);
-		this.pinnedNodeIds.add(this.drag.node.id);
-		this.drag.node.fx = this.drag.node.x;
-		this.drag.node.fy = this.drag.node.y;
+		const completed = this.drag;
 		this.drag = null;
-		this.simulation.alphaTarget(0).alpha(0.32).restart();
+		this.releasePointerCapture(completed);
+		if (completed.phase === "pressed") return;
+		completed.node.element?.removeClass("is-dragging");
+		this.suppressClickFor(completed.node.id);
+		this.pinnedNodeIds.add(completed.node.id);
+		completed.node.fx = completed.node.x;
+		completed.node.fy = completed.node.y;
+		this.simulation
+			.alphaTarget(0)
+			.alpha(minimumSimulationAlpha(this.simulation.alpha(), GRAPH_MOTION.dropAlpha))
+			.restart();
 	}
 
-	private cancelNodeDrag(): void {
-		if (!this.drag) return;
+	private cancelNodeDrag(pointerId?: number): void {
+		if (!this.drag || (pointerId !== undefined && this.drag.pointerId !== pointerId)) return;
 		const cancelled = this.drag;
+		this.drag = null;
+		this.releasePointerCapture(cancelled);
+		cancelled.node.element?.removeClass("is-dragging");
 		if (this.previewOwnerId === cancelled.node.id) this.clearPreview();
 		cancelled.node.x = cancelled.startNodeX;
 		cancelled.node.y = cancelled.startNodeY;
@@ -648,9 +641,17 @@ export class OneHopForceGraph {
 			cancelled.node.fx = null;
 			cancelled.node.fy = null;
 		}
-		this.drag = null;
-		this.simulation.alphaTarget(0).alpha(0.08).restart();
+		this.simulation
+			.alphaTarget(0)
+			.alpha(minimumSimulationAlpha(this.simulation.alpha(), GRAPH_MOTION.cancelAlpha))
+			.restart();
 		this.updateNodes();
+	}
+
+	private releasePointerCapture(drag: DragState): void {
+		if (drag.captureTarget.hasPointerCapture(drag.pointerId)) {
+			drag.captureTarget.releasePointerCapture(drag.pointerId);
+		}
 	}
 
 	private suppressClickFor(nodeId: string): void {
@@ -666,6 +667,7 @@ export class OneHopForceGraph {
 	}
 
 	private startPan(event: PointerEvent): void {
+		if (!event.isPrimary || event.button !== 0) return;
 		if (event.target instanceof Element && event.target.closest("button")) return;
 		this.viewportTouched = true;
 		this.pan = {
@@ -686,7 +688,17 @@ export class OneHopForceGraph {
 	}
 
 	private endPan(event: PointerEvent): void {
-		if (this.pan?.pointerId === event.pointerId) this.pan = null;
+		if (this.pan?.pointerId !== event.pointerId) return;
+		const pointerId = this.pan.pointerId;
+		this.pan = null;
+		if (this.stage.hasPointerCapture(pointerId)) this.stage.releasePointerCapture(pointerId);
+	}
+
+	private cancelPan(): void {
+		if (!this.pan) return;
+		const pointerId = this.pan.pointerId;
+		this.pan = null;
+		if (this.stage.hasPointerCapture(pointerId)) this.stage.releasePointerCapture(pointerId);
 	}
 
 	private zoomWithWheel(event: WheelEvent): void {
@@ -733,7 +745,7 @@ export class OneHopForceGraph {
 		const fitScale = Math.min(this.stage.clientWidth / graphWidth, this.stage.clientHeight / graphHeight);
 		this.scale = markViewportTouched
 			? Math.min(1, Math.max(MIN_SCALE, fitScale))
-			: Math.min(1, fitScale);
+			: Math.min(1, Math.max(AUTO_FIT_MIN_SCALE, fitScale));
 		this.panX = -((minX + maxX) / 2) * this.scale;
 		this.panY = -((minY + maxY) / 2) * this.scale;
 		this.updateWorldTransform();

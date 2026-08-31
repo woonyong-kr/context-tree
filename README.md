@@ -48,7 +48,7 @@ Obsidian Graph answers “how is this network connected?” Linked Graph Navigat
 
 Keyboard-only flow: run **Focus route search**, type a route or section name, press `Arrow Down` to focus the first match, then `Enter` to open it. Use the Back command or header action to return.
 
-Graph rendering stays responsive on unusually dense notes by showing at most 120 direct nodes and 48 next-step preview nodes. When routes are omitted, the panel reports the count and offers the complete authored list in Outline view.
+Graph rendering stays responsive on unusually dense notes by sizing its direct-node limit from the measured panel area (12 to 120 nodes) and showing at most 48 next-step preview nodes. When routes are omitted, the panel reports the count and offers the complete authored list in Outline view.
 
 The demo Vault includes a [130-route fallback example](https://github.com/woonyong-kr/obsidian-navigator-demo-vault/blob/main/Benchmarks/Dense%20Routes.md), and the parser has a [reproducible 5,000-route benchmark](docs/benchmarks.md).
 

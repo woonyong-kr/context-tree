@@ -1,6 +1,6 @@
 import { ItemView, setIcon, TFile, WorkspaceLeaf } from "obsidian";
 import type LinkedGraphPlugin from "./main";
-import { MAX_DIRECT_GRAPH_NODES, boundedItems } from "./limits";
+import { boundedItems, directGraphNodeLimit } from "./limits";
 import { countLinks, graphMatches, type DocumentLinkGraph, type GraphEntry, type LinkedNote } from "./model";
 import { OneHopForceGraph, type OneHopGraphNode } from "./one-hop-graph";
 import { COPY } from "./ui/copy";
@@ -233,7 +233,11 @@ export class LinkedGraphView extends ItemView {
 		const open = row.createEl("button", { cls: "linked-graph-link", attr: { title: link.path, type: "button" } });
 		if (link.sectionPath.length > 0) open.createSpan({ cls: "linked-graph-link-context", text: link.sectionPath.join(" › ") });
 		open.createSpan({ cls: "linked-graph-link-label", text: link.label });
-		open.addEventListener("click", () => void this.plugin.openLinkedNote(link.linkText, this.sourceFile?.path ?? ""));
+		open.addEventListener("click", () => void this.plugin.openLinkedNote(
+			link.linkText,
+			this.sourceFile?.path ?? "",
+			link.path,
+		));
 		setIcon(row.createSpan({ cls: "linked-graph-open-icon", attr: { "aria-hidden": "true" } }), "arrow-up-right");
 	}
 
@@ -242,7 +246,7 @@ export class LinkedGraphView extends ItemView {
 		const sourceFile = this.sourceFile;
 		const sourcePath = sourceFile.path;
 		const nodes = flattenGraphEntries(entries, (path) => this.plugin.nodeKindForPath(path));
-		const visibleNodes = boundedItems(nodes, MAX_DIRECT_GRAPH_NODES);
+		const visibleNodes = boundedItems(nodes, directGraphNodeLimit(this.body.clientWidth, this.body.clientHeight));
 		this.graphSurface = new OneHopForceGraph(this.body, {
 			title: this.graph.title,
 			rootKind: this.plugin.nodeKindForPath(sourcePath),
@@ -260,10 +264,10 @@ export class LinkedGraphView extends ItemView {
 			items: visibleNodes.items,
 			omittedDirectCount: visibleNodes.omitted,
 			onOpen: (node) => {
-				void this.plugin.openLinkedNote(node.linkText, sourcePath);
+				void this.plugin.openLinkedNote(node.linkText, sourcePath, node.path);
 			},
 			onOpenParent: (parent) => {
-				void this.plugin.openLinkedNote(parent.linkText, sourcePath);
+				void this.plugin.openLinkedNote(parent.linkText, sourcePath, parent.path);
 			},
 			onShowAll: () => {
 				this.mode = "outline";

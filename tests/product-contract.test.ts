@@ -44,6 +44,9 @@ test("view defaults to the current-note graph and keeps mode state session-only"
 	assert.match(view, /focusSearch\(\)/);
 	assert.match(main, /private readonly sessionHistory = new SessionNavigationHistory\(\)/);
 	assert.match(main, /navigateHistory\(delta: -1 \| 1\)/);
+	assert.match(main, /openLinkedNote\(linkText: string, sourcePath: string, targetPath: string\)/);
+	assert.match(main, /this\.setCurrentSource\(target, sourceLeaf\)/);
+	assert.match(main, /this\.refreshViews\(\)/);
 	assert.doesNotMatch(main, /saveData\(|loadData\(/);
 });
 
@@ -72,16 +75,16 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /forceSimulation/);
 	assert.match(graph, /forceLink/);
 	assert.match(graph, /forceCollide/);
-	assert.match(graph, /alphaTarget\(0\.22\)\.restart/);
+	assert.match(graph, /alphaTarget\(GRAPH_MOTION\.dragAlphaTarget\)/);
 	assert.match(graph, /ResizeObserver/);
 	assert.match(graph, /stage\.clientWidth/);
 	assert.match(graph, /graphLayoutMetrics/);
 	assert.match(graph, /updateResponsiveLayout/);
 	assert.match(graph, /nodeAnchorOffset/);
 	assert.match(graph, /private fitGraph\(markViewportTouched = true\)/);
-	assert.doesNotMatch(graph, /AUTO_FIT_MIN_SCALE/);
+	assert.match(graph, /AUTO_FIT_MIN_SCALE/);
 	assert.match(graph, /const fitScale = Math\.min\(this\.stage\.clientWidth \/ graphWidth/);
-	assert.match(graph, /markViewportTouched[\s\S]*Math\.max\(MIN_SCALE, fitScale\)[\s\S]*Math\.min\(1, fitScale\)/);
+	assert.match(graph, /markViewportTouched[\s\S]*Math\.max\(MIN_SCALE, fitScale\)[\s\S]*Math\.max\(AUTO_FIT_MIN_SCALE, fitScale\)/);
 	assert.match(graph, /this\.stage\.clientWidth \/ graphWidth/);
 	assert.doesNotMatch(graph, /const maxX = Math\.max/);
 	assert.doesNotMatch(graph, /const maxY = Math\.max/);
@@ -91,9 +94,8 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.doesNotMatch(graph, /"aria-disabled"/);
 	assert.match(graph, /if \(!options\.parent\) rootElement\.tabIndex = -1/);
 	assert.match(graph, /onOpenParent/);
-	assert.match(graph, /pointerenter/);
-	assert.match(graph, /shell\.addEventListener\("pointermove", \(event\) => this\.moveHoverMagnet\(event, node\)\)/);
-	assert.match(graph, /boundedHoverMagnet/);
+	assert.match(graph, /shell\.addEventListener\("pointerenter", \(\) => void this\.showPreview\(node\)\)/);
+	assert.doesNotMatch(graph, /moveHover|boundedHover|hoverOriginClientX|previewIntent/);
 	assert.match(graph, /onPreview/);
 	assert.match(graph, /element\.addEventListener\("focus", \(\) => void this\.showPreview\(node\)\)/);
 	assert.doesNotMatch(graph, /linked-graph-preview-toggle|previewToggle|togglePreview/);
@@ -104,10 +106,10 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /hasNodeDragIntent/);
 	assert.doesNotMatch(graph, /Math\.hypot\(deltaX, deltaY\)/);
 	assert.match(graph, /private readonly pinnedNodeIds = new Set<string>\(\)/);
-	assert.match(graph, /this\.pinnedNodeIds\.add\(this\.drag\.node\.id\)/);
+	assert.match(graph, /this\.pinnedNodeIds\.add\(completed\.node\.id\)/);
 	assert.match(graph, /pointercancel[^\n]*cancelNodeDrag/);
 	assert.match(graph, /lostpointercapture[^\n]*cancelNodeDrag/);
-	assert.match(graph, /window\.addEventListener\("blur", this\.cancelDragOnBlur\)/);
+	assert.match(graph, /window\.addEventListener\("blur", this\.cancelPointerInteractionsOnBlur\)/);
 	assert.match(graph, /cancelled\.node\.x = cancelled\.startNodeX/);
 	assert.match(graph, /offsetWidth/);
 	assert.match(graph, /ringSize = this\.layoutWidth <= 420 \? 2 : 8/);
@@ -117,7 +119,7 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.doesNotMatch(graph, /root-parent-icon|corner-up-left/);
 	assert.doesNotMatch(graph, /title: item\.path/);
 	assert.match(view, /toggleClass\("is-graph", this\.mode === "graph"\)/);
-	assert.match(view, /MAX_DIRECT_GRAPH_NODES/);
+	assert.match(view, /directGraphNodeLimit\(this\.body\.clientWidth, this\.body\.clientHeight\)/);
 	assert.match(view, /showAllInOutline/);
 	assert.doesNotMatch(view, /group:|group,/);
 	assert.match(main, /frontmatter\?\.parent/);
@@ -125,6 +127,7 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(navigation, /entity_kind/);
 	assert.match(navigation, /facets/);
 	assert.doesNotMatch(graph, /localStorage|saveData|vault\.modify/);
+	assert.doesNotMatch(graph, /빠른 이동|하위 노드|linked-graph-preview-toggle|chevron-right/);
 });
 
 test("navigation coalesces duplicate workspace events into one graph refresh", async () => {
@@ -157,11 +160,17 @@ test("graph uses an edge-to-edge canvas and node-only hover affordances", async 
 	assert.match(styles, /\.linked-graph-network-overflow/);
 	assert.match(styles, /\.linked-graph-view \.linked-graph-network-root:focus-visible,[\s\S]*outline: none;[\s\S]*box-shadow: none/);
 	assert.match(styles, /\.linked-graph-network-root \{[\s\S]*flex-direction: column/);
-	assert.match(styles, /button\.linked-graph-network-node \{[\s\S]*flex-direction: column[\s\S]*text-align: center/);
+	assert.match(styles, /button\.linked-graph-network-node \{[^}]*text-align: center[^}]*transform: none/);
+	assert.doesNotMatch(styles, /button\.linked-graph-network-node \{[^}]*transform: translate/);
+	assert.match(styles, /\.linked-graph-network-node-visual \{[^}]*flex-direction: column/);
+	assert.doesNotMatch(styles, /--lg-hover-[xy]|\.linked-graph-network-node-visual \{[^}]*transition/);
 	assert.match(styles, /\.linked-graph-network-preview-node \{[\s\S]*flex-direction: column[\s\S]*text-align: center/);
 	assert.match(styles, /\.linked-graph-network-preview-node\.is-visible \{[\s\S]*scale\(1\)/);
 	assert.match(styles, /\.linked-graph-network-root-label,[\s\S]*\.linked-graph-network-node-label \{[\s\S]*overflow-wrap: anywhere;[\s\S]*white-space: normal/);
 	assert.doesNotMatch(styles, /\.linked-graph-network-node-context/);
+	assert.match(graph, /captureTarget\.setPointerCapture\(event\.pointerId\)/);
+	assert.match(graph, /captureTarget\.releasePointerCapture\(drag\.pointerId\)/);
+	assert.doesNotMatch(graph, /node\.(?:anchor|element)\?\.setPointerCapture/);
 	assert.match(styles, /\.linked-graph-preview-status \{[\s\S]*width: 1px;[\s\S]*clip-path: inset\(50%\)/);
 	assert.doesNotMatch(styles, /\.linked-graph-network-root-label,[\s\S]*\.linked-graph-network-node-label \{[^}]*text-overflow: ellipsis/);
 	assert.match(graph, /\.on\("end", \(\) => \{[\s\S]*if \(!this\.viewportTouched\) this\.fitGraph\(false\)/);

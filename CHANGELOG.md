@@ -6,8 +6,9 @@
 - Pin a hovered route before loading its outgoing links and render the next-hop preview without adding it to the primary force simulation, so the source cannot move away from the pointer.
 - Measure drag intent in screen pixels and suppress navigation only after a deliberate drag, restoring reliable single-click navigation at every zoom level.
 - Keep a successful drop as the node's session-only position and restore its pre-drag position when pointer input is cancelled or the app loses focus.
-- Keep automatic fitting above a readable interaction scale while allowing sparse sidebar graphs to fit complete labels; dense graphs use the existing pan/zoom viewport instead of shrinking every click target into a thumbnail.
-- Restore controlled motion without moving the click target: a hovered node gets a bounded magnetic offset, its next routes spring outward from the source, and both return smoothly when hover ends.
+- Fit the complete measured title bounds when a graph first opens, so long root and route labels no longer begin cropped; zoom, pan, and Outline remain available when a dense graph starts small.
+- Keep hover targets stationary, reveal next routes immediately, and make root and direct-node drags track the pointer through the same capture owner while surrounding nodes settle with short, damped force motion.
+- Re-root the sidebar graph immediately after a direct-node or Outline navigation instead of waiting on workspace event ordering.
 - Expand the world radius progressively once a note exceeds eight direct routes, preventing chapter-sized graphs from stacking labels in a narrow sidebar.
 - Bound next-route previews by the actual pane width and fan them toward the available graph interior, keeping large chapter indexes readable without adding another button or status card.
 - Split compact previews across two staggered rings so long lesson titles do not collapse into a single fan.

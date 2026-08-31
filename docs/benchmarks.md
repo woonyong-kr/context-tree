@@ -1,6 +1,6 @@
 # Large-note benchmark
 
-Linked Graph Navigator bounds rendered DOM at 120 direct routes and 48 next-step routes. The complete authored link set remains available in Outline view.
+Linked Graph Navigator bounds rendered DOM at 12 to 120 direct routes according to measured panel area and at 48 next-step routes. The complete authored link set remains available in Outline view.
 
 Run the parser benchmark with:
 

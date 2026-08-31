@@ -112,9 +112,18 @@ export default class LinkedGraphPlugin extends Plugin {
 		if (leaf?.view instanceof LinkedGraphView) leaf.view.focusSearch();
 	}
 
-	async openLinkedNote(linkText: string, sourcePath: string): Promise<void> {
-		if (this.sourceLeaf) this.app.workspace.setActiveLeaf(this.sourceLeaf, { focus: true });
+	async openLinkedNote(linkText: string, sourcePath: string, targetPath: string): Promise<void> {
+		const target = this.fileForPath(targetPath);
+		const sourceLeaf = this.sourceLeaf ?? this.app.workspace.getActiveViewOfType(MarkdownView)?.leaf ?? null;
+		if (sourceLeaf) this.app.workspace.setActiveLeaf(sourceLeaf, { focus: true });
 		await this.app.workspace.openLinkText(linkText, sourcePath, false);
+		if (!target) return;
+		this.setCurrentSource(target, sourceLeaf);
+		if (this.refreshTimer !== undefined) {
+			window.clearTimeout(this.refreshTimer);
+			this.refreshTimer = undefined;
+		}
+		this.refreshViews();
 	}
 
 	historyState(): { canBack: boolean; canForward: boolean } {

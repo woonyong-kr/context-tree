@@ -29,6 +29,7 @@
 	--lg-icon-size: 16px;
 	--lg-font-small: var(--font-ui-smaller);
 	--lg-font-normal: var(--font-ui-small);
+	--lg-preview-duration: 160ms;
 }
 /* linked-graph-design-tokens:end */
 
@@ -357,7 +358,7 @@
 	stroke-dasharray: 4 5;
 	stroke-width: 1;
 	opacity: 0;
-	transition: opacity 140ms var(--anim-motion-smooth);
+	transition: opacity var(--lg-preview-duration) var(--anim-motion-smooth);
 }
 
 .linked-graph-network-edge.is-preview.is-visible {
@@ -445,9 +446,7 @@
 .linked-graph-view button.linked-graph-network-node {
 	--lg-node-color: var(--lg-kind-unknown);
 	display: inline-flex;
-	flex-direction: column;
 	align-items: center;
-	gap: var(--lg-space-1);
 	width: max-content;
 	max-width: 190px;
 	min-height: 30px;
@@ -463,8 +462,19 @@
 	text-align: center;
 	cursor: pointer;
 	touch-action: none;
-	transform: translate(var(--lg-hover-x, 0), var(--lg-hover-y, 0));
-	transition: transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+	transform: none;
+}
+
+.linked-graph-network-node-visual {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--lg-space-1);
+}
+
+.linked-graph-network-root.is-dragging,
+.linked-graph-network-node-shell.is-dragging button.linked-graph-network-node {
+	cursor: grabbing;
 }
 
 .linked-graph-view button.linked-graph-network-node:hover,
@@ -574,8 +584,8 @@
 		calc(var(--lg-node-y, 0px) - var(--lg-preview-offset-y, 0px))
 	) translate(-50%, -50%) scale(0.72);
 	transition:
-		opacity 140ms var(--anim-motion-smooth),
-		transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+		opacity var(--lg-preview-duration) var(--anim-motion-smooth),
+		transform var(--lg-preview-duration) cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .linked-graph-network-preview-node.is-visible {
@@ -714,8 +724,7 @@
 	.linked-graph-open-icon,
 	.linked-graph-network-node-dot,
 	.linked-graph-network-edge.is-preview,
-	.linked-graph-network-preview-node,
-	.linked-graph-view button.linked-graph-network-node {
+	.linked-graph-network-preview-node {
 		transition: none;
 	}
 }

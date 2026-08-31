@@ -4,6 +4,7 @@ import {
 	MAX_DIRECT_GRAPH_NODES,
 	MAX_PREVIEW_GRAPH_NODES,
 	boundedItems,
+	directGraphNodeLimit,
 	previewGraphNodeLimit,
 } from "../src/limits";
 
@@ -23,6 +24,14 @@ test("does not report omissions below the visual limit", () => {
 		omitted: 0,
 		total: 3,
 	});
+});
+
+test("adapts the direct graph bound to measured panel area", () => {
+	assert.equal(directGraphNodeLimit(300, 600), 12);
+	assert.equal(directGraphNodeLimit(600, 800), 32);
+	assert.equal(directGraphNodeLimit(900, 900), 54);
+	assert.equal(directGraphNodeLimit(1_600, 1_200), MAX_DIRECT_GRAPH_NODES);
+	assert.equal(directGraphNodeLimit(0, 0), 12);
 });
 
 test("keeps hover previews readable at common sidebar widths", () => {
