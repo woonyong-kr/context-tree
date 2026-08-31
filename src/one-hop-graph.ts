@@ -97,9 +97,6 @@ interface PanState {
 
 const MIN_SCALE = 0.12;
 const MAX_SCALE = 2.4;
-// Keep authored text at its native scale on first open. Dense graphs remain
-// available through pan, zoom, explicit Fit, and the complete Outline view.
-const AUTO_FIT_MIN_SCALE = 1;
 
 export class OneHopForceGraph {
 	private readonly stage: HTMLElement;
@@ -231,10 +228,22 @@ export class OneHopForceGraph {
 		this.renderControls(options.controls);
 		this.renderOverflowNotice();
 		this.stage.addEventListener("pointerdown", (event) => this.startPan(event));
-		this.stage.addEventListener("pointermove", (event) => this.movePan(event));
-		this.stage.addEventListener("pointerup", (event) => this.endPan(event));
-		this.stage.addEventListener("pointercancel", (event) => this.endPan(event));
-		this.stage.addEventListener("lostpointercapture", (event) => this.endPan(event));
+		this.stage.addEventListener("pointermove", (event) => {
+			this.moveNode(event);
+			this.movePan(event);
+		});
+		this.stage.addEventListener("pointerup", (event) => {
+			this.endNodeDrag(event);
+			this.endPan(event);
+		});
+		this.stage.addEventListener("pointercancel", (event) => {
+			this.cancelNodeDrag(event.pointerId);
+			this.endPan(event);
+		});
+		this.stage.addEventListener("lostpointercapture", (event) => {
+			this.cancelNodeDrag(event.pointerId);
+			this.endPan(event);
+		});
 		this.stage.addEventListener("wheel", (event) => this.zoomWithWheel(event), { passive: false });
 		window.addEventListener("blur", this.cancelPointerInteractionsOnBlur);
 		this.updateWorldTransform();
@@ -269,9 +278,8 @@ export class OneHopForceGraph {
 				type: "button",
 			},
 		});
-		const visual = element.createSpan({ cls: "linked-graph-network-node-visual" });
-		const dot = visual.createSpan({ cls: "linked-graph-network-node-dot", attr: { "aria-hidden": "true" } });
-		visual.createSpan({ cls: "linked-graph-network-node-label", text: item.label });
+		const dot = element.createSpan({ cls: "linked-graph-network-node-dot", attr: { "aria-hidden": "true" } });
+		element.createSpan({ cls: "linked-graph-network-node-label", text: item.label });
 		const node: PhysicsNode = {
 			id: item.key,
 			depth: 1,
@@ -285,11 +293,7 @@ export class OneHopForceGraph {
 			anchor: element,
 		};
 		this.registerDrag(element, node);
-		element.addEventListener("pointerenter", (event) => {
-			node.hoverOrigin = { clientX: event.clientX, clientY: event.clientY };
-			void this.showPreview(node);
-		});
-		element.addEventListener("pointermove", (event) => this.moveHover(event, node));
+		element.addEventListener("pointerenter", () => void this.showPreview(node));
 		element.addEventListener("pointerleave", () => this.hidePreview(node));
 		element.addEventListener("focus", () => void this.showPreview(node));
 		element.addEventListener("blur", () => this.hidePreview(node));
@@ -309,10 +313,6 @@ export class OneHopForceGraph {
 
 	private registerDrag(element: HTMLElement, node: PhysicsNode): void {
 		element.addEventListener("pointerdown", (event) => this.startNodeDrag(event, node, element));
-		element.addEventListener("pointermove", (event) => this.moveNode(event));
-		element.addEventListener("pointerup", (event) => this.endNodeDrag(event));
-		element.addEventListener("pointercancel", (event) => this.cancelNodeDrag(event.pointerId));
-		element.addEventListener("lostpointercapture", (event) => this.cancelNodeDrag(event.pointerId));
 	}
 
 	private consumeSuppressedClick(event: MouseEvent, nodeId: string): boolean {
@@ -756,7 +756,7 @@ export class OneHopForceGraph {
 		const fitScale = Math.min(this.stage.clientWidth / graphWidth, this.stage.clientHeight / graphHeight);
 		this.scale = markViewportTouched
 			? Math.min(1, Math.max(MIN_SCALE, fitScale))
-			: Math.min(1, Math.max(AUTO_FIT_MIN_SCALE, fitScale));
+			: Math.min(1, fitScale);
 		this.panX = -((minX + maxX) / 2) * this.scale;
 		this.panY = -((minY + maxY) / 2) * this.scale;
 		this.updateWorldTransform();

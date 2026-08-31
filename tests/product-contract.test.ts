@@ -82,9 +82,9 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /updateResponsiveLayout/);
 	assert.match(graph, /nodeAnchorOffset/);
 	assert.match(graph, /private fitGraph\(markViewportTouched = true\)/);
-	assert.match(graph, /AUTO_FIT_MIN_SCALE/);
+	assert.doesNotMatch(graph, /AUTO_FIT_MIN_SCALE/);
 	assert.match(graph, /const fitScale = Math\.min\(this\.stage\.clientWidth \/ graphWidth/);
-	assert.match(graph, /markViewportTouched[\s\S]*Math\.max\(MIN_SCALE, fitScale\)[\s\S]*Math\.max\(AUTO_FIT_MIN_SCALE, fitScale\)/);
+	assert.match(graph, /markViewportTouched[\s\S]*Math\.max\(MIN_SCALE, fitScale\)[\s\S]*Math\.min\(1, fitScale\)/);
 	assert.match(graph, /this\.stage\.clientWidth \/ graphWidth/);
 	assert.doesNotMatch(graph, /const maxX = Math\.max/);
 	assert.doesNotMatch(graph, /const maxY = Math\.max/);
@@ -101,7 +101,7 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /if \(!options\.parent\) rootElement\.tabIndex = -1/);
 	assert.match(graph, /onOpenParent/);
 	assert.match(graph, /element\.addEventListener\("pointerenter", \(\) => void this\.showPreview\(node\)\)/);
-	assert.doesNotMatch(graph, /moveHover|boundedHover|hoverOriginClientX|previewIntent/);
+	assert.doesNotMatch(graph, /moveHover|boundedHover|hoverOrigin|previewIntent/);
 	assert.match(graph, /onPreview/);
 	assert.match(graph, /element\.addEventListener\("focus", \(\) => void this\.showPreview\(node\)\)/);
 	assert.doesNotMatch(graph, /linked-graph-preview-toggle|previewToggle|togglePreview/);
@@ -114,8 +114,12 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /private readonly pinnedNodeIds = new Set<string>\(\)/);
 	assert.match(graph, /this\.pinnedNodeIds\.add\(completed\.node\.id\)/);
 	assert.match(graph, /completed\.phase === "pressed"[\s\S]*this\.suppressClickFor\(completed\.node\.id\)[\s\S]*this\.activateNode\(completed\.node\)/);
-	assert.match(graph, /pointercancel[^\n]*cancelNodeDrag/);
-	assert.match(graph, /lostpointercapture[^\n]*cancelNodeDrag/);
+	assert.match(graph, /pointercancel"[\s\S]*this\.cancelNodeDrag\(event\.pointerId\)/);
+	assert.match(graph, /lostpointercapture"[\s\S]*this\.cancelNodeDrag\(event\.pointerId\)/);
+	assert.match(graph, /this\.stage\.addEventListener\("pointermove"[\s\S]*this\.moveNode\(event\)[\s\S]*this\.movePan\(event\)/);
+	assert.match(graph, /this\.stage\.addEventListener\("pointerup"[\s\S]*this\.endNodeDrag\(event\)[\s\S]*this\.endPan\(event\)/);
+	const registerDrag = graph.slice(graph.indexOf("private registerDrag"), graph.indexOf("private consumeSuppressedClick"));
+	assert.doesNotMatch(registerDrag, /pointermove|pointerup|pointercancel|lostpointercapture/);
 	assert.match(graph, /window\.addEventListener\("blur", this\.cancelPointerInteractionsOnBlur\)/);
 	assert.match(graph, /cancelled\.node\.x = cancelled\.startNodeX/);
 	assert.match(graph, /offsetWidth/);
