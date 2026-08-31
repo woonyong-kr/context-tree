@@ -1,7 +1,7 @@
 {
 	"name": "linked-graph",
-	"version": "1.4.2",
-	"description": "A current-note outline and one-hop graph for Obsidian.",
+	"version": "1.4.3",
+	"description": "Follow the links you wrote in order as a focused outline or graph beside the active note.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {

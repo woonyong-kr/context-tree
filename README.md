@@ -1,34 +1,44 @@
 # Linked Graph Navigator
 
-Linked Graph Navigator is a focused right-sidebar navigator for the Markdown note you are reading.
+**Follow the paths you wrote, not every connection in your Vault.**
 
-![Linked Graph Navigator animated current-note and next-hop walkthrough](docs/assets/linked-graph-demo.gif)
+Linked Graph Navigator follows the active Markdown note and shows only its resolved outgoing `[[wikilinks]]` in the order you wrote them. Keep the routes in a quiet outline or see them as a focused graph beside the note.
 
-![Linked Graph Navigator following the canonical Wiki note](docs/assets/linked-graph-runtime.png)
+![Linked Graph Navigator walkthrough from an active note to its authored routes and a next-step preview](docs/assets/linked-graph-demo.gif)
 
-![Linked Graph Navigator previewing the focused route's next hop](docs/assets/linked-graph-runtime-preview.png)
+## The three-step workflow
 
-It reads resolved `[[wikilinks]]` in authored order and presents the same current-note routes as a quiet outline or a one-hop graph. Clicking a title opens the canonical Markdown note; clicking the movable current-note node opens its canonical parent.
+1. **Open a linked note.** The navigator follows the active Markdown editor automatically.
+2. **See the intended routes.** Direct outgoing links appear in authored order instead of becoming a vault-wide tangle.
+3. **Preview the next step.** Hover a route to reveal its next outgoing links, or click it to open the original note.
+
+There is no relationship database, generated map, or saved layout. Disable the plugin and every Markdown link remains exactly where you wrote it.
 
 ## Why use this instead of Obsidian Graph view?
 
-Obsidian Graph answers “how is the whole vault connected?” Linked Graph Navigator answers “where can I go from this note, in the order I deliberately wrote?”
+Obsidian Graph answers “how is this network connected?” Linked Graph Navigator answers “where did I intend the reader to go next?”
 
 | | Linked Graph Navigator | Obsidian Graph |
 |---|---|---|
-| Scope | Current note | Vault or local neighbourhood |
-| Direction | Authored outgoing links | Connected notes in multiple directions |
-| Layout | Responsive force layout using only resolved links | Relationship-only force layout |
-| Location | Persistent right sidebar | Separate graph view |
-| Action | Open a note, move to its parent, or preview the next outgoing hop | Inspect a network |
+| Scope | Active note | Vault or local neighbourhood |
+| Direction | Outgoing links in written order | Connections in multiple directions |
+| Layout | Focused routes with optional next-step preview | Relationship network |
+| Location | Persistent right-sidebar navigator | Separate graph view |
+| Action | Follow the intended reading path | Inspect connections |
 | Knowledge writes | None | None |
 
-## Use
+## What it looks like
+
+![Linked Graph Navigator following the active Wiki note](docs/assets/linked-graph-runtime.png)
+
+![Linked Graph Navigator previewing the focused route's next step](docs/assets/linked-graph-runtime-preview.png)
+
+## Get started
 
 1. Open a Markdown note.
 2. Run **Open Linked Graph Navigator for the current note** or select its ribbon icon.
 3. The default graph shows the current note and only its direct authored links. The current node and direct nodes all participate in the force layout.
-4. Drag any visible primary node, click the current node to move to its canonical parent, or hover a direct node to preview its next outgoing hop.
+4. Drag any visible primary node, click the current node to move to its configured parent, or hover a direct node to preview its next outgoing links.
 5. Node colours use existing canonical metadata only; titles are never used to infer type.
 6. Pan or zoom the graph, click a direct node to open the canonical note, or switch to **Outline view** for the same direct links in Markdown order.
 7. Use search to filter both views.

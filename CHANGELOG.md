@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.3
+
+- Reframe the public page around following the reading paths intentionally written in the active note.
+- Replace graph terminology with a three-step active-note, intended-route, and next-step-preview explanation.
+- Recut the public walkthrough to enlarge the authored routes and the hover-only next-step preview.
+
 ## 1.4.2
 
 - Add an animated public-safe walkthrough of current-note routes and next-hop preview.

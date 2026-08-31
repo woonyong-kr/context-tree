@@ -1,9 +1,9 @@
 {
 	"id": "linked-graph",
 	"name": "Linked Graph Navigator",
-	"version": "1.4.2",
+	"version": "1.4.3",
 	"minAppVersion": "1.8.0",
-	"description": "Browse the current Markdown note as an outline or one-hop graph.",
+	"description": "Follow the links you wrote in order as a focused outline or graph beside the active note.",
 	"author": "woonyong-kr",
 	"authorUrl": "https://github.com/woonyong-kr",
 	"isDesktopOnly": false
