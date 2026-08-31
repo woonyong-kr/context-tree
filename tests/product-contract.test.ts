@@ -90,6 +90,9 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.doesNotMatch(graph, /const maxY = Math\.max/);
 	assert.match(graph, /const sourceAnchor = this\.nodeAnchor\(link\.source\)/);
 	assert.match(graph, /registerDrag\(rootElement, this\.root\)/);
+	assert.match(graph, /registerDrag\(shell, node\)/);
+	assert.match(graph, /shell\.addEventListener\("click", \(event\) => \{[\s\S]*this\.options\.onOpen\(item\)/);
+	assert.doesNotMatch(graph, /element\.addEventListener\("click"/);
 	assert.match(graph, /options\.parent[\s\S]*createEl\("button"[\s\S]*createDiv\(/);
 	assert.doesNotMatch(graph, /"aria-disabled"/);
 	assert.match(graph, /if \(!options\.parent\) rootElement\.tabIndex = -1/);

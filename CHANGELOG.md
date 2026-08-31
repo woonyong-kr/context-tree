@@ -7,7 +7,7 @@
 - Measure drag intent in screen pixels, delay pointer capture until that threshold is crossed, and suppress navigation only after a deliberate drag, restoring reliable single-click navigation at every zoom level.
 - Keep a successful drop as the node's session-only position and restore its pre-drag position when pointer input is cancelled or the app loses focus.
 - Fit the complete measured title bounds when a graph first opens, so long root and route labels no longer begin cropped; zoom, pan, and Outline remain available when a dense graph starts small.
-- Keep hover targets stationary, reveal next routes immediately, and make root and direct-node drags track the pointer through the same capture owner while surrounding nodes settle with short, damped force motion.
+- Keep hover targets stationary, reveal next routes immediately, and route each direct node's padded hover, click, and drag area through one interaction owner while surrounding nodes settle with short, damped force motion.
 - Re-root the sidebar graph immediately after a direct-node or Outline navigation instead of waiting on workspace event ordering.
 - Expand the world radius progressively once a note exceeds eight direct routes, preventing chapter-sized graphs from stacking labels in a narrow sidebar.
 - Bound next-route previews by the actual pane width and fan them toward the available graph interior, keeping large chapter indexes readable without adding another button or status card.

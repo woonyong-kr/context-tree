@@ -286,14 +286,14 @@ export class OneHopForceGraph {
 			dot,
 			anchor: element,
 		};
-		this.registerDrag(element, node);
+		this.registerDrag(shell, node);
 		shell.addEventListener("pointerenter", () => void this.showPreview(node));
 		shell.addEventListener("pointerleave", () => this.hidePreview(node));
 		element.addEventListener("focus", () => void this.showPreview(node));
 		shell.addEventListener("focusout", (event) => {
 			if (!(event.relatedTarget instanceof Node) || !shell.contains(event.relatedTarget)) this.hidePreview(node);
 		});
-		element.addEventListener("click", (event) => {
+		shell.addEventListener("click", (event) => {
 			if (this.consumeSuppressedClick(event, node.id)) return;
 			this.options.onOpen(item);
 		});
