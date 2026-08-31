@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.2
+
+- Keep every graph node title visible with multiline wrapping, include rendered title height in collision spacing, and fit the initial graph before user pan or zoom so labels are not clipped by the sidebar boundary.
+
 ## 1.6.1
 
 - Remove the per-node next-route chevron that cluttered dense graphs. Direct nodes once again remain a single control: hover or keyboard focus previews the next route, and activation opens the note.

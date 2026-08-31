@@ -77,7 +77,7 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /graphLayoutMetrics/);
 	assert.match(graph, /updateResponsiveLayout/);
 	assert.match(graph, /nodeAnchorOffset/);
-	assert.match(graph, /private fitGraph\(\)/);
+	assert.match(graph, /private fitGraph\(markViewportTouched = true\)/);
 	assert.match(graph, /this\.stage\.clientWidth \/ graphWidth/);
 	assert.doesNotMatch(graph, /const maxX = Math\.max/);
 	assert.doesNotMatch(graph, /const maxY = Math\.max/);
@@ -130,6 +130,7 @@ test("graph edges stay readable while preview edges remain visually secondary", 
 
 test("graph uses an edge-to-edge canvas and node-only hover affordances", async () => {
 	const styles = await readFile(new URL("styles.css", repository), "utf8");
+	const graph = await readFile(new URL("src/one-hop-graph.ts", repository), "utf8");
 	assert.match(styles, /\.linked-graph-body\.is-graph \{[\s\S]*padding: 0;[\s\S]*overflow: hidden/);
 	assert.match(styles, /\.linked-graph-network \{[\s\S]*min-height: 420px/);
 	assert.doesNotMatch(styles, /\.linked-graph-network-group-label/);
@@ -141,4 +142,10 @@ test("graph uses an edge-to-edge canvas and node-only hover affordances", async 
 	assert.match(styles, /\.linked-graph-network-root \{[\s\S]*flex-direction: column/);
 	assert.match(styles, /button\.linked-graph-network-node \{[\s\S]*flex-direction: column[\s\S]*text-align: center/);
 	assert.match(styles, /\.linked-graph-network-preview-node \{[\s\S]*flex-direction: column[\s\S]*text-align: center/);
+	assert.match(styles, /\.linked-graph-network-root-label,[\s\S]*\.linked-graph-network-node-label \{[\s\S]*overflow-wrap: anywhere;[\s\S]*white-space: normal/);
+	assert.match(styles, /\.linked-graph-network-node-context \{[\s\S]*overflow-wrap: anywhere;[\s\S]*white-space: normal/);
+	assert.doesNotMatch(styles, /\.linked-graph-network-root-label,[\s\S]*\.linked-graph-network-node-label \{[^}]*text-overflow: ellipsis/);
+	assert.match(graph, /\.on\("end", \(\) => \{[\s\S]*if \(!this\.viewportTouched\) this\.fitGraph\(false\)/);
+	assert.match(graph, /window\.requestAnimationFrame\(\(\) => \{[\s\S]*this\.fitGraph\(false\)/);
+	assert.match(graph, /Math\.hypot\(width, height\) \/ 2/);
 });

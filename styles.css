@@ -416,15 +416,28 @@
 
 .linked-graph-network-root-label,
 .linked-graph-network-node-label {
-	overflow: hidden;
+	overflow: visible;
 	color: var(--lg-graph-text);
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	line-height: 1.25;
+	overflow-wrap: anywhere;
+	text-overflow: clip;
+	white-space: normal;
+}
+
+.linked-graph-network-root-label {
+	display: block;
+	max-width: 174px;
+	text-align: center;
 }
 
 .linked-graph-network-node-context {
 	max-width: 138px;
+	overflow: visible;
+	line-height: 1.2;
+	overflow-wrap: anywhere;
 	text-align: center;
+	text-overflow: clip;
+	white-space: normal;
 }
 
 .linked-graph-network-preview-node .linked-graph-network-node-context {

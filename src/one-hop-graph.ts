@@ -115,6 +115,8 @@ export class OneHopForceGraph {
 	private drag: DragState | null = null;
 	private pan: PanState | null = null;
 	private suppressClick = false;
+	private viewportTouched = false;
+	private initialFitFrame: number | null = null;
 
 	constructor(host: HTMLElement, private readonly options: OneHopForceGraphOptions) {
 		this.stage = host.createDiv({ cls: "linked-graph-network" });
@@ -194,10 +196,14 @@ export class OneHopForceGraph {
 				.strength((node) => node.depth === 0 ? 0.025 : node.depth === 1 ? 0.002 : 0.001))
 			.force("center-y", forceY<PhysicsNode>(0)
 				.strength((node) => node.depth === 0 ? 0.025 : node.depth === 1 ? 0.002 : 0.001))
-			.on("tick", () => this.updateNodes());
+			.on("tick", () => this.updateNodes())
+			.on("end", () => {
+				if (!this.viewportTouched) this.fitGraph(false);
+			});
 		this.resizeObserver = new ResizeObserver(() => {
 			if (!this.updateResponsiveLayout()) return;
 			this.updateNodes();
+			if (!this.viewportTouched) this.fitGraph(false);
 			this.simulation.alpha(0.12).restart();
 		});
 		this.resizeObserver.observe(this.stage);
@@ -211,10 +217,15 @@ export class OneHopForceGraph {
 		this.stage.addEventListener("wheel", (event) => this.zoomWithWheel(event), { passive: false });
 		this.updateWorldTransform();
 		this.updateNodes();
+		this.initialFitFrame = window.requestAnimationFrame(() => {
+			this.initialFitFrame = null;
+			if (!this.viewportTouched) this.fitGraph(false);
+		});
 	}
 
 	destroy(): void {
 		this.previewToken += 1;
+		if (this.initialFitFrame !== null) window.cancelAnimationFrame(this.initialFitFrame);
 		this.resizeObserver.disconnect();
 		this.simulation.stop();
 	}
@@ -295,11 +306,14 @@ export class OneHopForceGraph {
 		const fallbackWidth = node.depth === 2
 			? Math.min(132, 26 + node.label.length * 7)
 			: Math.min(190, 34 + node.label.length * 8);
-		const halfWidth = (node.element?.offsetWidth || fallbackWidth) / 2;
+		const width = node.element?.offsetWidth || fallbackWidth;
+		const fallbackHeight = node.depth === 2 ? 34 : 42;
+		const height = node.element?.offsetHeight || fallbackHeight;
+		const halfDiagonal = Math.hypot(width, height) / 2;
 		const padding = node.depth === 2 ? 10 : 12;
 		const minimum = node.depth === 2 ? 34 : 42;
-		const maximum = node.depth === 2 ? 82 : 112;
-		return Math.min(maximum, Math.max(minimum, halfWidth + padding));
+		const maximum = node.depth === 2 ? 140 : 190;
+		return Math.min(maximum, Math.max(minimum, halfDiagonal + padding));
 	}
 
 	private async showPreview(node: PhysicsNode): Promise<void> {
@@ -523,6 +537,7 @@ export class OneHopForceGraph {
 
 	private startPan(event: PointerEvent): void {
 		if (event.target instanceof Element && event.target.closest("button")) return;
+		this.viewportTouched = true;
 		this.pan = {
 			pointerId: event.pointerId,
 			startClientX: event.clientX,
@@ -546,6 +561,7 @@ export class OneHopForceGraph {
 
 	private zoomWithWheel(event: WheelEvent): void {
 		event.preventDefault();
+		this.viewportTouched = true;
 		const factor = Math.exp(-event.deltaY * 0.0012);
 		const next = Math.min(MAX_SCALE, Math.max(MIN_SCALE, this.scale * factor));
 		const bounds = this.stage.getBoundingClientRect();
@@ -560,13 +576,15 @@ export class OneHopForceGraph {
 	}
 
 	private setScale(next: number): void {
+		this.viewportTouched = true;
 		this.scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, next));
 		this.updateWorldTransform();
 	}
 
-	private fitGraph(): void {
+	private fitGraph(markViewportTouched = true): void {
 		const nodes = this.allNodes();
 		if (nodes.length === 0) return;
+		if (markViewportTouched) this.viewportTouched = true;
 		let minX = Number.POSITIVE_INFINITY;
 		let maxX = Number.NEGATIVE_INFINITY;
 		let minY = Number.POSITIVE_INFINITY;
