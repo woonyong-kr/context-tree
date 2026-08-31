@@ -20,7 +20,7 @@ Keep the canonical Markdown note visible while providing the shortest readable r
 12. Search, group collapse, view mode, pan, zoom, hover preview, and node positions are ephemeral.
 13. No plugin action writes Markdown, Canvas, sidecars, maps, relationships, settings, or layout state.
 14. Authored section context remains visible in Outline view but is not repeated under every Graph node. Preview count announcements remain available to assistive technology without adding a visual status card.
-15. Automatic fitting preserves a readable minimum interaction scale. Dense graphs may extend beyond the sidebar and use pan or explicit fit instead of shrinking every node into a hard-to-click thumbnail.
+15. Automatic fitting prioritises complete visible-node bounds over a minimum scale, so a newly opened graph never begins with cropped titles. Dense graphs may start small and use zoom, pan, or Outline for readable inspection.
 
 ## Right sidebar anatomy
 
@@ -28,7 +28,7 @@ Keep the canonical Markdown note visible while providing the shortest readable r
 - Outline: deterministic vertical order with hairline separators and blue navigation titles.
 - Plain-text bullet groups: collapsible labels plus descendant link count.
 - Graph: movable current note, force-positioned direct authored links, parent navigation, stable hover/focus outgoing preview, bounded visual nodes, omission status, metadata colours, intentional drag, pan, zoom, and no saved positions.
-- Graph spacing: the leaf is a viewport over an unbounded ephemeral world. Automatic fit may scale a sparse sidebar graph to 0.5 so complete labels remain visible. After eight direct routes, density progressively expands force distance and the viewport intentionally shows a navigable local region so chapter-sized labels do not stack. Pan and zoom, not viewport-edge clamping, reveal the rest of the graph.
+- Graph spacing: the leaf is a viewport over an unbounded ephemeral world. Automatic fit uses the complete measured label bounds even when that requires a scale below the interactive zoom minimum. After eight direct routes, density progressively expands force distance so chapter-sized labels do not stack. Zoom, pan, bounds-fit, and Outline provide readable inspection without cropping the initial graph.
 - Graph motion: hover may move the visible button by at most 12 screen pixels while its hit area and physics position stay fixed. Leaving restores the visual origin. Deliberate node drag reheats the primary simulation; drop commits the session-only position, while pointer cancellation or focus loss restores the pre-drag position. Link, charge, collision, and gentle centering forces settle continuously instead of snapping nodes to a fixed ring or panel edge. Hover previews spring from and collapse into a stable local radial projection without pulling primary nodes. Fit computes the current visible node bounds and never rewrites positions.
 - Empty and error states: short action-oriented text, no decorative cards.
 

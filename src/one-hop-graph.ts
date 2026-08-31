@@ -96,7 +96,6 @@ interface PanState {
 }
 
 const MIN_SCALE = 0.12;
-const AUTO_FIT_MIN_SCALE = 0.5;
 const MAX_SCALE = 2.4;
 
 export class OneHopForceGraph {
@@ -731,14 +730,10 @@ export class OneHopForceGraph {
 		const padding = 40;
 		const graphWidth = Math.max(1, maxX - minX + padding * 2);
 		const graphHeight = Math.max(1, maxY - minY + padding * 2);
-		const minimumScale = markViewportTouched ? MIN_SCALE : AUTO_FIT_MIN_SCALE;
-		this.scale = Math.min(
-			1,
-			Math.max(
-				minimumScale,
-				Math.min(this.stage.clientWidth / graphWidth, this.stage.clientHeight / graphHeight),
-			),
-		);
+		const fitScale = Math.min(this.stage.clientWidth / graphWidth, this.stage.clientHeight / graphHeight);
+		this.scale = markViewportTouched
+			? Math.min(1, Math.max(MIN_SCALE, fitScale))
+			: Math.min(1, fitScale);
 		this.panX = -((minX + maxX) / 2) * this.scale;
 		this.panY = -((minY + maxY) / 2) * this.scale;
 		this.updateWorldTransform();

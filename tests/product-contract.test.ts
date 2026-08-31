@@ -79,8 +79,9 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /updateResponsiveLayout/);
 	assert.match(graph, /nodeAnchorOffset/);
 	assert.match(graph, /private fitGraph\(markViewportTouched = true\)/);
-	assert.match(graph, /const AUTO_FIT_MIN_SCALE = 0\.5/);
-	assert.match(graph, /const minimumScale = markViewportTouched \? MIN_SCALE : AUTO_FIT_MIN_SCALE/);
+	assert.doesNotMatch(graph, /AUTO_FIT_MIN_SCALE/);
+	assert.match(graph, /const fitScale = Math\.min\(this\.stage\.clientWidth \/ graphWidth/);
+	assert.match(graph, /markViewportTouched[\s\S]*Math\.max\(MIN_SCALE, fitScale\)[\s\S]*Math\.min\(1, fitScale\)/);
 	assert.match(graph, /this\.stage\.clientWidth \/ graphWidth/);
 	assert.doesNotMatch(graph, /const maxX = Math\.max/);
 	assert.doesNotMatch(graph, /const maxY = Math\.max/);
