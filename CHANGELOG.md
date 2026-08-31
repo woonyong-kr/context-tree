@@ -4,7 +4,7 @@
 
 - Remove repeated section captions such as `하위 키워드` from graph nodes while keeping authored grouping in Outline view.
 - Pin a hovered route before loading its outgoing links and render the next-hop preview without adding it to the primary force simulation, so the source cannot move away from the pointer.
-- Measure drag intent in screen pixels and suppress navigation only after a deliberate drag, restoring reliable single-click navigation at every zoom level.
+- Measure drag intent in screen pixels, delay pointer capture until that threshold is crossed, and suppress navigation only after a deliberate drag, restoring reliable single-click navigation at every zoom level.
 - Keep a successful drop as the node's session-only position and restore its pre-drag position when pointer input is cancelled or the app loses focus.
 - Fit the complete measured title bounds when a graph first opens, so long root and route labels no longer begin cropped; zoom, pan, and Outline remain available when a dense graph starts small.
 - Keep hover targets stationary, reveal next routes immediately, and make root and direct-node drags track the pointer through the same capture owner while surrounding nodes settle with short, damped force motion.

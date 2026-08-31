@@ -574,7 +574,6 @@ export class OneHopForceGraph {
 			captureTarget,
 			phase: "pressed",
 		};
-		captureTarget.setPointerCapture(event.pointerId);
 	}
 
 	private moveNode(event: PointerEvent): void {
@@ -586,6 +585,7 @@ export class OneHopForceGraph {
 				event.clientY,
 				this.drag.pointerType,
 			)) return;
+			this.drag.captureTarget.setPointerCapture(event.pointerId);
 			this.drag.phase = "dragging";
 			if (this.previewOwnerId === this.drag.node.id) this.clearPreview(true);
 			this.viewportTouched = true;

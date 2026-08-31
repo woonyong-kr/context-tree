@@ -168,7 +168,8 @@ test("graph uses an edge-to-edge canvas and node-only hover affordances", async 
 	assert.match(styles, /\.linked-graph-network-preview-node\.is-visible \{[\s\S]*scale\(1\)/);
 	assert.match(styles, /\.linked-graph-network-root-label,[\s\S]*\.linked-graph-network-node-label \{[\s\S]*overflow-wrap: anywhere;[\s\S]*white-space: normal/);
 	assert.doesNotMatch(styles, /\.linked-graph-network-node-context/);
-	assert.match(graph, /captureTarget\.setPointerCapture\(event\.pointerId\)/);
+	assert.match(graph, /if \(!hasNodeDragIntent[\s\S]*this\.drag\.captureTarget\.setPointerCapture\(event\.pointerId\)[\s\S]*this\.drag\.phase = "dragging"/);
+	assert.doesNotMatch(graph, /phase: "pressed",\s*};\s*captureTarget\.setPointerCapture/);
 	assert.match(graph, /captureTarget\.releasePointerCapture\(drag\.pointerId\)/);
 	assert.doesNotMatch(graph, /node\.(?:anchor|element)\?\.setPointerCapture/);
 	assert.match(styles, /\.linked-graph-preview-status \{[\s\S]*width: 1px;[\s\S]*clip-path: inset\(50%\)/);
