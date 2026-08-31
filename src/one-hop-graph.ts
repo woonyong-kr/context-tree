@@ -29,8 +29,6 @@ interface OneHopGraphControls {
 	zoomIn: string;
 	fitGraph: string;
 	openParent: (label: string) => string;
-	previewNext: (label: string) => string;
-	closePreview: (label: string) => string;
 	omittedRoutes: (count: number) => string;
 	previewStatus: (label: string, shown: number, total: number) => string;
 	showAllInOutline: string;
@@ -62,7 +60,6 @@ interface PhysicsNode extends SimulationNodeDatum {
 	element?: HTMLElement;
 	dot?: HTMLElement;
 	anchor?: HTMLElement;
-	previewToggle?: HTMLButtonElement;
 }
 
 interface PhysicsLink extends SimulationLinkDatum<PhysicsNode> {
@@ -239,17 +236,6 @@ export class OneHopForceGraph {
 		const dot = element.createSpan({ cls: "linked-graph-network-node-dot", attr: { "aria-hidden": "true" } });
 		element.createSpan({ cls: "linked-graph-network-node-label", text: item.label });
 		if (item.context) element.createSpan({ cls: "linked-graph-network-node-context", text: item.context });
-		const previewToggle = shell.createEl("button", {
-			cls: "linked-graph-preview-toggle",
-			attr: {
-				"aria-expanded": "false",
-				"aria-label": this.options.controls.previewNext(item.label),
-				tabindex: "0",
-				title: this.options.controls.previewNext(item.label),
-				type: "button",
-			},
-		});
-		setIcon(previewToggle, "chevron-right");
 		const node: PhysicsNode = {
 			id: item.key,
 			depth: 1,
@@ -261,7 +247,6 @@ export class OneHopForceGraph {
 			element: shell,
 			dot,
 			anchor: element,
-			previewToggle,
 		};
 		this.registerDrag(element, node);
 		shell.addEventListener("pointerenter", () => void this.showPreview(node));
@@ -269,10 +254,6 @@ export class OneHopForceGraph {
 		element.addEventListener("focus", () => void this.showPreview(node));
 		shell.addEventListener("focusout", (event) => {
 			if (!(event.relatedTarget instanceof Node) || !shell.contains(event.relatedTarget)) this.hidePreview(node);
-		});
-		previewToggle.addEventListener("click", (event) => {
-			event.stopPropagation();
-			void this.togglePreview(node);
 		});
 		element.addEventListener("click", (event) => {
 			if (this.consumeSuppressedClick(event)) return;
@@ -321,14 +302,6 @@ export class OneHopForceGraph {
 		return Math.min(maximum, Math.max(minimum, halfWidth + padding));
 	}
 
-	private async togglePreview(node: PhysicsNode): Promise<void> {
-		if (this.previewOwnerId === node.id) {
-			this.clearPreview();
-			return;
-		}
-		await this.showPreview(node);
-	}
-
 	private async showPreview(node: PhysicsNode): Promise<void> {
 		if (!node.graph || this.previewOwnerId === node.id) return;
 		this.clearPreview();
@@ -345,7 +318,6 @@ export class OneHopForceGraph {
 		}
 		if (token !== this.previewToken || this.previewOwnerId !== node.id) return;
 		const visibleItems = boundedItems(items, MAX_PREVIEW_GRAPH_NODES);
-		this.setPreviewExpanded(node, true);
 		this.previewStatus.hidden = false;
 		this.previewStatus.setText(this.options.controls.previewStatus(
 			node.label,
@@ -400,7 +372,6 @@ export class OneHopForceGraph {
 	private clearPreview(): void {
 		this.previewToken += 1;
 		const previousOwner = this.leaves.find((leaf) => leaf.id === this.previewOwnerId);
-		if (previousOwner) this.setPreviewExpanded(previousOwner, false);
 		if (previousOwner && this.drag?.node !== previousOwner) {
 			previousOwner.fx = null;
 			previousOwner.fy = null;
@@ -414,19 +385,6 @@ export class OneHopForceGraph {
 		this.previewStatus.hidden = true;
 		this.previewStatus.setText("");
 		if (this.simulation) this.restartSimulation(0.12);
-	}
-
-	private setPreviewExpanded(node: PhysicsNode, expanded: boolean): void {
-		const toggle = node.previewToggle;
-		if (!toggle) return;
-		toggle.ariaExpanded = String(expanded);
-		const label = expanded
-			? this.options.controls.closePreview(node.label)
-			: this.options.controls.previewNext(node.label);
-		toggle.ariaLabel = label;
-		toggle.title = label;
-		toggle.empty();
-		setIcon(toggle, expanded ? "chevron-down" : "chevron-right");
 	}
 
 	private restartSimulation(alpha: number): void {

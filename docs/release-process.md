@@ -5,7 +5,7 @@
 3. Run `npm audit --omit=dev --audit-level=high`.
 4. Build `main.js` with `npm run build`.
 5. Install the local build through the Woon Obsidian plugin adapter and keep its receipt.
-6. Reload Obsidian; verify follow, single graph creation per navigation, movable current node, parent affordance, hover/focus/touch second-hop preview, keyboard disclosure state, 120/48 graph bounds with Outline fallback, unbounded pan/zoom, bounds-fit, density-responsive spacing, drag-reheated settling, metadata colours, direct navigation, collapse, search, empty state, and no Vault writes.
+6. Reload Obsidian; verify follow, single graph creation per navigation, movable current node, parent affordance, hover/focus second-hop preview without per-node disclosure buttons, 120/48 graph bounds with Outline fallback, unbounded pan/zoom, bounds-fit, density-responsive spacing, drag-reheated settling, metadata colours, direct navigation, collapse, search, empty state, and no Vault writes.
 7. Capture the tested right-sidebar runtime using public-safe sample notes.
 8. Update `docs/release-media.json` with dimensions and SHA-256; rerun `npm run check:media`.
 9. Verify manifest, package, tag, and release versions match.

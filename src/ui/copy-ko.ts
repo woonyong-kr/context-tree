@@ -12,8 +12,6 @@ export const COPY_KO = {
 		zoomIn: "확대",
 		fitGraph: "그래프 맞춤",
 		openParent: (label: string) => `상위 문서로 이동: ${label}`,
-		previewNext: (label: string) => `${label}의 다음 링크 미리보기`,
-		closePreview: (label: string) => `${label}의 다음 링크 미리보기 닫기`,
 		showAllInOutline: "목차에서 모두 보기",
 	},
 	labels: {

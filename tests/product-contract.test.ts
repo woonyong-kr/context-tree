@@ -89,11 +89,8 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /onOpenParent/);
 	assert.match(graph, /pointerenter/);
 	assert.match(graph, /onPreview/);
-	assert.match(graph, /linked-graph-preview-toggle/);
-	assert.match(graph, /aria-expanded/);
-	assert.match(graph, /tabindex: "0"/);
-	assert.doesNotMatch(graph, /clickable-icon linked-graph-preview-toggle/);
-	assert.match(graph, /togglePreview/);
+	assert.match(graph, /element\.addEventListener\("focus", \(\) => void this\.showPreview\(node\)\)/);
+	assert.doesNotMatch(graph, /linked-graph-preview-toggle|previewToggle|togglePreview/);
 	assert.match(graph, /MAX_PREVIEW_GRAPH_NODES/);
 	assert.match(graph, /node\.fx = node\.x/);
 	assert.match(graph, /offsetWidth/);
@@ -138,7 +135,7 @@ test("graph uses an edge-to-edge canvas and node-only hover affordances", async 
 	assert.doesNotMatch(styles, /\.linked-graph-network-group-label/);
 	assert.match(styles, /\.linked-graph-network-node-shell\.is-preview-source[\s\S]*background: transparent/);
 	assert.match(styles, /\.linked-graph-network-node-shell\.is-preview-source \.linked-graph-network-node-dot \{[\s\S]*transform: scale\(1\.18\)/);
-	assert.match(styles, /\.linked-graph-preview-toggle/);
+	assert.doesNotMatch(styles, /\.linked-graph-preview-toggle/);
 	assert.match(styles, /\.linked-graph-network-overflow/);
 	assert.match(styles, /\.linked-graph-view \.linked-graph-network-root:focus-visible,[\s\S]*outline: none;[\s\S]*box-shadow: none/);
 	assert.match(styles, /\.linked-graph-network-root \{[\s\S]*flex-direction: column/);

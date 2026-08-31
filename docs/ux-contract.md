@@ -12,7 +12,7 @@ Keep the canonical Markdown note visible while providing the shortest readable r
 4. Link order and plain-text bullet grouping follow the source in Outline view; Graph view contains resolved links only.
 5. The graph is the default: current note plus its direct authored links and one real edge per authored link.
 6. The current-note node and direct-link nodes share the force simulation and can all be dragged. Clicking the current-note node opens its resolved canonical `parent` when one exists.
-7. Hovering or focusing a direct-link node temporarily previews only that note's resolved outgoing links. A separate disclosure button provides the same preview on touch and keyboard; it reports its expanded state and can close the preview without opening the note.
+7. Hovering or focusing a direct-link node temporarily previews only that note's resolved outgoing links. The node itself is the only visible control: keyboard focus previews and Enter opens the note. Graph nodes never grow a second disclosure button.
 8. Node colour follows existing `node_kind`, `entity_kind`, and `facets` metadata. Titles never determine type, and colour is not the only navigation signal.
 9. Force position, hover preview, pan, zoom, and drag are ephemeral; plain bullet text never creates a graph node, caption, or cluster anchor.
 10. Outline view projects the full direct-link set in authored order. Graph view renders at most 120 direct nodes and 48 preview nodes, reports any omissions, and links to the complete Outline view.
@@ -25,7 +25,7 @@ Keep the canonical Markdown note visible while providing the shortest readable r
 - Header: current note title, resolved route count, search icon, and view switch.
 - Outline: deterministic vertical order with hairline separators and blue navigation titles.
 - Plain-text bullet groups: collapsible labels plus descendant link count.
-- Graph: movable current note, force-positioned direct authored links, parent navigation, hover/focus/touch outgoing preview, bounded visual nodes, omission status, metadata colours, drag, pan, zoom, and no saved positions.
+- Graph: movable current note, force-positioned direct authored links, parent navigation, hover/focus outgoing preview, bounded visual nodes, omission status, metadata colours, drag, pan, zoom, and no saved positions.
 - Graph spacing: the leaf is a viewport over an unbounded ephemeral world. Compact sidebars keep a readable minimum radius; wider panes and denser link sets expand force distance beyond the viewport when necessary. Pan and zoom, not viewport-edge clamping, reveal the rest of the graph.
 - Graph motion: node drag reheats one shared simulation; link, charge, collision, and gentle centering forces settle continuously instead of snapping nodes to a fixed ring or panel edge. Fit computes the current node bounds and never rewrites positions.
 - Empty and error states: short action-oriented text, no decorative cards.

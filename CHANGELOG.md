@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.1
+
+- Remove the per-node next-route chevron that cluttered dense graphs. Direct nodes once again remain a single control: hover or keyboard focus previews the next route, and activation opens the note.
+
 ## 1.6.0
 
 - Show the authored section heading as context on direct graph routes, next-step previews, and the complete Outline.

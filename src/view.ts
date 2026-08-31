@@ -253,8 +253,6 @@ export class LinkedGraphView extends ItemView {
 				zoomIn: COPY.actions.zoomIn,
 				fitGraph: COPY.actions.fitGraph,
 				openParent: COPY.actions.openParent,
-				previewNext: COPY.actions.previewNext,
-				closePreview: COPY.actions.closePreview,
 				omittedRoutes: COPY.labels.omittedRoutes,
 				previewStatus: COPY.labels.previewStatus,
 				showAllInOutline: COPY.actions.showAllInOutline,

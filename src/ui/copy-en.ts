@@ -5,8 +5,6 @@ export const COPY_EN = {
 		expand: (label: string) => `Expand ${label}`, collapse: (label: string) => `Collapse ${label}`,
 		zoomOut: "Zoom out", zoomIn: "Zoom in", fitGraph: "Fit graph",
 		openParent: (label: string) => `Open parent note: ${label}`,
-		previewNext: (label: string) => `Preview next links from ${label}`,
-		closePreview: (label: string) => `Close next-link preview from ${label}`,
 		showAllInOutline: "Show all in Outline",
 	},
 	labels: {

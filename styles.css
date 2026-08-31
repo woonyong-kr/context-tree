@@ -461,30 +461,6 @@
 	touch-action: none;
 }
 
-.linked-graph-preview-toggle {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 24px;
-	height: 24px;
-	margin: -6px -18px 0 -6px;
-	padding: 4px;
-	border: 0;
-	border-radius: var(--radius-s);
-	color: var(--lg-faint);
-	background: transparent;
-	box-shadow: none;
-	opacity: 0.72;
-}
-
-.linked-graph-network-node-shell:hover .linked-graph-preview-toggle,
-.linked-graph-network-node-shell:focus-within .linked-graph-preview-toggle,
-.linked-graph-preview-toggle[aria-expanded="true"] {
-	color: var(--lg-text);
-	background: color-mix(in srgb, var(--lg-hover) 72%, transparent);
-	opacity: 1;
-}
-
 .linked-graph-view button.linked-graph-network-node:hover,
 .linked-graph-view button.linked-graph-network-node:focus-visible,
 .linked-graph-view .linked-graph-network-node-shell.is-preview-source button.linked-graph-network-node {

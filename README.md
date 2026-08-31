@@ -40,7 +40,7 @@ Obsidian Graph answers “how is this network connected?” Linked Graph Navigat
 1. Open a Markdown note.
 2. Run **Open Linked Graph Navigator for the current note** or select its ribbon icon.
 3. The default graph shows the current note and only its direct authored links. The current node and direct nodes all participate in the force layout.
-4. Drag any visible primary node, click the current node to move to its configured parent, or hover/focus a direct node to preview its next outgoing links. On touch, use the disclosure beside the node.
+4. Drag any visible primary node, click the current node to move to its configured parent, or hover/focus a direct node to preview its next outgoing links. Each graph node remains one uncluttered control.
 5. Node colours use existing canonical metadata only; titles are never used to infer type.
 6. Pan or zoom the graph, click a direct node to open the canonical note, or switch to **Outline view** for the same direct links in Markdown order.
 7. Use search to filter both views. A route also shows the section heading where its link was authored, so similarly named links keep their reading context.
