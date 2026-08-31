@@ -266,8 +266,7 @@
 	white-space: nowrap;
 }
 
-.linked-graph-link-context,
-.linked-graph-network-node-context {
+.linked-graph-link-context {
 	display: block;
 	max-width: 100%;
 	overflow: hidden;
@@ -430,21 +429,6 @@
 	text-align: center;
 }
 
-.linked-graph-network-node-context {
-	max-width: 138px;
-	overflow: visible;
-	line-height: 1.2;
-	overflow-wrap: anywhere;
-	text-align: center;
-	text-overflow: clip;
-	white-space: normal;
-}
-
-.linked-graph-network-preview-node .linked-graph-network-node-context {
-	max-width: 104px;
-	opacity: 0.78;
-}
-
 .linked-graph-view .linked-graph-network-root .linked-graph-network-root-label,
 .linked-graph-view .linked-graph-network-node .linked-graph-network-node-label,
 .linked-graph-view .linked-graph-network-preview-node .linked-graph-network-node-label {
@@ -499,7 +483,6 @@
 	transform: scale(1.18);
 }
 
-.linked-graph-preview-status,
 .linked-graph-network-overflow {
 	position: absolute;
 	z-index: 3;
@@ -512,10 +495,14 @@
 }
 
 .linked-graph-preview-status {
-	top: var(--lg-space-3);
-	left: var(--lg-space-3);
-	max-width: min(60%, 320px);
-	padding: var(--lg-space-2) var(--lg-space-3);
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
 	pointer-events: none;
 }
 

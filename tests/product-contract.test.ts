@@ -47,7 +47,7 @@ test("view defaults to the current-note graph and keeps mode state session-only"
 	assert.doesNotMatch(main, /saveData\(|loadData\(/);
 });
 
-test("authored section context is shown without creating relationship data", async () => {
+test("authored section context stays in Outline and does not clutter graph nodes", async () => {
 	const [model, view, graph] = await Promise.all([
 		readFile(new URL("src/model.ts", repository), "utf8"),
 		readFile(new URL("src/view.ts", repository), "utf8"),
@@ -55,7 +55,8 @@ test("authored section context is shown without creating relationship data", asy
 	]);
 	assert.match(model, /sectionPath: string\[\]/);
 	assert.match(view, /linked-graph-link-context/);
-	assert.match(graph, /linked-graph-network-node-context/);
+	assert.doesNotMatch(graph, /linked-graph-network-node-context/);
+	assert.doesNotMatch(graph, /item\.context \? `\$\{item\.context\}: \$\{item\.label\}`/);
 	assert.doesNotMatch(`${model}\n${view}\n${graph}`, /sectionDatabase|relationshipStore/);
 });
 
@@ -92,7 +93,17 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /element\.addEventListener\("focus", \(\) => void this\.showPreview\(node\)\)/);
 	assert.doesNotMatch(graph, /linked-graph-preview-toggle|previewToggle|togglePreview/);
 	assert.match(graph, /MAX_PREVIEW_GRAPH_NODES/);
-	assert.match(graph, /node\.fx = node\.x/);
+	assert.match(graph, /node\.fx = node\.x;[\s\S]*await this\.options\.onPreview/);
+	assert.match(graph, /forceSimulation<PhysicsNode, PhysicsLink>\(this\.physicsNodes\(\)\)/);
+	assert.doesNotMatch(graph, /simulation\.nodes\(this\.visibleNodes\(\)\)/);
+	assert.match(graph, /hasNodeDragIntent/);
+	assert.doesNotMatch(graph, /Math\.hypot\(deltaX, deltaY\)/);
+	assert.match(graph, /private readonly pinnedNodeIds = new Set<string>\(\)/);
+	assert.match(graph, /this\.pinnedNodeIds\.add\(this\.drag\.node\.id\)/);
+	assert.match(graph, /pointercancel[^\n]*cancelNodeDrag/);
+	assert.match(graph, /lostpointercapture[^\n]*cancelNodeDrag/);
+	assert.match(graph, /window\.addEventListener\("blur", this\.cancelDragOnBlur\)/);
+	assert.match(graph, /cancelled\.node\.x = cancelled\.startNodeX/);
 	assert.match(graph, /offsetWidth/);
 	assert.match(graph, /ringSize = 8/);
 	assert.match(graph, /force\("center-x"/);
@@ -143,7 +154,8 @@ test("graph uses an edge-to-edge canvas and node-only hover affordances", async 
 	assert.match(styles, /button\.linked-graph-network-node \{[\s\S]*flex-direction: column[\s\S]*text-align: center/);
 	assert.match(styles, /\.linked-graph-network-preview-node \{[\s\S]*flex-direction: column[\s\S]*text-align: center/);
 	assert.match(styles, /\.linked-graph-network-root-label,[\s\S]*\.linked-graph-network-node-label \{[\s\S]*overflow-wrap: anywhere;[\s\S]*white-space: normal/);
-	assert.match(styles, /\.linked-graph-network-node-context \{[\s\S]*overflow-wrap: anywhere;[\s\S]*white-space: normal/);
+	assert.doesNotMatch(styles, /\.linked-graph-network-node-context/);
+	assert.match(styles, /\.linked-graph-preview-status \{[\s\S]*width: 1px;[\s\S]*clip-path: inset\(50%\)/);
 	assert.doesNotMatch(styles, /\.linked-graph-network-root-label,[\s\S]*\.linked-graph-network-node-label \{[^}]*text-overflow: ellipsis/);
 	assert.match(graph, /\.on\("end", \(\) => \{[\s\S]*if \(!this\.viewportTouched\) this\.fitGraph\(false\)/);
 	assert.match(graph, /window\.requestAnimationFrame\(\(\) => \{[\s\S]*this\.fitGraph\(false\)/);

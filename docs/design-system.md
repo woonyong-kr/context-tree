@@ -15,8 +15,8 @@
 - Header: current note title, route count, icon-only search, and text-labelled view switch
 - Outline group: medium label, count, disclosure chevron
 - Outline link: file icon, blue text, and hover-only open indicator
-- Graph node: one metadata-coloured dot above a centred title, matching Obsidian Graph's node-label grammar; the root is movable and opens its canonical parent when one exists
-- Graph: `d3-force` link/charge/collision movement, viewport-responsive spacing, content-sized direct-link nodes, real link edges, no plain-text group captions, and translucent hover-only second-hop previews
+- Graph node: one metadata-coloured dot above a centred title, matching Obsidian Graph's node-label grammar; repeated Outline section captions are omitted, and the root opens its canonical parent when one exists
+- Graph: `d3-force` link/charge/collision movement for primary nodes, viewport-responsive spacing, content-sized direct-link nodes, real link edges, no plain-text group captions, and stable radial hover-only second-hop previews that do not reheat the primary graph
 - Type colour: Obsidian theme colours selected only from canonical `node_kind`, `entity_kind`, or `facets`; unknown nodes remain neutral
 - Focus: host-derived focus treatment on controls; graph nodes remain dot-and-label shapes without cards or outlines
 - State text: muted and compact
@@ -28,5 +28,5 @@
 - Tree, treeitem, group, level, and expanded semantics describe hierarchy.
 - Colour is not the only indicator: indentation, connectors, icons, and counts remain.
 - No motion is required to understand or use the panel.
-- Drag and wheel gestures have icon-button alternatives for zoom reset; current and direct linked nodes remain native buttons.
+- Drag begins only after deliberate screen-space movement; small pointer jitter remains a native button click at every graph scale. Wheel gestures have icon-button alternatives for zoom reset.
 - Hover preview is also available on keyboard focus and is never required to reach a direct linked note.

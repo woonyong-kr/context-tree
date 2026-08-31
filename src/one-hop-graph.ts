@@ -14,6 +14,7 @@ import { setIcon } from "obsidian";
 import { graphLayoutMetrics, nodeAnchorOffset, type GraphLayoutMetrics, type NodeAnchorOffset } from "./graph-layout";
 import { MAX_PREVIEW_GRAPH_NODES, boundedItems } from "./limits";
 import type { GraphNavigationTarget, NodeVisualKind } from "./navigation";
+import { hasNodeDragIntent } from "./pointer-intent";
 
 export interface OneHopGraphNode {
 	key: string;
@@ -57,6 +58,8 @@ interface PhysicsNode extends SimulationNodeDatum {
 	y: number;
 	graph?: OneHopGraphNode;
 	previewParent?: PhysicsNode;
+	previewOffsetX?: number;
+	previewOffsetY?: number;
 	element?: HTMLElement;
 	dot?: HTMLElement;
 	anchor?: HTMLElement;
@@ -77,6 +80,7 @@ interface DragState {
 	startClientY: number;
 	startNodeX: number;
 	startNodeY: number;
+	startedPinned: boolean;
 	moved: boolean;
 }
 
@@ -114,9 +118,12 @@ export class OneHopForceGraph {
 	private scale = 1;
 	private drag: DragState | null = null;
 	private pan: PanState | null = null;
-	private suppressClick = false;
+	private suppressedClickNodeId: string | null = null;
+	private suppressClickTimer: number | null = null;
+	private readonly pinnedNodeIds = new Set<string>();
 	private viewportTouched = false;
 	private initialFitFrame: number | null = null;
+	private readonly cancelDragOnBlur = (): void => this.cancelNodeDrag();
 
 	constructor(host: HTMLElement, private readonly options: OneHopForceGraphOptions) {
 		this.stage = host.createDiv({ cls: "linked-graph-network" });
@@ -166,7 +173,7 @@ export class OneHopForceGraph {
 		this.registerDrag(rootElement, this.root);
 		if (options.parent) {
 			rootElement.addEventListener("click", (event) => {
-				if (this.consumeSuppressedClick(event as MouseEvent)) return;
+				if (this.consumeSuppressedClick(event as MouseEvent, this.root.id)) return;
 				options.onOpenParent(options.parent!);
 			});
 		}
@@ -180,7 +187,7 @@ export class OneHopForceGraph {
 			.id((node) => node.id)
 			.distance((link) => link.distance)
 			.strength((link) => link.preview ? 0.24 : 0.3);
-		this.simulation = forceSimulation<PhysicsNode, PhysicsLink>(this.allNodes())
+		this.simulation = forceSimulation<PhysicsNode, PhysicsLink>(this.physicsNodes())
 			.alpha(0.9)
 			.alphaDecay(0.022)
 			.velocityDecay(0.3)
@@ -215,6 +222,7 @@ export class OneHopForceGraph {
 		this.stage.addEventListener("pointerup", (event) => this.endPan(event));
 		this.stage.addEventListener("pointercancel", (event) => this.endPan(event));
 		this.stage.addEventListener("wheel", (event) => this.zoomWithWheel(event), { passive: false });
+		window.addEventListener("blur", this.cancelDragOnBlur);
 		this.updateWorldTransform();
 		this.updateNodes();
 		this.initialFitFrame = window.requestAnimationFrame(() => {
@@ -226,6 +234,8 @@ export class OneHopForceGraph {
 	destroy(): void {
 		this.previewToken += 1;
 		if (this.initialFitFrame !== null) window.cancelAnimationFrame(this.initialFitFrame);
+		if (this.suppressClickTimer !== null) window.clearTimeout(this.suppressClickTimer);
+		window.removeEventListener("blur", this.cancelDragOnBlur);
 		this.resizeObserver.disconnect();
 		this.simulation.stop();
 	}
@@ -239,14 +249,13 @@ export class OneHopForceGraph {
 		const element = shell.createEl("button", {
 			cls: "linked-graph-network-node",
 			attr: {
-				"aria-label": item.context ? `${item.context}: ${item.label}` : item.label,
+				"aria-label": item.label,
 				"data-node-kind": item.kind,
 				type: "button",
 			},
 		});
 		const dot = element.createSpan({ cls: "linked-graph-network-node-dot", attr: { "aria-hidden": "true" } });
 		element.createSpan({ cls: "linked-graph-network-node-label", text: item.label });
-		if (item.context) element.createSpan({ cls: "linked-graph-network-node-context", text: item.context });
 		const node: PhysicsNode = {
 			id: item.key,
 			depth: 1,
@@ -267,7 +276,7 @@ export class OneHopForceGraph {
 			if (!(event.relatedTarget instanceof Node) || !shell.contains(event.relatedTarget)) this.hidePreview(node);
 		});
 		element.addEventListener("click", (event) => {
-			if (this.consumeSuppressedClick(event)) return;
+			if (this.consumeSuppressedClick(event, node.id)) return;
 			this.options.onOpen(item);
 		});
 		return node;
@@ -284,21 +293,26 @@ export class OneHopForceGraph {
 		element.addEventListener("pointerdown", (event) => this.startNodeDrag(event, node));
 		element.addEventListener("pointermove", (event) => this.moveNode(event));
 		element.addEventListener("pointerup", (event) => this.endNodeDrag(event));
-		element.addEventListener("pointercancel", (event) => this.endNodeDrag(event));
+		element.addEventListener("pointercancel", () => this.cancelNodeDrag());
+		element.addEventListener("lostpointercapture", () => this.cancelNodeDrag());
 	}
 
-	private consumeSuppressedClick(event: MouseEvent): boolean {
-		if (!this.suppressClick) return false;
+	private consumeSuppressedClick(event: MouseEvent, nodeId: string): boolean {
+		if (this.suppressedClickNodeId !== nodeId) return false;
 		event.preventDefault();
-		this.suppressClick = false;
+		this.clearSuppressedClick();
 		return true;
 	}
 
-	private allNodes(): PhysicsNode[] {
+	private physicsNodes(): PhysicsNode[] {
+		return [this.root, ...this.leaves];
+	}
+
+	private visibleNodes(): PhysicsNode[] {
 		return [this.root, ...this.leaves, ...this.previewNodes];
 	}
 
-	private allLinks(): PhysicsLink[] {
+	private visibleLinks(): PhysicsLink[] {
 		return [...this.baseLinks, ...this.previewLinks];
 	}
 
@@ -321,6 +335,8 @@ export class OneHopForceGraph {
 		this.clearPreview();
 		this.previewOwnerId = node.id;
 		node.element?.addClass("is-preview-source");
+		node.fx = node.x;
+		node.fy = node.y;
 		const token = this.previewToken;
 		let items: readonly OneHopGraphNode[];
 		try {
@@ -338,8 +354,6 @@ export class OneHopForceGraph {
 			visibleItems.items.length,
 			visibleItems.total,
 		));
-		node.fx = node.x;
-		node.fy = node.y;
 		const outwardAngle = Math.atan2(node.y - this.root.y, node.x - this.root.x);
 		this.previewNodes = visibleItems.items.map((item, index) => {
 			const ringSize = 8;
@@ -356,16 +370,19 @@ export class OneHopForceGraph {
 			});
 			const dot = element.createSpan({ cls: "linked-graph-network-node-dot", attr: { "aria-hidden": "true" } });
 			element.createSpan({ cls: "linked-graph-network-node-label", text: item.label });
-			if (item.context) element.createSpan({ cls: "linked-graph-network-node-context", text: item.context });
+			const offsetX = Math.cos(angle) * distance;
+			const offsetY = Math.sin(angle) * distance;
 			return {
 				id: `preview:${node.id}:${item.key}`,
 				depth: 2,
 				label: item.label,
 				kind: item.kind,
-				x: node.x + Math.cos(angle) * distance,
-				y: node.y + Math.sin(angle) * distance,
+				x: node.x + offsetX,
+				y: node.y + offsetY,
 				graph: item,
 				previewParent: node,
+				previewOffsetX: offsetX,
+				previewOffsetY: offsetY,
 				element,
 				dot,
 			};
@@ -376,7 +393,7 @@ export class OneHopForceGraph {
 			true,
 			this.layout.previewDistance + Math.floor(index / 8) * this.layout.previewRingGap,
 		));
-		this.restartSimulation(0.3);
+		this.updateNodes();
 	}
 
 	private hidePreview(node: PhysicsNode): void {
@@ -386,7 +403,7 @@ export class OneHopForceGraph {
 	private clearPreview(): void {
 		this.previewToken += 1;
 		const previousOwner = this.leaves.find((leaf) => leaf.id === this.previewOwnerId);
-		if (previousOwner && this.drag?.node !== previousOwner) {
+		if (previousOwner && this.drag?.node !== previousOwner && !this.pinnedNodeIds.has(previousOwner.id)) {
 			previousOwner.fx = null;
 			previousOwner.fy = null;
 		}
@@ -398,13 +415,6 @@ export class OneHopForceGraph {
 		this.previewOwnerId = null;
 		this.previewStatus.hidden = true;
 		this.previewStatus.setText("");
-		if (this.simulation) this.restartSimulation(0.12);
-	}
-
-	private restartSimulation(alpha: number): void {
-		this.simulation.nodes(this.allNodes());
-		this.linkForce.links(this.allLinks());
-		this.simulation.alpha(alpha).restart();
 	}
 
 	private updateResponsiveLayout(): boolean {
@@ -460,12 +470,17 @@ export class OneHopForceGraph {
 	}
 
 	private updateNodes(): void {
-		for (const node of this.allNodes()) {
+		for (const node of this.previewNodes) {
+			if (!node.previewParent) continue;
+			node.x = (node.previewParent.x ?? 0) + (node.previewOffsetX ?? 0);
+			node.y = (node.previewParent.y ?? 0) + (node.previewOffsetY ?? 0);
+		}
+		for (const node of this.visibleNodes()) {
 			const x = node.x ?? 0;
 			const y = node.y ?? 0;
 			node.element?.style.setProperty("transform", `translate(${String(x)}px, ${String(y)}px) translate(-50%, -50%)`);
 		}
-		for (const link of this.allLinks()) {
+		for (const link of this.visibleLinks()) {
 			const sourceAnchor = this.nodeAnchor(link.source);
 			const targetAnchor = this.nodeAnchor(link.target);
 			link.element.setAttribute("x1", String((link.source.x ?? 0) + sourceAnchor.x));
@@ -501,19 +516,27 @@ export class OneHopForceGraph {
 			startClientY: event.clientY,
 			startNodeX: node.x ?? 0,
 			startNodeY: node.y ?? 0,
+			startedPinned: this.pinnedNodeIds.has(node.id),
 			moved: false,
 		};
-		node.fx = node.x;
-		node.fy = node.y;
-		this.simulation.alphaTarget(0.22).restart();
 		node.element?.setPointerCapture(event.pointerId);
 	}
 
 	private moveNode(event: PointerEvent): void {
 		if (!this.drag || this.drag.pointerId !== event.pointerId) return;
+		if (!this.drag.moved) {
+			if (!hasNodeDragIntent(
+				{ clientX: this.drag.startClientX, clientY: this.drag.startClientY },
+				event.clientX,
+				event.clientY,
+			)) return;
+			this.drag.moved = true;
+			this.drag.node.fx = this.drag.node.x;
+			this.drag.node.fy = this.drag.node.y;
+			this.simulation.alphaTarget(0.22).restart();
+		}
 		const deltaX = (event.clientX - this.drag.startClientX) / this.scale;
 		const deltaY = (event.clientY - this.drag.startClientY) / this.scale;
-		this.drag.moved ||= Math.hypot(deltaX, deltaY) > 4;
 		this.drag.node.fx = this.drag.startNodeX + deltaX;
 		this.drag.node.fy = this.drag.startNodeY + deltaY;
 		this.drag.node.x = this.drag.node.fx;
@@ -523,16 +546,48 @@ export class OneHopForceGraph {
 
 	private endNodeDrag(event: PointerEvent): void {
 		if (!this.drag || this.drag.pointerId !== event.pointerId) return;
-		this.suppressClick = this.drag.moved;
-		if (this.previewOwnerId === this.drag.node.id) {
-			this.drag.node.fx = this.drag.node.x;
-			this.drag.node.fy = this.drag.node.y;
-		} else {
-			this.drag.node.fx = null;
-			this.drag.node.fy = null;
+		if (!this.drag.moved) {
+			this.drag = null;
+			return;
 		}
+		this.suppressClickFor(this.drag.node.id);
+		this.pinnedNodeIds.add(this.drag.node.id);
+		this.drag.node.fx = this.drag.node.x;
+		this.drag.node.fy = this.drag.node.y;
 		this.drag = null;
 		this.simulation.alphaTarget(0).alpha(0.32).restart();
+	}
+
+	private cancelNodeDrag(): void {
+		if (!this.drag) return;
+		const cancelled = this.drag;
+		if (this.previewOwnerId === cancelled.node.id) this.clearPreview();
+		cancelled.node.x = cancelled.startNodeX;
+		cancelled.node.y = cancelled.startNodeY;
+		if (cancelled.startedPinned) {
+			this.pinnedNodeIds.add(cancelled.node.id);
+			cancelled.node.fx = cancelled.startNodeX;
+			cancelled.node.fy = cancelled.startNodeY;
+		} else {
+			this.pinnedNodeIds.delete(cancelled.node.id);
+			cancelled.node.fx = null;
+			cancelled.node.fy = null;
+		}
+		this.drag = null;
+		this.simulation.alphaTarget(0).alpha(0.08).restart();
+		this.updateNodes();
+	}
+
+	private suppressClickFor(nodeId: string): void {
+		this.clearSuppressedClick();
+		this.suppressedClickNodeId = nodeId;
+		this.suppressClickTimer = window.setTimeout(() => this.clearSuppressedClick(), 0);
+	}
+
+	private clearSuppressedClick(): void {
+		if (this.suppressClickTimer !== null) window.clearTimeout(this.suppressClickTimer);
+		this.suppressClickTimer = null;
+		this.suppressedClickNodeId = null;
 	}
 
 	private startPan(event: PointerEvent): void {
@@ -582,7 +637,7 @@ export class OneHopForceGraph {
 	}
 
 	private fitGraph(markViewportTouched = true): void {
-		const nodes = this.allNodes();
+		const nodes = this.visibleNodes();
 		if (nodes.length === 0) return;
 		if (markViewportTouched) this.viewportTouched = true;
 		let minX = Number.POSITIVE_INFINITY;
