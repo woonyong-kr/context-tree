@@ -96,7 +96,7 @@ interface PanState {
 }
 
 const MIN_SCALE = 0.12;
-const AUTO_FIT_MIN_SCALE = 0.72;
+const AUTO_FIT_MIN_SCALE = 0.58;
 const MAX_SCALE = 2.4;
 
 export class OneHopForceGraph {
