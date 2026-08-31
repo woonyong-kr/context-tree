@@ -8,7 +8,7 @@
 
 ## Public demo runtime
 
-The 1229×768 captures use the public `obsidian-navigator-demo-vault` in Obsidian 1.13.7. They contain no personal Woon notes. `00 Start Here.md` exposes seven authored routes grouped under `Calendar path`, `Knowledge path`, and `Practice and fallback`; the accessibility tree reports those section names on the corresponding route buttons.
+The 984×768 captures use the public `obsidian-navigator-demo-vault` in Obsidian 1.13.7. They contain no personal Woon notes. `00 Start Here.md` exposes seven authored routes grouped under `Calendar path`, `Knowledge path`, and `Practice and fallback`; the accessibility tree reports those section names on the corresponding route buttons.
 
 The same runtime exposed session-only Back and Forward controls plus route search. The public Vault contains a 130-route note; automated limit tests verify the 120-node graph ceiling, ten-item omission count, and complete Outline fallback. The parser benchmark separately covers 5,000 authored links.
 
@@ -20,6 +20,7 @@ The same runtime exposed session-only Back and Forward controls plus route searc
 | Canvas use | passed | Graph mode removes body padding and renders an unbounded world through the whole remaining pane. Node coordinates are never clamped to the visible sidebar; pan, zoom, and bounds-fit reveal the rest of the graph. |
 | Moving labels | passed | Every title is part of its force node; the removed group-label layer leaves no fixed captions behind the moving graph. |
 | Route labels | passed | Every direct route keeps a visible title; content-sized native buttons no longer collapse to bare dots. |
+| Label completeness | passed | Long root, direct, context, and preview titles wrap instead of using ellipsis. Collision bounds include both measured width and multiline height, and the settled graph fits itself once before user pan or zoom. |
 | Motion | passed | `d3-force` link, charge, and collision forces apply equally to the current note and direct nodes. Drag reheats the shared simulation, slower alpha decay and lower velocity damping preserve natural movement, and duplicate source events are coalesced into one graph refresh. |
 | Viewport safety | passed | The world remains larger than the sidebar without clipping node coordinates. A widened leaf immediately exposed more graph area; background pan, zoom controls, and bounds-fit recovered every route without rewriting node positions. |
 | Navigation | passed | On `책`, the centre exposed `상위 문서로 이동: Wiki`; clicking it opened `wiki/README.md` and rebuilt the graph from two book links to seven Wiki routes. |
@@ -56,5 +57,6 @@ The same runtime exposed session-only Back and Forward controls plus route searc
 16. Replaced hand-tuned edge and label colours with Obsidian's native `--graph-line` and `--graph-text` tokens.
 17. Moved every root, direct, and preview title below its dot while preserving dot-centred edge geometry.
 18. Removed viewport coordinate clamps, changed reset into bounds-fit, adopted a phyllotaxis seed, and retuned force decay, charge, centring, and drag reheating for an Obsidian-like unbounded canvas.
+19. Removed title ellipsis, allowed multiline wrapping, measured collision height, and fitted the settled graph once so complete labels remain visible without overriding later user navigation.
 
 final result: passed
