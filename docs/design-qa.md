@@ -6,11 +6,11 @@
 
 ![Obsidian 1.13.7 next-hop preview](assets/linked-graph-runtime-preview.png)
 
-## Compared reference
+## Public demo runtime
 
-The user-supplied captures, including the latest native-Graph comparison, and the final 1115×768 Obsidian runtime were placed side by side locally. The latest comparison verified that edges inherit Obsidian's own `--graph-line` and `--graph-text` tokens, every line terminates at the visible dot centre, and the resting `Wiki` centre has no rectangular outline.
+The 1229×768 captures use the public `obsidian-navigator-demo-vault` in Obsidian 1.13.7. They contain no personal Woon notes. `00 Start Here.md` exposes seven authored routes grouped under `Calendar path`, `Knowledge path`, and `Practice and fallback`; the accessibility tree reports those section names on the corresponding route buttons.
 
-The final implementation was captured in Obsidian 1.13.7 with `wiki/README.md` active and the Linked Graph Navigator leaf widened. The first capture shows the resting responsive 1-hop graph. The second keyboard-focus capture exercises the same next-hop preview path used by pointer hover. The local-only side-by-side comparison is stored outside release media.
+The same runtime exposed session-only Back and Forward controls plus route search. The public Vault contains a 130-route note; automated limit tests verify the 120-node graph ceiling, ten-item omission count, and complete Outline fallback. The parser benchmark separately covers 5,000 authored links.
 
 ## Fidelity and interaction review
 
@@ -23,6 +23,9 @@ The final implementation was captured in Obsidian 1.13.7 with `wiki/README.md` a
 | Motion | passed | `d3-force` link, charge, and collision forces apply equally to the current note and direct nodes. Drag reheats the shared simulation, slower alpha decay and lower velocity damping preserve natural movement, and duplicate source events are coalesced into one graph refresh. |
 | Viewport safety | passed | The world remains larger than the sidebar without clipping node coordinates. A widened leaf immediately exposed more graph area; background pan, zoom controls, and bounds-fit recovered every route without rewriting node positions. |
 | Navigation | passed | On `책`, the centre exposed `상위 문서로 이동: Wiki`; clicking it opened `wiki/README.md` and rebuilt the graph from two book links to seven Wiki routes. |
+| Section context | passed | Public demo routes expose their authored section heading in visible text and accessible names, so repeated labels retain reading context. |
+| Keyboard route flow | passed | Search can be focused from the command palette, `Arrow Down` moves to the first result, `Enter` opens it, and session-only Back/Forward retrace the opened path. |
+| Dense-note fallback | passed | A 130-route public demo stops the force graph at 120 direct nodes, reports ten omissions, and offers the full deterministic Outline. |
 | Hover preview | passed | Focusing a direct route exposed the same measured second-level graph used by pointer hover. The source stayed pinned, preview edges remained dashed and non-interactive, and leaving hover or focus removed the entire second level. |
 | Edge geometry | passed | Direct and preview SVG endpoints use the measured dot centre instead of the text-and-dot button centre. Every visible line joins dot to dot. |
 | Edge contrast | passed | Direct links use Obsidian's native `--graph-line` at 1px; preview links use the same theme token as a secondary dashed path. Both remain distinct from node type colours. |

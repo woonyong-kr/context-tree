@@ -7,20 +7,20 @@
 		{
 			"path": "docs/assets/linked-graph-demo.gif",
 			"width": 1000,
-			"height": 620,
-			"sha256": "5c25896adda3648561c857e503c7ef6d5fb4537e321716297e18989464d1374d"
+			"height": 624,
+			"sha256": "4fc8dba632dc19f29feb5d9467c38329270fb9dab60b658b1c68fe3365ade75c"
 		},
 		{
 			"path": "docs/assets/linked-graph-runtime.png",
-			"width": 1115,
+			"width": 1229,
 			"height": 768,
-			"sha256": "ffb25a5652c7e87187a89ba1bac2193e6e4baf27fcbdc528f1646480964dd855"
+			"sha256": "2ba2ef8b2022cbb986f3a93864286041bbab025988186cc10b90bf2abdb7dead"
 		},
 		{
 			"path": "docs/assets/linked-graph-runtime-preview.png",
-			"width": 1115,
+			"width": 1229,
 			"height": 768,
-			"sha256": "f53ce02050bf909c9945beccdac7cc54f9a987d6fb5246a0a8500741eec63e29"
+			"sha256": "693b6829490f441c95fb56fd6824afd0eea7312414e91a42ee72d5703d30891b"
 		}
 	]
 }
