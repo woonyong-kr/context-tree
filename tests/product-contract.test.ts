@@ -109,7 +109,7 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /window\.addEventListener\("blur", this\.cancelDragOnBlur\)/);
 	assert.match(graph, /cancelled\.node\.x = cancelled\.startNodeX/);
 	assert.match(graph, /offsetWidth/);
-	assert.match(graph, /ringSize = this\.layoutWidth <= 420 \? 4 : 8/);
+	assert.match(graph, /ringSize = this\.layoutWidth <= 420 \? 2 : 8/);
 	assert.match(graph, /force\("center-x"/);
 	assert.match(graph, /force\("center-y"/);
 	assert.doesNotMatch(graph, /network-group-label|groupAnchors|groupTarget/);
