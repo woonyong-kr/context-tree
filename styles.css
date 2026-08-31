@@ -460,6 +460,15 @@
 	transform: translate(-50%, -50%);
 }
 
+.linked-graph-network-node-visual {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--lg-space-1);
+	transform: translate(var(--lg-hover-x, 0), var(--lg-hover-y, 0));
+	transition: transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 .linked-graph-network-root.is-dragging,
 .linked-graph-network-node.is-dragging {
 	cursor: grabbing;
@@ -711,6 +720,7 @@
 @media (prefers-reduced-motion: reduce) {
 	.linked-graph-open-icon,
 	.linked-graph-network-node-dot,
+	.linked-graph-network-node-visual,
 	.linked-graph-network-edge.is-preview,
 	.linked-graph-network-preview-node {
 		transition: none;

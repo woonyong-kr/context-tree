@@ -11,7 +11,7 @@ import {
 	type SimulationNodeDatum,
 } from "d3-force";
 import { setIcon } from "obsidian";
-import { GRAPH_MOTION, minimumSimulationAlpha } from "./graph-motion";
+import { boundedHoverOffset, GRAPH_MOTION, minimumSimulationAlpha, type PointerPosition } from "./graph-motion";
 import { graphLayoutMetrics, nodeAnchorOffset, type GraphLayoutMetrics, type NodeAnchorOffset } from "./graph-layout";
 import { boundedItems, previewGraphNodeLimit } from "./limits";
 import type { GraphNavigationTarget, NodeVisualKind } from "./navigation";
@@ -61,6 +61,9 @@ interface PhysicsNode extends SimulationNodeDatum {
 	previewParent?: PhysicsNode;
 	previewOffsetX?: number;
 	previewOffsetY?: number;
+	hoverOffsetX?: number;
+	hoverOffsetY?: number;
+	hoverOrigin?: PointerPosition;
 	element?: HTMLElement;
 	dot?: HTMLElement;
 	anchor?: HTMLElement;
@@ -154,6 +157,7 @@ export class OneHopForceGraph {
 					cls: "linked-graph-network-root has-parent",
 					attr: {
 						"aria-label": options.controls.openParent(options.parent.label),
+						"data-graph-node-id": "__current__",
 						"data-node-kind": options.rootKind,
 						type: "button",
 					},
@@ -162,6 +166,7 @@ export class OneHopForceGraph {
 					cls: "linked-graph-network-root",
 					attr: {
 						"aria-label": options.title,
+						"data-graph-node-id": "__current__",
 						"data-node-kind": options.rootKind,
 					},
 				});
@@ -178,7 +183,6 @@ export class OneHopForceGraph {
 			element: rootElement,
 			dot: rootDot,
 		};
-		this.registerDrag(rootElement, this.root);
 		if (options.parent) {
 			rootElement.addEventListener("click", (event) => {
 				if (this.consumeSuppressedClick(event as MouseEvent, this.root.id)) return;
@@ -227,7 +231,7 @@ export class OneHopForceGraph {
 
 		this.renderControls(options.controls);
 		this.renderOverflowNotice();
-		this.stage.addEventListener("pointerdown", (event) => this.startPan(event));
+		this.stage.addEventListener("pointerdown", (event) => this.startPointerInteraction(event));
 		this.stage.addEventListener("pointermove", (event) => {
 			this.moveNode(event);
 			this.movePan(event);
@@ -274,12 +278,14 @@ export class OneHopForceGraph {
 			cls: "linked-graph-network-node",
 			attr: {
 				"aria-label": item.label,
+				"data-graph-node-id": item.key,
 				"data-node-kind": item.kind,
 				type: "button",
 			},
 		});
-		const dot = element.createSpan({ cls: "linked-graph-network-node-dot", attr: { "aria-hidden": "true" } });
-		element.createSpan({ cls: "linked-graph-network-node-label", text: item.label });
+		const visual = element.createSpan({ cls: "linked-graph-network-node-visual", attr: { "aria-hidden": "true" } });
+		const dot = visual.createSpan({ cls: "linked-graph-network-node-dot" });
+		visual.createSpan({ cls: "linked-graph-network-node-label", text: item.label });
 		const node: PhysicsNode = {
 			id: item.key,
 			depth: 1,
@@ -292,8 +298,11 @@ export class OneHopForceGraph {
 			dot,
 			anchor: element,
 		};
-		this.registerDrag(element, node);
-		element.addEventListener("pointerenter", () => void this.showPreview(node));
+		element.addEventListener("pointerenter", (event) => {
+			node.hoverOrigin = { clientX: event.clientX, clientY: event.clientY };
+			void this.showPreview(node);
+		});
+		element.addEventListener("pointermove", (event) => this.moveHover(event, node));
 		element.addEventListener("pointerleave", () => this.hidePreview(node));
 		element.addEventListener("focus", () => void this.showPreview(node));
 		element.addEventListener("blur", () => this.hidePreview(node));
@@ -311,8 +320,19 @@ export class OneHopForceGraph {
 		return { source, target, element, preview, distance };
 	}
 
-	private registerDrag(element: HTMLElement, node: PhysicsNode): void {
-		element.addEventListener("pointerdown", (event) => this.startNodeDrag(event, node, element));
+	private startPointerInteraction(event: PointerEvent): void {
+		if (!(event.target instanceof Element)) {
+			this.startPan(event);
+			return;
+		}
+		const nodeElement = event.target.closest<HTMLElement>("[data-graph-node-id]");
+		const nodeId = nodeElement?.dataset.graphNodeId;
+		const node = nodeId ? this.physicsNodes().find((candidate) => candidate.id === nodeId) : undefined;
+		if (node && nodeElement) {
+			this.startNodeDrag(event, node, nodeElement);
+			return;
+		}
+		this.startPan(event);
 	}
 
 	private consumeSuppressedClick(event: MouseEvent, nodeId: string): boolean {
@@ -431,6 +451,7 @@ export class OneHopForceGraph {
 
 	private hidePreview(node: PhysicsNode): void {
 		if (this.drag?.node === node && this.drag.phase === "dragging") return;
+		this.resetHover(node);
 		if (this.previewOwnerId === node.id) this.clearPreview(true);
 	}
 
@@ -524,8 +545,8 @@ export class OneHopForceGraph {
 	private updateNodes(): void {
 		for (const node of this.previewNodes) {
 			if (!node.previewParent) continue;
-			node.x = (node.previewParent.x ?? 0) + (node.previewOffsetX ?? 0);
-			node.y = (node.previewParent.y ?? 0) + (node.previewOffsetY ?? 0);
+			node.x = (node.previewParent.x ?? 0) + (node.previewParent.hoverOffsetX ?? 0) + (node.previewOffsetX ?? 0);
+			node.y = (node.previewParent.y ?? 0) + (node.previewParent.hoverOffsetY ?? 0) + (node.previewOffsetY ?? 0);
 		}
 		for (const node of this.visibleNodes()) {
 			const x = node.x ?? 0;
@@ -552,7 +573,7 @@ export class OneHopForceGraph {
 	private nodeAnchor(node: PhysicsNode): NodeAnchorOffset {
 		const anchor = node.anchor ?? node.element;
 		if (!anchor || !node.dot) return { x: 0, y: 0 };
-		return nodeAnchorOffset(
+		const offset = nodeAnchorOffset(
 			anchor.offsetWidth,
 			anchor.offsetHeight,
 			node.dot.offsetLeft,
@@ -560,6 +581,33 @@ export class OneHopForceGraph {
 			node.dot.offsetWidth,
 			node.dot.offsetHeight,
 		);
+		return {
+			x: offset.x + (node.hoverOffsetX ?? 0),
+			y: offset.y + (node.hoverOffsetY ?? 0),
+		};
+	}
+
+	private moveHover(event: PointerEvent, node: PhysicsNode): void {
+		if (this.drag || this.previewOwnerId !== node.id || !node.anchor || !node.hoverOrigin) return;
+		const offset = boundedHoverOffset(node.hoverOrigin, event.clientX, event.clientY);
+		node.hoverOffsetX = offset.x / this.scale;
+		node.hoverOffsetY = offset.y / this.scale;
+		this.setHoverCssOffset(node);
+		this.updateNodes();
+	}
+
+	private resetHover(node: PhysicsNode): void {
+		if (node.hoverOrigin === undefined && !node.hoverOffsetX && !node.hoverOffsetY) return;
+		node.hoverOrigin = undefined;
+		node.hoverOffsetX = 0;
+		node.hoverOffsetY = 0;
+		this.setHoverCssOffset(node);
+		this.updateNodes();
+	}
+
+	private setHoverCssOffset(node: PhysicsNode): void {
+		node.anchor?.style.setProperty("--lg-hover-x", `${String(node.hoverOffsetX ?? 0)}px`);
+		node.anchor?.style.setProperty("--lg-hover-y", `${String(node.hoverOffsetY ?? 0)}px`);
 	}
 
 	private updateWorldTransform(): void {
@@ -569,6 +617,7 @@ export class OneHopForceGraph {
 	private startNodeDrag(event: PointerEvent, node: PhysicsNode, captureTarget: HTMLElement): void {
 		if (!event.isPrimary || event.button !== 0) return;
 		if (this.drag) this.cancelNodeDrag();
+		this.resetHover(node);
 		this.drag = {
 			node,
 			pointerId: event.pointerId,
@@ -619,8 +668,6 @@ export class OneHopForceGraph {
 		this.drag = null;
 		this.releasePointerCapture(completed);
 		if (completed.phase === "pressed") {
-			this.suppressClickFor(completed.node.id);
-			this.activateNode(completed.node);
 			return;
 		}
 		completed.node.element?.removeClass("is-dragging");
