@@ -340,10 +340,16 @@
 }
 
 .linked-graph-network-root,
-.linked-graph-network-node {
+.linked-graph-network-node-shell {
 	position: absolute;
 	top: 0;
 	left: 0;
+}
+
+.linked-graph-network-node-shell {
+	display: inline-flex;
+	align-items: flex-start;
+	width: max-content;
 }
 
 .linked-graph-network-root {
@@ -425,9 +431,33 @@
 	touch-action: none;
 }
 
+.linked-graph-preview-toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	margin: -6px -18px 0 -6px;
+	padding: 4px;
+	border: 0;
+	border-radius: var(--radius-s);
+	color: var(--lg-faint);
+	background: transparent;
+	box-shadow: none;
+	opacity: 0.72;
+}
+
+.linked-graph-network-node-shell:hover .linked-graph-preview-toggle,
+.linked-graph-network-node-shell:focus-within .linked-graph-preview-toggle,
+.linked-graph-preview-toggle[aria-expanded="true"] {
+	color: var(--lg-text);
+	background: color-mix(in srgb, var(--lg-hover) 72%, transparent);
+	opacity: 1;
+}
+
 .linked-graph-view button.linked-graph-network-node:hover,
 .linked-graph-view button.linked-graph-network-node:focus-visible,
-.linked-graph-view button.linked-graph-network-node.is-preview-source {
+.linked-graph-view .linked-graph-network-node-shell.is-preview-source button.linked-graph-network-node {
 	color: var(--lg-text);
 	background: transparent;
 }
@@ -445,9 +475,58 @@
 .linked-graph-network-root:focus-visible .linked-graph-network-root-dot,
 .linked-graph-network-node:hover .linked-graph-network-node-dot,
 .linked-graph-network-node:focus-visible .linked-graph-network-node-dot,
-.linked-graph-network-node.is-preview-source .linked-graph-network-node-dot {
+.linked-graph-network-node-shell.is-preview-source .linked-graph-network-node-dot {
 	box-shadow: 0 0 0 3px color-mix(in srgb, var(--lg-node-color) 22%, transparent);
 	transform: scale(1.18);
+}
+
+.linked-graph-preview-status,
+.linked-graph-network-overflow {
+	position: absolute;
+	z-index: 3;
+	border: 1px solid var(--lg-border);
+	border-radius: var(--radius-s);
+	color: var(--lg-muted);
+	background: color-mix(in srgb, var(--lg-surface) 92%, transparent);
+	font-size: var(--lg-font-small);
+	box-shadow: var(--shadow-s);
+}
+
+.linked-graph-preview-status {
+	top: var(--lg-space-3);
+	left: var(--lg-space-3);
+	max-width: min(60%, 320px);
+	padding: var(--lg-space-2) var(--lg-space-3);
+	pointer-events: none;
+}
+
+.linked-graph-network-overflow {
+	right: var(--lg-space-3);
+	bottom: var(--lg-space-3);
+	left: var(--lg-space-3);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--lg-space-3);
+	padding: var(--lg-space-2) var(--lg-space-3);
+}
+
+.linked-graph-network-overflow button {
+	flex: 0 0 auto;
+	min-height: 30px;
+	padding: 0 var(--lg-space-2);
+	border: 0;
+	border-radius: var(--radius-s);
+	color: var(--lg-accent);
+	background: transparent;
+	box-shadow: none;
+	font-size: var(--lg-font-small);
+	font-weight: var(--font-semibold);
+}
+
+.linked-graph-network-overflow button:hover,
+.linked-graph-network-overflow button:focus-visible {
+	background: var(--lg-hover);
 }
 
 .linked-graph-network-node-label {

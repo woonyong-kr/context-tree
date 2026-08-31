@@ -12,6 +12,7 @@ import {
 } from "d3-force";
 import { setIcon } from "obsidian";
 import { graphLayoutMetrics, nodeAnchorOffset, type GraphLayoutMetrics, type NodeAnchorOffset } from "./graph-layout";
+import { MAX_PREVIEW_GRAPH_NODES, boundedItems } from "./limits";
 import type { GraphNavigationTarget, NodeVisualKind } from "./navigation";
 
 export interface OneHopGraphNode {
@@ -27,6 +28,11 @@ interface OneHopGraphControls {
 	zoomIn: string;
 	fitGraph: string;
 	openParent: (label: string) => string;
+	previewNext: (label: string) => string;
+	closePreview: (label: string) => string;
+	omittedRoutes: (count: number) => string;
+	previewStatus: (label: string, shown: number, total: number) => string;
+	showAllInOutline: string;
 }
 
 interface OneHopForceGraphOptions {
@@ -36,9 +42,11 @@ interface OneHopForceGraphOptions {
 	ariaLabel: string;
 	controls: OneHopGraphControls;
 	items: readonly OneHopGraphNode[];
+	omittedDirectCount: number;
 	onOpen: (node: OneHopGraphNode) => void;
 	onOpenParent: (parent: GraphNavigationTarget) => void;
 	onPreview: (node: OneHopGraphNode) => Promise<readonly OneHopGraphNode[]>;
+	onShowAll: () => void;
 }
 
 interface PhysicsNode extends SimulationNodeDatum {
@@ -52,6 +60,8 @@ interface PhysicsNode extends SimulationNodeDatum {
 	previewParent?: PhysicsNode;
 	element?: HTMLElement;
 	dot?: HTMLElement;
+	anchor?: HTMLElement;
+	previewToggle?: HTMLButtonElement;
 }
 
 interface PhysicsLink extends SimulationLinkDatum<PhysicsNode> {
@@ -93,6 +103,7 @@ export class OneHopForceGraph {
 	private readonly simulation: Simulation<PhysicsNode, PhysicsLink>;
 	private readonly linkForce: ForceLink<PhysicsNode, PhysicsLink>;
 	private readonly resizeObserver: ResizeObserver;
+	private readonly previewStatus: HTMLElement;
 	private layout: GraphLayoutMetrics;
 	private layoutWidth = 0;
 	private layoutHeight = 0;
@@ -117,6 +128,11 @@ export class OneHopForceGraph {
 		this.edgeLayer.setAttribute("class", "linked-graph-network-edges");
 		this.edgeLayer.setAttribute("aria-hidden", "true");
 		this.world.append(this.edgeLayer);
+		this.previewStatus = this.stage.createDiv({
+			cls: "linked-graph-preview-status",
+			attr: { "aria-live": "polite", role: "status" },
+		});
+		this.previewStatus.hidden = true;
 
 		const rootElement = options.parent
 			? this.world.createEl("button", {
@@ -189,6 +205,7 @@ export class OneHopForceGraph {
 		this.resizeObserver.observe(this.stage);
 
 		this.renderControls(options.controls);
+		this.renderOverflowNotice();
 		this.stage.addEventListener("pointerdown", (event) => this.startPan(event));
 		this.stage.addEventListener("pointermove", (event) => this.movePan(event));
 		this.stage.addEventListener("pointerup", (event) => this.endPan(event));
@@ -209,7 +226,8 @@ export class OneHopForceGraph {
 		const angle = -Math.PI / 2 + goldenAngle * index;
 		const fill = Math.sqrt((index + 1) / Math.max(this.options.items.length, 1));
 		const initialRadius = radius * (0.68 + fill * 0.32);
-		const element = this.world.createEl("button", {
+		const shell = this.world.createDiv({ cls: "linked-graph-network-node-shell" });
+		const element = shell.createEl("button", {
 			cls: "linked-graph-network-node",
 			attr: {
 				"aria-label": item.label,
@@ -219,6 +237,16 @@ export class OneHopForceGraph {
 		});
 		const dot = element.createSpan({ cls: "linked-graph-network-node-dot", attr: { "aria-hidden": "true" } });
 		element.createSpan({ cls: "linked-graph-network-node-label", text: item.label });
+		const previewToggle = shell.createEl("button", {
+			cls: "clickable-icon linked-graph-preview-toggle",
+			attr: {
+				"aria-expanded": "false",
+				"aria-label": this.options.controls.previewNext(item.label),
+				title: this.options.controls.previewNext(item.label),
+				type: "button",
+			},
+		});
+		setIcon(previewToggle, "chevron-right");
 		const node: PhysicsNode = {
 			id: item.key,
 			depth: 1,
@@ -227,14 +255,22 @@ export class OneHopForceGraph {
 			x: Math.cos(angle) * initialRadius,
 			y: Math.sin(angle) * initialRadius,
 			graph: item,
-			element,
+			element: shell,
 			dot,
+			anchor: element,
+			previewToggle,
 		};
 		this.registerDrag(element, node);
-		element.addEventListener("pointerenter", () => void this.showPreview(node));
-		element.addEventListener("pointerleave", () => this.hidePreview(node));
+		shell.addEventListener("pointerenter", () => void this.showPreview(node));
+		shell.addEventListener("pointerleave", () => this.hidePreview(node));
 		element.addEventListener("focus", () => void this.showPreview(node));
-		element.addEventListener("blur", () => this.hidePreview(node));
+		shell.addEventListener("focusout", (event) => {
+			if (!(event.relatedTarget instanceof Node) || !shell.contains(event.relatedTarget)) this.hidePreview(node);
+		});
+		previewToggle.addEventListener("click", (event) => {
+			event.stopPropagation();
+			void this.togglePreview(node);
+		});
 		element.addEventListener("click", (event) => {
 			if (this.consumeSuppressedClick(event)) return;
 			this.options.onOpen(item);
@@ -282,6 +318,14 @@ export class OneHopForceGraph {
 		return Math.min(maximum, Math.max(minimum, halfWidth + padding));
 	}
 
+	private async togglePreview(node: PhysicsNode): Promise<void> {
+		if (this.previewOwnerId === node.id) {
+			this.clearPreview();
+			return;
+		}
+		await this.showPreview(node);
+	}
+
 	private async showPreview(node: PhysicsNode): Promise<void> {
 		if (!node.graph || this.previewOwnerId === node.id) return;
 		this.clearPreview();
@@ -297,14 +341,22 @@ export class OneHopForceGraph {
 			return;
 		}
 		if (token !== this.previewToken || this.previewOwnerId !== node.id) return;
+		const visibleItems = boundedItems(items, MAX_PREVIEW_GRAPH_NODES);
+		this.setPreviewExpanded(node, true);
+		this.previewStatus.hidden = false;
+		this.previewStatus.setText(this.options.controls.previewStatus(
+			node.label,
+			visibleItems.items.length,
+			visibleItems.total,
+		));
 		node.fx = node.x;
 		node.fy = node.y;
 		const outwardAngle = Math.atan2(node.y - this.root.y, node.x - this.root.x);
-		this.previewNodes = items.map((item, index) => {
+		this.previewNodes = visibleItems.items.map((item, index) => {
 			const ringSize = 8;
 			const ring = Math.floor(index / ringSize);
 			const ringStart = ring * ringSize;
-			const ringCount = Math.min(ringSize, items.length - ringStart);
+			const ringCount = Math.min(ringSize, visibleItems.items.length - ringStart);
 			const ringPosition = index - ringStart;
 			const spread = Math.min(Math.PI * 0.95, 0.34 * Math.max(ringCount - 1, 1));
 			const angle = outwardAngle - spread / 2 + spread * (ringPosition / Math.max(ringCount - 1, 1));
@@ -344,6 +396,7 @@ export class OneHopForceGraph {
 	private clearPreview(): void {
 		this.previewToken += 1;
 		const previousOwner = this.leaves.find((leaf) => leaf.id === this.previewOwnerId);
+		if (previousOwner) this.setPreviewExpanded(previousOwner, false);
 		if (previousOwner && this.drag?.node !== previousOwner) {
 			previousOwner.fx = null;
 			previousOwner.fy = null;
@@ -354,7 +407,22 @@ export class OneHopForceGraph {
 		this.previewNodes = [];
 		this.previewLinks = [];
 		this.previewOwnerId = null;
+		this.previewStatus.hidden = true;
+		this.previewStatus.setText("");
 		if (this.simulation) this.restartSimulation(0.12);
+	}
+
+	private setPreviewExpanded(node: PhysicsNode, expanded: boolean): void {
+		const toggle = node.previewToggle;
+		if (!toggle) return;
+		toggle.ariaExpanded = String(expanded);
+		const label = expanded
+			? this.options.controls.closePreview(node.label)
+			: this.options.controls.previewNext(node.label);
+		toggle.ariaLabel = label;
+		toggle.title = label;
+		toggle.empty();
+		setIcon(toggle, expanded ? "chevron-down" : "chevron-right");
 	}
 
 	private restartSimulation(alpha: number): void {
@@ -388,6 +456,20 @@ export class OneHopForceGraph {
 		);
 	}
 
+	private renderOverflowNotice(): void {
+		if (this.options.omittedDirectCount <= 0) return;
+		const notice = this.stage.createDiv({ cls: "linked-graph-network-overflow" });
+		notice.createSpan({ text: this.options.controls.omittedRoutes(this.options.omittedDirectCount) });
+		const button = notice.createEl("button", {
+			text: this.options.controls.showAllInOutline,
+			attr: { type: "button" },
+		});
+		button.addEventListener("click", (event) => {
+			event.stopPropagation();
+			this.options.onShowAll();
+		});
+	}
+
 	private iconButton(icon: string, label: string, action: () => void): HTMLButtonElement {
 		const button = createEl("button", {
 			cls: "clickable-icon linked-graph-network-control",
@@ -418,10 +500,11 @@ export class OneHopForceGraph {
 	}
 
 	private nodeAnchor(node: PhysicsNode): NodeAnchorOffset {
-		if (!node.element || !node.dot) return { x: 0, y: 0 };
+		const anchor = node.anchor ?? node.element;
+		if (!anchor || !node.dot) return { x: 0, y: 0 };
 		return nodeAnchorOffset(
-			node.element.offsetWidth,
-			node.element.offsetHeight,
+			anchor.offsetWidth,
+			anchor.offsetHeight,
 			node.dot.offsetLeft,
 			node.dot.offsetTop,
 			node.dot.offsetWidth,

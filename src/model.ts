@@ -29,9 +29,6 @@ interface GroupDraft extends LinkGroup {
 	indent: number;
 }
 
-const WIKILINK = /(?<!!)\[\[([^\]]+)\]\]/g;
-const MARKDOWN_LINK = /(?<!!)\[([^\]]+)\]\(([^)]+)\)/g;
-
 function visibleMarkdown(markdown: string): string[] {
 	const lines = markdown.split(/\r?\n/);
 	const visible: string[] = [];
@@ -68,10 +65,64 @@ function visibleMarkdown(markdown: string): string[] {
 			}
 			remainder = remainder.slice(0, start) + remainder.slice(end + 3);
 		}
-		visible.push(remainder);
+		visible.push(maskInlineCodeAndMath(remainder));
 	}
 
 	return visible;
+}
+
+function maskInlineCodeAndMath(line: string): string {
+	let result = "";
+	let index = 0;
+	while (index < line.length) {
+		if (line[index] === "\\" && index + 1 < line.length) {
+			result += line.slice(index, index + 2);
+			index += 2;
+			continue;
+		}
+		if (line[index] === "`") {
+			const run = delimiterRun(line, index, "`");
+			const end = findUnescaped(line, "`".repeat(run), index + run);
+			if (end >= 0) {
+				const length = end + run - index;
+				result += " ".repeat(length);
+				index += length;
+				continue;
+			}
+		}
+		if (line[index] === "$") {
+			const run = line[index + 1] === "$" ? 2 : 1;
+			const delimiter = "$".repeat(run);
+			const end = findUnescaped(line, delimiter, index + run);
+			const content = end >= 0 ? line.slice(index + run, end) : "";
+			if (end >= 0 && content.trim() && !/^\s|\s$/.test(content)) {
+				const length = end + run - index;
+				result += " ".repeat(length);
+				index += length;
+				continue;
+			}
+		}
+		result += line[index];
+		index += 1;
+	}
+	return result;
+}
+
+function delimiterRun(value: string, start: number, delimiter: string): number {
+	let length = 0;
+	while (value[start + length] === delimiter) length += 1;
+	return length;
+}
+
+function findUnescaped(value: string, needle: string, start: number): number {
+	let index = value.indexOf(needle, start);
+	while (index >= 0) {
+		let slashes = 0;
+		for (let cursor = index - 1; cursor >= 0 && value[cursor] === "\\"; cursor -= 1) slashes += 1;
+		if (slashes % 2 === 0) return index;
+		index = value.indexOf(needle, index + needle.length);
+	}
+	return -1;
 }
 
 function indentation(raw: string): number {
@@ -119,14 +170,7 @@ function splitMarkdownLink(label: string, rawTarget: string): ReturnType<typeof 
 
 function linksOnLine(line: string, sourcePath: string, resolve: LinkResolver, seen: Set<string>): LinkedNote[] {
 	const links: LinkedNote[] = [];
-	const candidates: Array<{ index: number; parsed: ReturnType<typeof splitLink> }> = [];
-	for (const match of line.matchAll(WIKILINK)) {
-		candidates.push({ index: match.index, parsed: splitLink(match[1] ?? "") });
-	}
-	for (const match of line.matchAll(MARKDOWN_LINK)) {
-		candidates.push({ index: match.index, parsed: splitMarkdownLink(match[1] ?? "", match[2] ?? "") });
-	}
-	for (const { parsed } of candidates.sort((left, right) => left.index - right.index)) {
+	for (const { parsed } of linkCandidates(line)) {
 		if (!parsed) continue;
 		const path = resolve(parsed.linkPath, sourcePath);
 		if (!path) continue;
@@ -136,6 +180,58 @@ function linksOnLine(line: string, sourcePath: string, resolve: LinkResolver, se
 		links.push({ kind: "link", key, label: parsed.label, linkText: parsed.linkText, path, subpath: parsed.subpath });
 	}
 	return links;
+}
+
+function linkCandidates(line: string): Array<{ index: number; parsed: ReturnType<typeof splitLink> }> {
+	const candidates: Array<{ index: number; parsed: ReturnType<typeof splitLink> }> = [];
+	for (let index = 0; index < line.length; index += 1) {
+		if (line[index] === "\\") {
+			index += 1;
+			continue;
+		}
+		if (line[index] !== "[" || line[index - 1] === "!") continue;
+		if (line.startsWith("[[", index)) {
+			const end = line.indexOf("]]", index + 2);
+			if (end < 0) continue;
+			candidates.push({ index, parsed: splitLink(line.slice(index + 2, end)) });
+			index = end + 1;
+			continue;
+		}
+		const labelEnd = matchingDelimiter(line, index, "[", "]");
+		if (labelEnd < 0 || line[labelEnd + 1] !== "(") continue;
+		const targetEnd = matchingDelimiter(line, labelEnd + 1, "(", ")");
+		if (targetEnd < 0) continue;
+		candidates.push({
+			index,
+			parsed: splitMarkdownLink(
+				line.slice(index + 1, labelEnd),
+				line.slice(labelEnd + 2, targetEnd),
+			),
+		});
+		index = targetEnd;
+	}
+	return candidates;
+}
+
+function matchingDelimiter(
+	value: string,
+	start: number,
+	opening: "[" | "(",
+	closing: "]" | ")",
+): number {
+	let depth = 0;
+	for (let index = start; index < value.length; index += 1) {
+		if (value[index] === "\\") {
+			index += 1;
+			continue;
+		}
+		if (value[index] === opening) depth += 1;
+		else if (value[index] === closing) {
+			depth -= 1;
+			if (depth === 0) return index;
+		}
+	}
+	return -1;
 }
 
 function prune(entries: GraphEntry[]): GraphEntry[] {

@@ -10,6 +10,9 @@ export const COPY_KO = {
 		zoomIn: "확대",
 		fitGraph: "그래프 맞춤",
 		openParent: (label: string) => `상위 문서로 이동: ${label}`,
+		previewNext: (label: string) => `${label}의 다음 링크 미리보기`,
+		closePreview: (label: string) => `${label}의 다음 링크 미리보기 닫기`,
+		showAllInOutline: "목차에서 모두 보기",
 	},
 	labels: {
 		noCurrentDocument: "현재 Markdown 문서 없음", searchPlaceholder: "현재 경로 검색",
@@ -17,6 +20,10 @@ export const COPY_KO = {
 		treeAria: "현재 Markdown 문서의 링크 목차", graphAria: "현재 Markdown 문서의 1단계 링크 그래프", loading: "링크를 읽는 중…",
 		openMarkdown: "Markdown 문서를 열면 작성된 링크 순서가 여기에 표시됩니다.", noLinks: "이 문서에 연결된 Markdown 링크가 없습니다.",
 		noSearchResults: "일치하는 링크가 없습니다.", readFailed: "현재 문서의 링크를 읽지 못했습니다.",
+		omittedRoutes: (count: number) => `그래프 반응성을 위해 경로 ${String(count)}개를 생략했습니다.`,
+		previewStatus: (label: string, shown: number, total: number) => total === 0
+			? `${label}에 확인할 다음 경로가 없습니다.`
+			: `${label}: 다음 경로 ${String(total)}개 중 ${String(shown)}개를 표시합니다.`,
 	},
 	notice: { openMarkdownFirst: "먼저 Wiki 또는 Markdown 문서를 여세요." },
 } as const;

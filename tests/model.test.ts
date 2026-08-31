@@ -7,6 +7,7 @@ const known = new Map([
 	["책/LLM", "Wiki/책/LLM.md"],
 	["책/딥러닝", "Wiki/책/딥러닝.md"],
 	["프로젝트", "Wiki/프로젝트.md"],
+	["docs/(intro).md", "Wiki/docs/(intro).md"],
 ]);
 const resolve = (link: string): string | null => known.get(link) ?? null;
 
@@ -22,8 +23,19 @@ test("keeps authored link order and two-level bullet grouping", () => {
 });
 
 test("ignores embeds, code, comments, unresolved targets, and duplicate routes", () => {
-	const graph = parseDocumentLinks(`![[개념]]\n\`\`\`md\n[[프로젝트]]\n\`\`\`\n<!-- [[프로젝트]] -->\n- [[없는 문서]]\n- [[개념]]\n- [[개념|중복 별칭]]`, "Wiki.md", "Wiki", resolve);
+	const graph = parseDocumentLinks(`![[개념]]\n\`\`\`md\n[[프로젝트]]\n\`\`\`\n<!-- [[프로젝트]] -->\n- \`[[프로젝트]]\`\n- $[[프로젝트]]$\n- [[없는 문서]]\n- [[개념]]\n- [[개념|중복 별칭]]`, "Wiki.md", "Wiki", resolve);
 	assert.deepEqual(graph.entries.map((entry) => entry.label), ["개념"]);
+});
+
+test("parses nested parentheses in Markdown targets without truncating the path", () => {
+	const graph = parseDocumentLinks(
+		"- [문서 소개](docs/(intro).md)\n- [[개념]]",
+		"Wiki.md",
+		"Wiki",
+		resolve,
+	);
+	assert.deepEqual(graph.entries.map((entry) => entry.label), ["문서 소개", "개념"]);
+	assert.equal(graph.entries[0]?.kind === "link" ? graph.entries[0].path : null, "Wiki/docs/(intro).md");
 });
 
 test("preserves subpaths as distinct navigation destinations", () => {

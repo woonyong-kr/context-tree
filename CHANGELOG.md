@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.0
+
+- Bound Graph view to 120 direct routes and 48 next-step previews while keeping the complete authored list in Outline view.
+- Report omitted routes and provide a direct switch to the complete Outline view.
+- Ignore inline code and math while parsing, and preserve Markdown targets with nested parentheses.
+- Add explicit touch and keyboard controls for opening and closing next-step previews.
+- Pin GitHub Actions, add least-privilege dependency review, and enable Dependabot for npm and workflow updates.
+
 ## 1.4.3
 
 - Reframe the public page around following the reading paths intentionally written in the active note.

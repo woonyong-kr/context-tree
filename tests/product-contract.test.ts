@@ -68,6 +68,10 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /onOpenParent/);
 	assert.match(graph, /pointerenter/);
 	assert.match(graph, /onPreview/);
+	assert.match(graph, /linked-graph-preview-toggle/);
+	assert.match(graph, /aria-expanded/);
+	assert.match(graph, /togglePreview/);
+	assert.match(graph, /MAX_PREVIEW_GRAPH_NODES/);
 	assert.match(graph, /node\.fx = node\.x/);
 	assert.match(graph, /offsetWidth/);
 	assert.match(graph, /ringSize = 8/);
@@ -77,6 +81,8 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.doesNotMatch(graph, /root-parent-icon|corner-up-left/);
 	assert.doesNotMatch(graph, /title: item\.path/);
 	assert.match(view, /toggleClass\("is-graph", this\.mode === "graph"\)/);
+	assert.match(view, /MAX_DIRECT_GRAPH_NODES/);
+	assert.match(view, /showAllInOutline/);
 	assert.doesNotMatch(view, /group:|group,/);
 	assert.match(main, /frontmatter\?\.parent/);
 	assert.match(navigation, /node_kind/);
@@ -107,8 +113,10 @@ test("graph uses an edge-to-edge canvas and node-only hover affordances", async 
 	assert.match(styles, /\.linked-graph-body\.is-graph \{[\s\S]*padding: 0;[\s\S]*overflow: hidden/);
 	assert.match(styles, /\.linked-graph-network \{[\s\S]*min-height: 420px/);
 	assert.doesNotMatch(styles, /\.linked-graph-network-group-label/);
-	assert.match(styles, /\.linked-graph-network-node\.is-preview-source \{[\s\S]*background: transparent/);
-	assert.match(styles, /\.linked-graph-network-node\.is-preview-source \.linked-graph-network-node-dot \{[\s\S]*transform: scale\(1\.18\)/);
+	assert.match(styles, /\.linked-graph-network-node-shell\.is-preview-source[\s\S]*background: transparent/);
+	assert.match(styles, /\.linked-graph-network-node-shell\.is-preview-source \.linked-graph-network-node-dot \{[\s\S]*transform: scale\(1\.18\)/);
+	assert.match(styles, /\.linked-graph-preview-toggle/);
+	assert.match(styles, /\.linked-graph-network-overflow/);
 	assert.match(styles, /\.linked-graph-view \.linked-graph-network-root:focus-visible,[\s\S]*outline: none;[\s\S]*box-shadow: none/);
 	assert.match(styles, /\.linked-graph-network-root \{[\s\S]*flex-direction: column/);
 	assert.match(styles, /button\.linked-graph-network-node \{[\s\S]*flex-direction: column[\s\S]*text-align: center/);

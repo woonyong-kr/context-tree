@@ -1,5 +1,6 @@
 import { ItemView, setIcon, TFile, WorkspaceLeaf } from "obsidian";
 import type LinkedGraphPlugin from "./main";
+import { MAX_DIRECT_GRAPH_NODES, boundedItems } from "./limits";
 import { countLinks, graphMatches, type DocumentLinkGraph, type GraphEntry, type LinkedNote } from "./model";
 import { OneHopForceGraph, type OneHopGraphNode } from "./one-hop-graph";
 import { COPY } from "./ui/copy";
@@ -190,6 +191,7 @@ export class LinkedGraphView extends ItemView {
 		const sourceFile = this.sourceFile;
 		const sourcePath = sourceFile.path;
 		const nodes = flattenGraphEntries(entries, (path) => this.plugin.nodeKindForPath(path));
+		const visibleNodes = boundedItems(nodes, MAX_DIRECT_GRAPH_NODES);
 		this.graphSurface = new OneHopForceGraph(this.body, {
 			title: this.graph.title,
 			rootKind: this.plugin.nodeKindForPath(sourcePath),
@@ -200,13 +202,23 @@ export class LinkedGraphView extends ItemView {
 				zoomIn: COPY.actions.zoomIn,
 				fitGraph: COPY.actions.fitGraph,
 				openParent: COPY.actions.openParent,
+				previewNext: COPY.actions.previewNext,
+				closePreview: COPY.actions.closePreview,
+				omittedRoutes: COPY.labels.omittedRoutes,
+				previewStatus: COPY.labels.previewStatus,
+				showAllInOutline: COPY.actions.showAllInOutline,
 			},
-			items: nodes,
+			items: visibleNodes.items,
+			omittedDirectCount: visibleNodes.omitted,
 			onOpen: (node) => {
 				void this.plugin.openLinkedNote(node.linkText, sourcePath);
 			},
 			onOpenParent: (parent) => {
 				void this.plugin.openLinkedNote(parent.linkText, sourcePath);
+			},
+			onShowAll: () => {
+				this.mode = "outline";
+				this.render();
 			},
 			onPreview: async (node) => {
 				const file = this.plugin.fileForPath(node.path);
