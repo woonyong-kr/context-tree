@@ -22,14 +22,14 @@ export interface OneHopGraphNode {
 	kind: NodeVisualKind;
 }
 
-export interface OneHopGraphControls {
+interface OneHopGraphControls {
 	zoomOut: string;
 	zoomIn: string;
 	fitGraph: string;
 	openParent: (label: string) => string;
 }
 
-export interface OneHopForceGraphOptions {
+interface OneHopForceGraphOptions {
 	title: string;
 	rootKind: NodeVisualKind;
 	parent: GraphNavigationTarget | null;

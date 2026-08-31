@@ -9,7 +9,7 @@ export type NodeVisualKind =
 	| "detail"
 	| "unknown";
 
-export interface ParsedParentLink {
+interface ParsedParentLink {
 	linkPath: string;
 	linkText: string;
 	label: string;

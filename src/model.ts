@@ -1,4 +1,4 @@
-export type LinkResolver = (linkPath: string, sourcePath: string) => string | null;
+type LinkResolver = (linkPath: string, sourcePath: string) => string | null;
 
 export interface LinkedNote {
 	kind: "link";
@@ -9,7 +9,7 @@ export interface LinkedNote {
 	subpath: string;
 }
 
-export interface LinkGroup {
+interface LinkGroup {
 	kind: "group";
 	key: string;
 	label: string;

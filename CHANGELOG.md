@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.2
+
+- Add an animated public-safe walkthrough of current-note routes and next-hop preview.
+- Make unused-export detection part of the standard release gate and remove four accidental public type exports.
+- Pin the Obsidian development API to a reproducible compatible range.
+
 ## 1.4.1
 
 - Use the unique public name Linked Graph Navigator for the new `linked-graph` Community Directory entry while preserving the plugin ID and behavior.

@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 
 const repository = new URL("../", import.meta.url);
 const requiredAssets = [
+	"docs/assets/linked-graph-demo.gif",
 	"docs/assets/linked-graph-runtime.png",
 	"docs/assets/linked-graph-runtime-preview.png",
 ];

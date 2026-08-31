@@ -2,6 +2,8 @@
 
 Linked Graph Navigator is a focused right-sidebar navigator for the Markdown note you are reading.
 
+![Linked Graph Navigator animated current-note and next-hop walkthrough](docs/assets/linked-graph-demo.gif)
+
 ![Linked Graph Navigator following the canonical Wiki note](docs/assets/linked-graph-runtime.png)
 
 ![Linked Graph Navigator previewing the focused route's next hop](docs/assets/linked-graph-runtime-preview.png)
