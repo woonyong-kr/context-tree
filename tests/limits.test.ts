@@ -4,6 +4,7 @@ import {
 	MAX_DIRECT_GRAPH_NODES,
 	MAX_PREVIEW_GRAPH_NODES,
 	boundedItems,
+	previewGraphNodeLimit,
 } from "../src/limits";
 
 test("keeps graph and preview DOM bounded for very large notes", () => {
@@ -22,4 +23,10 @@ test("does not report omissions below the visual limit", () => {
 		omitted: 0,
 		total: 3,
 	});
+});
+
+test("keeps hover previews readable at common sidebar widths", () => {
+	assert.equal(previewGraphNodeLimit(302), 8);
+	assert.equal(previewGraphNodeLimit(600), 16);
+	assert.equal(previewGraphNodeLimit(900), MAX_PREVIEW_GRAPH_NODES);
 });

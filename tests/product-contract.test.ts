@@ -96,7 +96,7 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /onPreview/);
 	assert.match(graph, /element\.addEventListener\("focus", \(\) => void this\.showPreview\(node\)\)/);
 	assert.doesNotMatch(graph, /linked-graph-preview-toggle|previewToggle|togglePreview/);
-	assert.match(graph, /MAX_PREVIEW_GRAPH_NODES/);
+	assert.match(graph, /previewGraphNodeLimit\(this\.layoutWidth\)/);
 	assert.match(graph, /node\.fx = node\.x;[\s\S]*await this\.options\.onPreview/);
 	assert.match(graph, /forceSimulation<PhysicsNode, PhysicsLink>\(this\.physicsNodes\(\)\)/);
 	assert.doesNotMatch(graph, /simulation\.nodes\(this\.visibleNodes\(\)\)/);
@@ -109,7 +109,7 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /window\.addEventListener\("blur", this\.cancelDragOnBlur\)/);
 	assert.match(graph, /cancelled\.node\.x = cancelled\.startNodeX/);
 	assert.match(graph, /offsetWidth/);
-	assert.match(graph, /ringSize = 8/);
+	assert.match(graph, /ringSize = this\.layoutWidth <= 420 \? 4 : 8/);
 	assert.match(graph, /force\("center-x"/);
 	assert.match(graph, /force\("center-y"/);
 	assert.doesNotMatch(graph, /network-group-label|groupAnchors|groupTarget/);
