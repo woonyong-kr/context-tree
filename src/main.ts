@@ -1,4 +1,5 @@
 import { MarkdownView, Notice, Plugin, TAbstractFile, TFile, WorkspaceLeaf } from "obsidian";
+import { SessionNavigationHistory } from "./history";
 import { parseDocumentLinks, type DocumentLinkGraph } from "./model";
 import { nodeVisualKind, parseParentLink, type GraphNavigationTarget, type NodeVisualKind } from "./navigation";
 import { COPY } from "./ui/copy";
@@ -8,8 +9,7 @@ export default class LinkedGraphPlugin extends Plugin {
 	private currentFile: TFile | null = null;
 	private sourceLeaf: WorkspaceLeaf | null = null;
 	private refreshTimer: number | undefined;
-	private readonly sessionHistory: string[] = [];
-	private historyIndex = -1;
+	private readonly sessionHistory = new SessionNavigationHistory();
 	private navigatingHistory = false;
 
 	async onload(): Promise<void> {
@@ -118,21 +118,17 @@ export default class LinkedGraphPlugin extends Plugin {
 	}
 
 	historyState(): { canBack: boolean; canForward: boolean } {
-		return {
-			canBack: this.historyIndex > 0,
-			canForward: this.historyIndex >= 0 && this.historyIndex < this.sessionHistory.length - 1,
-		};
+		return this.sessionHistory.state();
 	}
 
 	async navigateHistory(delta: -1 | 1): Promise<void> {
-		const nextIndex = this.historyIndex + delta;
-		const path = this.sessionHistory[nextIndex];
+		const path = this.sessionHistory.target(delta);
 		if (!path) return;
 		const file = this.fileForPath(path);
 		if (!file) return;
 		const leaf = this.sourceLeaf ?? this.app.workspace.getLeaf(false);
 		this.navigatingHistory = true;
-		this.historyIndex = nextIndex;
+		this.sessionHistory.commit(delta);
 		try {
 			await leaf.openFile(file, { active: true });
 			this.setCurrentSource(file, leaf);
@@ -152,10 +148,7 @@ export default class LinkedGraphPlugin extends Plugin {
 	}
 
 	private recordHistory(path: string): void {
-		if (this.sessionHistory[this.historyIndex] === path) return;
-		this.sessionHistory.splice(this.historyIndex + 1);
-		this.sessionHistory.push(path);
-		this.historyIndex = this.sessionHistory.length - 1;
+		this.sessionHistory.record(path);
 	}
 
 	private historyCommand(delta: -1 | 1, checking: boolean): boolean {

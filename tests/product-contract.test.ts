@@ -42,7 +42,7 @@ test("view defaults to the current-note graph and keeps mode state session-only"
 	assert.match(view, /event\.key === "ArrowDown"/);
 	assert.match(view, /event\.key !== "Escape"/);
 	assert.match(view, /focusSearch\(\)/);
-	assert.match(main, /private readonly sessionHistory: string\[\] = \[\]/);
+	assert.match(main, /private readonly sessionHistory = new SessionNavigationHistory\(\)/);
 	assert.match(main, /navigateHistory\(delta: -1 \| 1\)/);
 	assert.doesNotMatch(main, /saveData\(|loadData\(/);
 });
