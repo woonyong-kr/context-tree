@@ -12,6 +12,7 @@ import {
 } from "d3-force";
 import { setIcon } from "obsidian";
 import { graphLayoutMetrics, nodeAnchorOffset, type GraphLayoutMetrics, type NodeAnchorOffset } from "./graph-layout";
+import { boundedHoverMagnet } from "./hover-magnet";
 import { MAX_PREVIEW_GRAPH_NODES, boundedItems } from "./limits";
 import type { GraphNavigationTarget, NodeVisualKind } from "./navigation";
 import { hasNodeDragIntent } from "./pointer-intent";
@@ -60,6 +61,8 @@ interface PhysicsNode extends SimulationNodeDatum {
 	previewParent?: PhysicsNode;
 	previewOffsetX?: number;
 	previewOffsetY?: number;
+	hoverOffsetX?: number;
+	hoverOffsetY?: number;
 	element?: HTMLElement;
 	dot?: HTMLElement;
 	anchor?: HTMLElement;
@@ -124,6 +127,8 @@ export class OneHopForceGraph {
 	private readonly pinnedNodeIds = new Set<string>();
 	private viewportTouched = false;
 	private initialFitFrame: number | null = null;
+	private previewAnimationFrame: number | null = null;
+	private readonly previewRemovalTimers = new Set<number>();
 	private readonly cancelDragOnBlur = (): void => this.cancelNodeDrag();
 
 	constructor(host: HTMLElement, private readonly options: OneHopForceGraphOptions) {
@@ -235,6 +240,8 @@ export class OneHopForceGraph {
 	destroy(): void {
 		this.previewToken += 1;
 		if (this.initialFitFrame !== null) window.cancelAnimationFrame(this.initialFitFrame);
+		if (this.previewAnimationFrame !== null) window.cancelAnimationFrame(this.previewAnimationFrame);
+		for (const timer of this.previewRemovalTimers) window.clearTimeout(timer);
 		if (this.suppressClickTimer !== null) window.clearTimeout(this.suppressClickTimer);
 		window.removeEventListener("blur", this.cancelDragOnBlur);
 		this.resizeObserver.disconnect();
@@ -271,6 +278,7 @@ export class OneHopForceGraph {
 		};
 		this.registerDrag(element, node);
 		shell.addEventListener("pointerenter", () => void this.showPreview(node));
+		shell.addEventListener("pointermove", (event) => this.moveHoverMagnet(event, node));
 		shell.addEventListener("pointerleave", () => this.hidePreview(node));
 		element.addEventListener("focus", () => void this.showPreview(node));
 		shell.addEventListener("focusout", (event) => {
@@ -395,22 +403,47 @@ export class OneHopForceGraph {
 			this.layout.previewDistance + Math.floor(index / 8) * this.layout.previewRingGap,
 		));
 		this.updateNodes();
+		this.previewAnimationFrame = window.requestAnimationFrame(() => {
+			this.previewAnimationFrame = null;
+			if (this.previewOwnerId !== node.id) return;
+			for (const preview of this.previewNodes) preview.element?.addClass("is-visible");
+			for (const link of this.previewLinks) link.element.classList.add("is-visible");
+		});
 	}
 
 	private hidePreview(node: PhysicsNode): void {
-		if (this.previewOwnerId === node.id) this.clearPreview();
+		if (this.drag?.node === node) return;
+		this.resetHoverMagnet(node);
+		if (this.previewOwnerId === node.id) this.clearPreview(true);
 	}
 
-	private clearPreview(): void {
+	private clearPreview(animate = false): void {
 		this.previewToken += 1;
+		if (this.previewAnimationFrame !== null) {
+			window.cancelAnimationFrame(this.previewAnimationFrame);
+			this.previewAnimationFrame = null;
+		}
 		const previousOwner = this.leaves.find((leaf) => leaf.id === this.previewOwnerId);
 		if (previousOwner && this.drag?.node !== previousOwner && !this.pinnedNodeIds.has(previousOwner.id)) {
 			previousOwner.fx = null;
 			previousOwner.fy = null;
 		}
 		for (const leaf of this.leaves) leaf.element?.removeClass("is-preview-source");
-		for (const node of this.previewNodes) node.element?.remove();
-		for (const link of this.previewLinks) link.element.remove();
+		const removedNodes = this.previewNodes;
+		const removedLinks = this.previewLinks;
+		if (animate && previousOwner) {
+			for (const node of removedNodes) node.element?.removeClass("is-visible");
+			for (const link of removedLinks) link.element.classList.remove("is-visible");
+			const timer = window.setTimeout(() => {
+				for (const node of removedNodes) node.element?.remove();
+				for (const link of removedLinks) link.element.remove();
+				this.previewRemovalTimers.delete(timer);
+			}, 190);
+			this.previewRemovalTimers.add(timer);
+		} else {
+			for (const node of removedNodes) node.element?.remove();
+			for (const link of removedLinks) link.element.remove();
+		}
 		this.previewNodes = [];
 		this.previewLinks = [];
 		this.previewOwnerId = null;
@@ -473,13 +506,20 @@ export class OneHopForceGraph {
 	private updateNodes(): void {
 		for (const node of this.previewNodes) {
 			if (!node.previewParent) continue;
-			node.x = (node.previewParent.x ?? 0) + (node.previewOffsetX ?? 0);
-			node.y = (node.previewParent.y ?? 0) + (node.previewOffsetY ?? 0);
+			node.x = (node.previewParent.x ?? 0) + (node.previewParent.hoverOffsetX ?? 0) + (node.previewOffsetX ?? 0);
+			node.y = (node.previewParent.y ?? 0) + (node.previewParent.hoverOffsetY ?? 0) + (node.previewOffsetY ?? 0);
 		}
 		for (const node of this.visibleNodes()) {
 			const x = node.x ?? 0;
 			const y = node.y ?? 0;
-			node.element?.style.setProperty("transform", `translate(${String(x)}px, ${String(y)}px) translate(-50%, -50%)`);
+			if (node.depth === 2) {
+				node.element?.style.setProperty("--lg-node-x", `${String(x)}px`);
+				node.element?.style.setProperty("--lg-node-y", `${String(y)}px`);
+				node.element?.style.setProperty("--lg-preview-offset-x", `${String(node.previewOffsetX ?? 0)}px`);
+				node.element?.style.setProperty("--lg-preview-offset-y", `${String(node.previewOffsetY ?? 0)}px`);
+			} else {
+				node.element?.style.setProperty("transform", `translate(${String(x)}px, ${String(y)}px) translate(-50%, -50%)`);
+			}
 		}
 		for (const link of this.visibleLinks()) {
 			const sourceAnchor = this.nodeAnchor(link.source);
@@ -494,7 +534,7 @@ export class OneHopForceGraph {
 	private nodeAnchor(node: PhysicsNode): NodeAnchorOffset {
 		const anchor = node.anchor ?? node.element;
 		if (!anchor || !node.dot) return { x: 0, y: 0 };
-		return nodeAnchorOffset(
+		const offset = nodeAnchorOffset(
 			anchor.offsetWidth,
 			anchor.offsetHeight,
 			node.dot.offsetLeft,
@@ -502,6 +542,37 @@ export class OneHopForceGraph {
 			node.dot.offsetWidth,
 			node.dot.offsetHeight,
 		);
+		return {
+			x: offset.x + (node.hoverOffsetX ?? 0),
+			y: offset.y + (node.hoverOffsetY ?? 0),
+		};
+	}
+
+	private moveHoverMagnet(event: PointerEvent, node: PhysicsNode): void {
+		if (this.drag || this.previewOwnerId !== node.id || !node.anchor) return;
+		const bounds = node.element?.getBoundingClientRect();
+		if (!bounds) return;
+		const offset = boundedHoverMagnet(
+			{ clientX: bounds.left + bounds.width / 2, clientY: bounds.top + bounds.height / 2 },
+			event.clientX,
+			event.clientY,
+		);
+		node.hoverOffsetX = offset.x / this.scale;
+		node.hoverOffsetY = offset.y / this.scale;
+		this.setHoverCssOffset(node, node.hoverOffsetX, node.hoverOffsetY);
+		this.updateNodes();
+	}
+
+	private resetHoverMagnet(node: PhysicsNode): void {
+		node.hoverOffsetX = 0;
+		node.hoverOffsetY = 0;
+		this.setHoverCssOffset(node, 0, 0);
+		this.updateNodes();
+	}
+
+	private setHoverCssOffset(node: PhysicsNode, x: number, y: number): void {
+		node.anchor?.style.setProperty("--lg-hover-x", `${String(x)}px`);
+		node.anchor?.style.setProperty("--lg-hover-y", `${String(y)}px`);
 	}
 
 	private updateWorldTransform(): void {
@@ -532,6 +603,8 @@ export class OneHopForceGraph {
 				event.clientY,
 			)) return;
 			this.drag.moved = true;
+			this.resetHoverMagnet(this.drag.node);
+			if (this.previewOwnerId === this.drag.node.id) this.clearPreview(true);
 			this.drag.node.fx = this.drag.node.x;
 			this.drag.node.fy = this.drag.node.y;
 			this.simulation.alphaTarget(0.22).restart();

@@ -7,6 +7,8 @@
 - Measure drag intent in screen pixels and suppress navigation only after a deliberate drag, restoring reliable single-click navigation at every zoom level.
 - Keep a successful drop as the node's session-only position and restore its pre-drag position when pointer input is cancelled or the app loses focus.
 - Keep automatic fitting above a readable interaction scale; dense graphs use the existing pan/zoom viewport instead of shrinking every click target into a thumbnail.
+- Restore controlled motion without moving the click target: a hovered node gets a bounded magnetic offset, its next routes spring outward from the source, and both return smoothly when hover ends.
+- Expand the world radius progressively once a note exceeds eight direct routes, preventing chapter-sized graphs from stacking labels in a narrow sidebar.
 
 ## 1.6.2
 

@@ -91,6 +91,8 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /if \(!options\.parent\) rootElement\.tabIndex = -1/);
 	assert.match(graph, /onOpenParent/);
 	assert.match(graph, /pointerenter/);
+	assert.match(graph, /shell\.addEventListener\("pointermove", \(event\) => this\.moveHoverMagnet\(event, node\)\)/);
+	assert.match(graph, /boundedHoverMagnet/);
 	assert.match(graph, /onPreview/);
 	assert.match(graph, /element\.addEventListener\("focus", \(\) => void this\.showPreview\(node\)\)/);
 	assert.doesNotMatch(graph, /linked-graph-preview-toggle|previewToggle|togglePreview/);
@@ -138,6 +140,7 @@ test("graph edges stay readable while preview edges remain visually secondary", 
 	assert.match(styles, /--lg-graph-text: var\(--graph-text/);
 	assert.match(styles, /\.linked-graph-network-edge \{[\s\S]*stroke: var\(--lg-graph-line\)[\s\S]*stroke-width: 1/);
 	assert.match(styles, /\.linked-graph-network-edge\.is-preview \{[\s\S]*var\(--lg-graph-line\) 68%[\s\S]*stroke-dasharray: 4 5[\s\S]*stroke-width: 1/);
+	assert.match(styles, /\.linked-graph-network-edge\.is-preview\.is-visible \{[\s\S]*opacity: 1/);
 	assert.match(styles, /stroke-linecap: round/);
 });
 
@@ -155,6 +158,7 @@ test("graph uses an edge-to-edge canvas and node-only hover affordances", async 
 	assert.match(styles, /\.linked-graph-network-root \{[\s\S]*flex-direction: column/);
 	assert.match(styles, /button\.linked-graph-network-node \{[\s\S]*flex-direction: column[\s\S]*text-align: center/);
 	assert.match(styles, /\.linked-graph-network-preview-node \{[\s\S]*flex-direction: column[\s\S]*text-align: center/);
+	assert.match(styles, /\.linked-graph-network-preview-node\.is-visible \{[\s\S]*scale\(1\)/);
 	assert.match(styles, /\.linked-graph-network-root-label,[\s\S]*\.linked-graph-network-node-label \{[\s\S]*overflow-wrap: anywhere;[\s\S]*white-space: normal/);
 	assert.doesNotMatch(styles, /\.linked-graph-network-node-context/);
 	assert.match(styles, /\.linked-graph-preview-status \{[\s\S]*width: 1px;[\s\S]*clip-path: inset\(50%\)/);

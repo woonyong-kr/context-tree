@@ -16,7 +16,8 @@ export function graphLayoutMetrics(width: number, height: number, itemCount: num
 	const safeHeight = height > 0 ? height : 640;
 	const shortSide = Math.min(safeWidth, safeHeight);
 	const viewportDistance = shortSide * 0.4;
-	const densityDistance = Math.sqrt(Math.max(itemCount, 1)) * 55;
+	const densityUnit = 55 + 27 * clamp((itemCount - 8) / 10, 0, 1);
+	const densityDistance = Math.sqrt(Math.max(itemCount, 1)) * densityUnit;
 	const directDistance = Math.round(Math.max(158, viewportDistance, densityDistance));
 	const previewDistance = Math.round(clamp(shortSide * 0.2, 116, 190));
 	const previewRingGap = Math.round(clamp(shortSide * 0.11, 72, 104));

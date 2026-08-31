@@ -23,6 +23,12 @@ test("expands the unbounded world for dense one-hop graphs", () => {
 	assert.ok(dense.chargeDistance >= dense.directDistance + dense.previewDistance);
 });
 
+test("gives chapter-sized graphs enough world space to keep labels from stacking", () => {
+	const chapter = graphLayoutMetrics(302, 620, 18);
+
+	assert.ok(chapter.directDistance >= 340);
+});
+
 test("anchors graph edges to the visible dot instead of the label group centre", () => {
 	const anchor = nodeAnchorOffset(90, 30, 8, 10, 8, 8);
 

@@ -356,6 +356,12 @@
 	stroke: color-mix(in srgb, var(--lg-graph-line) 68%, transparent);
 	stroke-dasharray: 4 5;
 	stroke-width: 1;
+	opacity: 0;
+	transition: opacity 140ms var(--anim-motion-smooth);
+}
+
+.linked-graph-network-edge.is-preview.is-visible {
+	opacity: 1;
 }
 
 .linked-graph-network-root,
@@ -369,6 +375,7 @@
 	display: inline-flex;
 	align-items: flex-start;
 	width: max-content;
+	padding: 12px;
 }
 
 .linked-graph-network-root {
@@ -456,6 +463,8 @@
 	text-align: center;
 	cursor: pointer;
 	touch-action: none;
+	transform: translate(var(--lg-hover-x, 0), var(--lg-hover-y, 0));
+	transition: transform 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .linked-graph-view button.linked-graph-network-node:hover,
@@ -558,9 +567,20 @@
 	font-size: var(--lg-font-small);
 	font-weight: var(--font-medium);
 	text-align: center;
-	opacity: 1;
+	opacity: 0;
 	pointer-events: none;
-	transition: opacity var(--anim-duration-fast) var(--anim-motion-smooth);
+	transform: translate(
+		calc(var(--lg-node-x, 0px) - var(--lg-preview-offset-x, 0px)),
+		calc(var(--lg-node-y, 0px) - var(--lg-preview-offset-y, 0px))
+	) translate(-50%, -50%) scale(0.72);
+	transition:
+		opacity 140ms var(--anim-motion-smooth),
+		transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.linked-graph-network-preview-node.is-visible {
+	opacity: 1;
+	transform: translate(var(--lg-node-x, 0px), var(--lg-node-y, 0px)) translate(-50%, -50%) scale(1);
 }
 
 .linked-graph-network-preview-node .linked-graph-network-node-dot {
@@ -692,7 +712,10 @@
 
 @media (prefers-reduced-motion: reduce) {
 	.linked-graph-open-icon,
-	.linked-graph-network-node-dot {
+	.linked-graph-network-node-dot,
+	.linked-graph-network-edge.is-preview,
+	.linked-graph-network-preview-node,
+	.linked-graph-view button.linked-graph-network-node {
 		transition: none;
 	}
 }
