@@ -6,6 +6,7 @@
 - Pin a hovered route before loading its outgoing links and render the next-hop preview without adding it to the primary force simulation, so the source cannot move away from the pointer.
 - Measure drag intent in screen pixels and suppress navigation only after a deliberate drag, restoring reliable single-click navigation at every zoom level.
 - Keep a successful drop as the node's session-only position and restore its pre-drag position when pointer input is cancelled or the app loses focus.
+- Keep automatic fitting above a readable interaction scale; dense graphs use the existing pan/zoom viewport instead of shrinking every click target into a thumbnail.
 
 ## 1.6.2
 

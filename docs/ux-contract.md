@@ -20,6 +20,7 @@ Keep the canonical Markdown note visible while providing the shortest readable r
 12. Search, group collapse, view mode, pan, zoom, hover preview, and node positions are ephemeral.
 13. No plugin action writes Markdown, Canvas, sidecars, maps, relationships, settings, or layout state.
 14. Authored section context remains visible in Outline view but is not repeated under every Graph node. Preview count announcements remain available to assistive technology without adding a visual status card.
+15. Automatic fitting preserves a readable minimum interaction scale. Dense graphs may extend beyond the sidebar and use pan or explicit fit instead of shrinking every node into a hard-to-click thumbnail.
 
 ## Right sidebar anatomy
 
