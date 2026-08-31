@@ -1,4 +1,4 @@
-# Linked Graph design QA
+# Linked Graph Navigator design QA
 
 ## Rendered implementation
 
@@ -10,7 +10,7 @@
 
 The user-supplied captures, including the latest native-Graph comparison, and the final 1115×768 Obsidian runtime were placed side by side locally. The latest comparison verified that edges inherit Obsidian's own `--graph-line` and `--graph-text` tokens, every line terminates at the visible dot centre, and the resting `Wiki` centre has no rectangular outline.
 
-The final implementation was captured in Obsidian 1.13.7 with `wiki/README.md` active and the Linked Graph leaf widened. The first capture shows the resting responsive 1-hop graph. The second keyboard-focus capture exercises the same next-hop preview path used by pointer hover. The local-only side-by-side comparison is stored outside release media.
+The final implementation was captured in Obsidian 1.13.7 with `wiki/README.md` active and the Linked Graph Navigator leaf widened. The first capture shows the resting responsive 1-hop graph. The second keyboard-focus capture exercises the same next-hop preview path used by pointer hover. The local-only side-by-side comparison is stored outside release media.
 
 ## Fidelity and interaction review
 

@@ -1,4 +1,4 @@
-# Linked Graph UX contract
+# Linked Graph Navigator UX contract
 
 ## Job
 
@@ -32,7 +32,7 @@ Keep the canonical Markdown note visible while providing the shortest readable r
 
 ## Fold boundary
 
-Obsidian's public plugin API does not expose the live fold ranges of the active Markdown editor. Linked Graph therefore does not inspect internal editor DOM or pretend to mirror folds. Outline disclosure remains session-only and does not hide authored links from the current-note graph.
+Obsidian's public plugin API does not expose the live fold ranges of the active Markdown editor. Linked Graph Navigator therefore does not inspect internal editor DOM or pretend to mirror folds. Outline disclosure remains session-only and does not hide authored links from the current-note graph.
 
 ## Out of scope
 

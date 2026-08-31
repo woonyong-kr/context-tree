@@ -1,6 +1,6 @@
-# Contributing to Linked Graph
+# Contributing to Linked Graph Navigator
 
-Linked Graph is a read-only projection over canonical Markdown.
+Linked Graph Navigator is a read-only projection over canonical Markdown.
 
 ## Before opening a pull request
 

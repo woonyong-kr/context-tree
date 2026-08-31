@@ -4,8 +4,8 @@ import { COPY_EN } from "../src/ui/copy-en";
 import { COPY_KO } from "../src/ui/copy-ko";
 
 test("names one read-only current-note product in both languages", () => {
-	assert.equal(COPY_KO.view.title, "Linked Graph");
-	assert.equal(COPY_EN.view.title, "Linked Graph");
+	assert.equal(COPY_KO.view.title, "Linked Graph Navigator");
+	assert.equal(COPY_EN.view.title, "Linked Graph Navigator");
 	assert.match(COPY_KO.view.openCommand, /현재 문서/);
 	assert.match(COPY_EN.view.openCommand, /current note/i);
 });

@@ -1,4 +1,4 @@
-# Linked Graph design system
+# Linked Graph Navigator design system
 
 ## Principles
 

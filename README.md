@@ -1,18 +1,18 @@
-# Linked Graph
+# Linked Graph Navigator
 
-Linked Graph is a focused right-sidebar navigator for the Markdown note you are reading.
+Linked Graph Navigator is a focused right-sidebar navigator for the Markdown note you are reading.
 
-![Linked Graph following the canonical Wiki note](docs/assets/linked-graph-runtime.png)
+![Linked Graph Navigator following the canonical Wiki note](docs/assets/linked-graph-runtime.png)
 
-![Linked Graph previewing the focused route's next hop](docs/assets/linked-graph-runtime-preview.png)
+![Linked Graph Navigator previewing the focused route's next hop](docs/assets/linked-graph-runtime-preview.png)
 
 It reads resolved `[[wikilinks]]` in authored order and presents the same current-note routes as a quiet outline or a one-hop graph. Clicking a title opens the canonical Markdown note; clicking the movable current-note node opens its canonical parent.
 
 ## Why use this instead of Obsidian Graph view?
 
-Obsidian Graph answers “how is the whole vault connected?” Linked Graph answers “where can I go from this note, in the order I deliberately wrote?”
+Obsidian Graph answers “how is the whole vault connected?” Linked Graph Navigator answers “where can I go from this note, in the order I deliberately wrote?”
 
-| | Linked Graph | Obsidian Graph |
+| | Linked Graph Navigator | Obsidian Graph |
 |---|---|---|
 | Scope | Current note | Vault or local neighbourhood |
 | Direction | Authored outgoing links | Connected notes in multiple directions |
@@ -24,14 +24,14 @@ Obsidian Graph answers “how is the whole vault connected?” Linked Graph answ
 ## Use
 
 1. Open a Markdown note.
-2. Run **Open Linked Graph for the current note** or select its ribbon icon.
+2. Run **Open Linked Graph Navigator for the current note** or select its ribbon icon.
 3. The default graph shows the current note and only its direct authored links. The current node and direct nodes all participate in the force layout.
 4. Drag any visible primary node, click the current node to move to its canonical parent, or hover a direct node to preview its next outgoing hop.
 5. Node colours use existing canonical metadata only; titles are never used to infer type.
 6. Pan or zoom the graph, click a direct node to open the canonical note, or switch to **Outline view** for the same direct links in Markdown order.
 7. Use search to filter both views.
 
-Linked Graph follows the active Markdown editor. View mode, group collapse, and search are session-only UI state. It does not create maps, Canvas files, backlinks, relationships, sidecars, or duplicated notes.
+Linked Graph Navigator follows the active Markdown editor. View mode, group collapse, and search are session-only UI state. It does not create maps, Canvas files, backlinks, relationships, sidecars, or duplicated notes.
 
 ## Ownership contract
 

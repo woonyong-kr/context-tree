@@ -1,5 +1,5 @@
 export const COPY_KO = {
-	view: { title: "Linked Graph", openRibbon: "현재 문서를 Linked Graph로 보기", openCommand: "현재 문서의 Linked Graph 열기", refreshCommand: "Linked Graph 새로고침" },
+	view: { title: "Linked Graph Navigator", openRibbon: "현재 문서를 Linked Graph Navigator로 보기", openCommand: "현재 문서의 Linked Graph Navigator 열기", refreshCommand: "Linked Graph Navigator 새로고침" },
 	actions: {
 		search: "현재 링크 검색",
 		showGraph: "그래프 보기",

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.1
+
+- Use the unique public name Linked Graph Navigator for the new `linked-graph` Community Directory entry while preserving the plugin ID and behavior.
+
 ## 1.4.0
 
 - Let dense current-note graphs expand into an unbounded world while the viewport remains an edge-to-edge navigation surface.

@@ -292,7 +292,7 @@ export class OneHopForceGraph {
 		try {
 			items = await this.options.onPreview(node.graph);
 		} catch (error) {
-			console.error("Linked Graph: failed to read hover preview links", error);
+			console.error("Linked Graph Navigator: failed to read hover preview links", error);
 			if (token === this.previewToken && this.previewOwnerId === node.id) this.clearPreview();
 			return;
 		}

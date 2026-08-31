@@ -26,7 +26,7 @@ test("runtime contains no Canvas, backlink expansion, or relationship editor", a
 test("manifest exposes the renamed product and no desktop-only dependency", async () => {
 	const manifest = JSON.parse(await readFile(new URL("manifest.json", repository), "utf8")) as Record<string, unknown>;
 	assert.equal(manifest.id, "linked-graph");
-	assert.equal(manifest.name, "Linked Graph");
+	assert.equal(manifest.name, "Linked Graph Navigator");
 	assert.equal(manifest.isDesktopOnly, false);
 });
 

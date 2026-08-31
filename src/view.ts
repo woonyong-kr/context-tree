@@ -57,7 +57,7 @@ export class LinkedGraphView extends ItemView {
 			this.updateHeading();
 			this.render();
 		} catch (error) {
-			console.error("Linked Graph: failed to read the current Markdown note", error);
+			console.error("Linked Graph Navigator: failed to read the current Markdown note", error);
 			if (generation !== this.generation || !this.body) return;
 			this.body.empty();
 			this.body.createDiv({ cls: "linked-graph-state", text: COPY.labels.readFailed });
