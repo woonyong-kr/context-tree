@@ -26,7 +26,7 @@ test("does not report omissions below the visual limit", () => {
 });
 
 test("keeps hover previews readable at common sidebar widths", () => {
-	assert.equal(previewGraphNodeLimit(302), 8);
-	assert.equal(previewGraphNodeLimit(600), 16);
+	assert.equal(previewGraphNodeLimit(302), 4);
+	assert.equal(previewGraphNodeLimit(600), 12);
 	assert.equal(previewGraphNodeLimit(900), MAX_PREVIEW_GRAPH_NODES);
 });
