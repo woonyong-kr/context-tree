@@ -366,17 +366,10 @@
 }
 
 .linked-graph-network-root,
-.linked-graph-network-node-shell {
+.linked-graph-network-node {
 	position: absolute;
 	top: 0;
 	left: 0;
-}
-
-.linked-graph-network-node-shell {
-	display: inline-flex;
-	align-items: flex-start;
-	width: max-content;
-	padding: 12px;
 }
 
 .linked-graph-network-root {
@@ -446,12 +439,14 @@
 .linked-graph-view button.linked-graph-network-node {
 	--lg-node-color: var(--lg-kind-unknown);
 	display: inline-flex;
+	flex-direction: column;
 	align-items: center;
+	gap: var(--lg-space-1);
 	width: max-content;
 	max-width: 190px;
 	min-height: 30px;
 	margin: 0;
-	padding: 0 var(--lg-space-1);
+	padding: 12px calc(12px + var(--lg-space-1));
 	border: 0;
 	border-radius: 0;
 	color: var(--lg-text);
@@ -462,24 +457,17 @@
 	text-align: center;
 	cursor: pointer;
 	touch-action: none;
-	transform: none;
-}
-
-.linked-graph-network-node-visual {
-	display: inline-flex;
-	flex-direction: column;
-	align-items: center;
-	gap: var(--lg-space-1);
+	transform: translate(-50%, -50%);
 }
 
 .linked-graph-network-root.is-dragging,
-.linked-graph-network-node-shell.is-dragging button.linked-graph-network-node {
+.linked-graph-network-node.is-dragging {
 	cursor: grabbing;
 }
 
 .linked-graph-view button.linked-graph-network-node:hover,
 .linked-graph-view button.linked-graph-network-node:focus-visible,
-.linked-graph-view .linked-graph-network-node-shell.is-preview-source button.linked-graph-network-node {
+.linked-graph-view button.linked-graph-network-node.is-preview-source {
 	color: var(--lg-text);
 	background: transparent;
 }
@@ -497,7 +485,7 @@
 .linked-graph-network-root:focus-visible .linked-graph-network-root-dot,
 .linked-graph-network-node:hover .linked-graph-network-node-dot,
 .linked-graph-network-node:focus-visible .linked-graph-network-node-dot,
-.linked-graph-network-node-shell.is-preview-source .linked-graph-network-node-dot {
+.linked-graph-network-node.is-preview-source .linked-graph-network-node-dot {
 	box-shadow: 0 0 0 3px color-mix(in srgb, var(--lg-node-color) 22%, transparent);
 	transform: scale(1.18);
 }

@@ -97,9 +97,8 @@ interface PanState {
 
 const MIN_SCALE = 0.12;
 const MAX_SCALE = 2.4;
-// Never shrink labels on first open. Compact sidebars can pan the unbounded
-// graph or explicitly press Fit; silent auto-shrinking makes every node an
-// unreadable thumbnail and hides the real information architecture.
+// Keep authored text at its native scale on first open. Dense graphs remain
+// available through pan, zoom, explicit Fit, and the complete Outline view.
 const AUTO_FIT_MIN_SCALE = 1;
 
 export class OneHopForceGraph {
@@ -262,8 +261,7 @@ export class OneHopForceGraph {
 		const angle = -Math.PI / 2 + goldenAngle * index;
 		const fill = Math.sqrt((index + 1) / Math.max(this.options.items.length, 1));
 		const initialRadius = radius * (0.68 + fill * 0.32);
-		const shell = this.world.createDiv({ cls: "linked-graph-network-node-shell" });
-		const element = shell.createEl("button", {
+		const element = this.world.createEl("button", {
 			cls: "linked-graph-network-node",
 			attr: {
 				"aria-label": item.label,
@@ -282,18 +280,20 @@ export class OneHopForceGraph {
 			x: Math.cos(angle) * initialRadius,
 			y: Math.sin(angle) * initialRadius,
 			graph: item,
-			element: shell,
+			element,
 			dot,
 			anchor: element,
 		};
-		this.registerDrag(shell, node);
-		shell.addEventListener("pointerenter", () => void this.showPreview(node));
-		shell.addEventListener("pointerleave", () => this.hidePreview(node));
-		element.addEventListener("focus", () => void this.showPreview(node));
-		shell.addEventListener("focusout", (event) => {
-			if (!(event.relatedTarget instanceof Node) || !shell.contains(event.relatedTarget)) this.hidePreview(node);
+		this.registerDrag(element, node);
+		element.addEventListener("pointerenter", (event) => {
+			node.hoverOrigin = { clientX: event.clientX, clientY: event.clientY };
+			void this.showPreview(node);
 		});
-		shell.addEventListener("click", (event) => {
+		element.addEventListener("pointermove", (event) => this.moveHover(event, node));
+		element.addEventListener("pointerleave", () => this.hidePreview(node));
+		element.addEventListener("focus", () => void this.showPreview(node));
+		element.addEventListener("blur", () => this.hidePreview(node));
+		element.addEventListener("click", (event) => {
 			if (this.consumeSuppressedClick(event, node.id)) return;
 			this.activateNode(node);
 		});
@@ -679,7 +679,7 @@ export class OneHopForceGraph {
 
 	private startPan(event: PointerEvent): void {
 		if (!event.isPrimary || event.button !== 0) return;
-		if (event.target instanceof Element && event.target.closest("button, .linked-graph-network-node-shell")) return;
+		if (event.target instanceof Element && event.target.closest("button")) return;
 		this.viewportTouched = true;
 		this.pan = {
 			pointerId: event.pointerId,
