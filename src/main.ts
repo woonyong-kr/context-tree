@@ -8,6 +8,9 @@ export default class LinkedGraphPlugin extends Plugin {
 	private currentFile: TFile | null = null;
 	private sourceLeaf: WorkspaceLeaf | null = null;
 	private refreshTimer: number | undefined;
+	private readonly sessionHistory: string[] = [];
+	private historyIndex = -1;
+	private navigatingHistory = false;
 
 	async onload(): Promise<void> {
 		this.registerView(VIEW_TYPE_LINKED_GRAPH, (leaf) => new LinkedGraphView(leaf, this));
@@ -15,6 +18,17 @@ export default class LinkedGraphPlugin extends Plugin {
 		this.addRibbonIcon("git-branch", COPY.view.openRibbon, () => void this.openLinkedGraph());
 		this.addCommand({ id: "open-current-note", name: COPY.view.openCommand, callback: () => void this.openLinkedGraph() });
 		this.addCommand({ id: "refresh-current-note", name: COPY.view.refreshCommand, callback: () => this.refreshViews() });
+		this.addCommand({ id: "focus-route-search", name: COPY.view.focusSearchCommand, callback: () => void this.focusRouteSearch() });
+		this.addCommand({
+			id: "navigate-back",
+			name: COPY.view.backCommand,
+			checkCallback: (checking) => this.historyCommand(-1, checking),
+		});
+		this.addCommand({
+			id: "navigate-forward",
+			name: COPY.view.forwardCommand,
+			checkCallback: (checking) => this.historyCommand(1, checking),
+		});
 
 		this.registerEvent(this.app.workspace.on("active-leaf-change", (leaf) => {
 			if (!(leaf?.view instanceof MarkdownView) || !leaf.view.file) return;
@@ -92,9 +106,40 @@ export default class LinkedGraphPlugin extends Plugin {
 		await this.app.workspace.revealLeaf(leaf);
 	}
 
+	async focusRouteSearch(): Promise<void> {
+		await this.openLinkedGraph();
+		const leaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_LINKED_GRAPH)[0];
+		if (leaf?.view instanceof LinkedGraphView) leaf.view.focusSearch();
+	}
+
 	async openLinkedNote(linkText: string, sourcePath: string): Promise<void> {
 		if (this.sourceLeaf) this.app.workspace.setActiveLeaf(this.sourceLeaf, { focus: true });
 		await this.app.workspace.openLinkText(linkText, sourcePath, false);
+	}
+
+	historyState(): { canBack: boolean; canForward: boolean } {
+		return {
+			canBack: this.historyIndex > 0,
+			canForward: this.historyIndex >= 0 && this.historyIndex < this.sessionHistory.length - 1,
+		};
+	}
+
+	async navigateHistory(delta: -1 | 1): Promise<void> {
+		const nextIndex = this.historyIndex + delta;
+		const path = this.sessionHistory[nextIndex];
+		if (!path) return;
+		const file = this.fileForPath(path);
+		if (!file) return;
+		const leaf = this.sourceLeaf ?? this.app.workspace.getLeaf(false);
+		this.navigatingHistory = true;
+		this.historyIndex = nextIndex;
+		try {
+			await leaf.openFile(file, { active: true });
+			this.setCurrentSource(file, leaf);
+		} finally {
+			this.navigatingHistory = false;
+		}
+		this.refreshViews();
 	}
 
 	private setCurrentSource(file: TFile, leaf: WorkspaceLeaf | null): void {
@@ -102,7 +147,22 @@ export default class LinkedGraphPlugin extends Plugin {
 		const sourceChanged = file.path !== this.currentFile?.path;
 		this.currentFile = file;
 		if (leaf && leaf.view instanceof MarkdownView) this.sourceLeaf = leaf;
+		if (sourceChanged && !this.navigatingHistory) this.recordHistory(file.path);
 		if (sourceChanged) this.scheduleViewRefresh(0);
+	}
+
+	private recordHistory(path: string): void {
+		if (this.sessionHistory[this.historyIndex] === path) return;
+		this.sessionHistory.splice(this.historyIndex + 1);
+		this.sessionHistory.push(path);
+		this.historyIndex = this.sessionHistory.length - 1;
+	}
+
+	private historyCommand(delta: -1 | 1, checking: boolean): boolean {
+		const state = this.historyState();
+		const available = delta < 0 ? state.canBack : state.canForward;
+		if (!checking && available) void this.navigateHistory(delta);
+		return available;
 	}
 
 	private scheduleViewRefresh(delay: number): void {

@@ -1,7 +1,9 @@
 export const COPY_KO = {
-	view: { title: "Linked Graph Navigator", openRibbon: "현재 문서를 Linked Graph Navigator로 보기", openCommand: "현재 문서의 Linked Graph Navigator 열기", refreshCommand: "Linked Graph Navigator 새로고침" },
+	view: { title: "Linked Graph Navigator", openRibbon: "현재 문서를 Linked Graph Navigator로 보기", openCommand: "현재 문서의 Linked Graph Navigator 열기", refreshCommand: "Linked Graph Navigator 새로고침", focusSearchCommand: "경로 검색으로 이동", backCommand: "이 세션에서 뒤로 이동", forwardCommand: "이 세션에서 앞으로 이동" },
 	actions: {
 		search: "현재 링크 검색",
+		back: "뒤로",
+		forward: "앞으로",
 		showGraph: "그래프 보기",
 		showOutline: "목차 보기",
 		expand: (label: string) => `${label} 펼치기`,

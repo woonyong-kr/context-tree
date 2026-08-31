@@ -21,6 +21,7 @@ export interface OneHopGraphNode {
 	linkText: string;
 	path: string;
 	kind: NodeVisualKind;
+	context: string;
 }
 
 interface OneHopGraphControls {
@@ -230,13 +231,14 @@ export class OneHopForceGraph {
 		const element = shell.createEl("button", {
 			cls: "linked-graph-network-node",
 			attr: {
-				"aria-label": item.label,
+				"aria-label": item.context ? `${item.context}: ${item.label}` : item.label,
 				"data-node-kind": item.kind,
 				type: "button",
 			},
 		});
 		const dot = element.createSpan({ cls: "linked-graph-network-node-dot", attr: { "aria-hidden": "true" } });
 		element.createSpan({ cls: "linked-graph-network-node-label", text: item.label });
+		if (item.context) element.createSpan({ cls: "linked-graph-network-node-context", text: item.context });
 		const previewToggle = shell.createEl("button", {
 			cls: "linked-graph-preview-toggle",
 			attr: {
@@ -368,6 +370,7 @@ export class OneHopForceGraph {
 			});
 			const dot = element.createSpan({ cls: "linked-graph-network-node-dot", attr: { "aria-hidden": "true" } });
 			element.createSpan({ cls: "linked-graph-network-node-label", text: item.label });
+			if (item.context) element.createSpan({ cls: "linked-graph-network-node-context", text: item.context });
 			return {
 				id: `preview:${node.id}:${item.key}`,
 				depth: 2,

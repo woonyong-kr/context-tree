@@ -21,6 +21,9 @@ export class LinkedGraphView extends ItemView {
 	private title: HTMLElement | null = null;
 	private contextLabel: HTMLElement | null = null;
 	private modeButton: HTMLButtonElement | null = null;
+	private backButton: HTMLButtonElement | null = null;
+	private forwardButton: HTMLButtonElement | null = null;
+	private searchInput: HTMLInputElement | null = null;
 
 	constructor(leaf: WorkspaceLeaf, private readonly plugin: LinkedGraphPlugin) {
 		super(leaf);
@@ -38,6 +41,11 @@ export class LinkedGraphView extends ItemView {
 	async onClose(): Promise<void> {
 		this.graphSurface?.destroy();
 		this.graphSurface = null;
+	}
+
+	focusSearch(): void {
+		this.containerEl.addClass("is-searching");
+		this.searchInput?.focus();
 	}
 
 	async refresh(file: TFile | null): Promise<void> {
@@ -74,12 +82,15 @@ export class LinkedGraphView extends ItemView {
 		this.title = heading.createEl("h2", { text: COPY.view.title });
 		this.contextLabel = heading.createDiv({ cls: "linked-graph-context" });
 		const actions = header.createDiv({ cls: "linked-graph-header-actions" });
+		this.backButton = this.iconButton(actions, "arrow-left", COPY.actions.back, () => void this.plugin.navigateHistory(-1));
+		this.forwardButton = this.iconButton(actions, "arrow-right", COPY.actions.forward, () => void this.plugin.navigateHistory(1));
 		const search = actions.createEl("button", { cls: "clickable-icon", attr: { "aria-label": COPY.actions.search, type: "button" } });
 		setIcon(search, "search");
 		this.modeButton = actions.createEl("button", { cls: "linked-graph-mode", attr: { type: "button" } });
 		const searchRow = container.createDiv({ cls: "linked-graph-search" });
 		setIcon(searchRow.createSpan({ cls: "linked-graph-search-icon" }), "search");
 		const input = searchRow.createEl("input", { type: "search", placeholder: COPY.labels.searchPlaceholder, attr: { "aria-label": COPY.actions.search } });
+		this.searchInput = input;
 		this.body = container.createDiv({ cls: "linked-graph-body" });
 
 		search.addEventListener("click", () => {
@@ -95,7 +106,44 @@ export class LinkedGraphView extends ItemView {
 			this.query = input.value;
 			this.render();
 		});
+		input.addEventListener("keydown", (event) => {
+			if (event.key === "ArrowDown") {
+				const firstRoute = this.body?.querySelector<HTMLButtonElement>(".linked-graph-network-node, .linked-graph-link");
+				if (firstRoute) {
+					event.preventDefault();
+					firstRoute.focus();
+				}
+				return;
+			}
+			if (event.key !== "Escape") return;
+			event.preventDefault();
+			if (input.value) {
+				input.value = "";
+				this.query = "";
+				this.render();
+				return;
+			}
+			container.removeClass("is-searching");
+			search.focus();
+		});
 		this.updateHeading();
+		this.updateHistoryControls();
+	}
+
+	private iconButton(container: HTMLElement, icon: string, label: string, action: () => void): HTMLButtonElement {
+		const button = container.createEl("button", {
+			cls: "clickable-icon",
+			attr: { "aria-label": label, title: label, type: "button" },
+		});
+		setIcon(button, icon);
+		button.addEventListener("click", action);
+		return button;
+	}
+
+	private updateHistoryControls(): void {
+		const state = this.plugin.historyState();
+		if (this.backButton) this.backButton.disabled = !state.canBack;
+		if (this.forwardButton) this.forwardButton.disabled = !state.canForward;
 	}
 
 	private updateHeading(): void {
@@ -126,6 +174,7 @@ export class LinkedGraphView extends ItemView {
 
 	private render(): void {
 		this.updateModeButton();
+		this.updateHistoryControls();
 		if (!this.body) return;
 		this.body.toggleClass("is-graph", this.mode === "graph");
 		this.graphSurface?.destroy();
@@ -181,7 +230,9 @@ export class LinkedGraphView extends ItemView {
 	private renderOutlineLink(container: HTMLElement, link: LinkedNote, level: number): void {
 		const row = container.createDiv({ cls: "linked-graph-link-row", attr: { role: "treeitem", "aria-level": String(level) } });
 		setIcon(row.createSpan({ cls: "linked-graph-entry-icon", attr: { "aria-hidden": "true" } }), "file-text");
-		const open = row.createEl("button", { cls: "linked-graph-link", text: link.label, attr: { title: link.path, type: "button" } });
+		const open = row.createEl("button", { cls: "linked-graph-link", attr: { title: link.path, type: "button" } });
+		if (link.sectionPath.length > 0) open.createSpan({ cls: "linked-graph-link-context", text: link.sectionPath.join(" › ") });
+		open.createSpan({ cls: "linked-graph-link-label", text: link.label });
 		open.addEventListener("click", () => void this.plugin.openLinkedNote(link.linkText, this.sourceFile?.path ?? ""));
 		setIcon(row.createSpan({ cls: "linked-graph-open-icon", attr: { "aria-hidden": "true" } }), "arrow-up-right");
 	}
@@ -247,6 +298,7 @@ function flattenGraphEntries(
 			linkText: entry.linkText,
 			path: entry.path,
 			kind: kindForPath(entry.path),
+			context: entry.sectionPath.at(-1) ?? "",
 		});
 	}
 	return result;

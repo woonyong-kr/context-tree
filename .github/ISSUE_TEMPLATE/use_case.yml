@@ -1,0 +1,26 @@
+name: Use case
+description: Propose a focused authored-link navigation workflow.
+title: "[Use case]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Current workflow
+      description: What current-note path are you trying to follow, and where does it break down?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Smallest useful outcome
+      description: Describe the navigation result without turning this into a Vault-wide graph.
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundary
+    attributes:
+      label: Product boundary
+      options:
+        - label: Authored Markdown links remain canonical and the use case needs no relationship database, remote AI, or telemetry.
+          required: true

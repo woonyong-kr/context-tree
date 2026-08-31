@@ -66,3 +66,20 @@ test("includes relative Markdown links in authored order but rejects external li
 	);
 	assert.deepEqual(graph.entries.map((entry) => entry.label), ["프로젝트", "개념"]);
 });
+
+test("preserves the authored heading path as navigation context", () => {
+	const graph = parseDocumentLinks(
+		"# Kotlin\n## Learn\n[[개념]]\n### Practice\n[[프로젝트]]\n## Build\n[[책/LLM]]",
+		"Kotlin.md",
+		"Kotlin",
+		resolve,
+	);
+	const links = graph.entries.filter((entry) => entry.kind === "link");
+	assert.deepEqual(links.map((entry) => entry.sectionPath), [
+		["Learn"],
+		["Learn", "Practice"],
+		["Build"],
+	]);
+	assert.equal(graphMatches(links[1]!, "practice"), true);
+	assert.equal(graphMatches(links[2]!, "learn"), false);
+});

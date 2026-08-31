@@ -6,6 +6,8 @@ Linked Graph Navigator follows the active Markdown note and shows only its resol
 
 ![Linked Graph Navigator walkthrough from an active note to its authored routes and a next-step preview](docs/assets/linked-graph-demo.gif)
 
+Want to try it without touching your notes? Download the [public demo Vault](https://github.com/woonyong-kr/obsidian-navigator-demo-vault/releases/latest) and follow its five-minute path.
+
 ## The three-step workflow
 
 1. **Open a linked note.** The navigator follows the active Markdown editor automatically.
@@ -41,9 +43,14 @@ Obsidian Graph answers “how is this network connected?” Linked Graph Navigat
 4. Drag any visible primary node, click the current node to move to its configured parent, or hover/focus a direct node to preview its next outgoing links. On touch, use the disclosure beside the node.
 5. Node colours use existing canonical metadata only; titles are never used to infer type.
 6. Pan or zoom the graph, click a direct node to open the canonical note, or switch to **Outline view** for the same direct links in Markdown order.
-7. Use search to filter both views.
+7. Use search to filter both views. A route also shows the section heading where its link was authored, so similarly named links keep their reading context.
+8. Use Back and Forward to retrace paths opened during the current Obsidian session. Nothing is persisted.
+
+Keyboard-only flow: run **Focus route search**, type a route or section name, press `Arrow Down` to focus the first match, then `Enter` to open it. Use the Back command or header action to return.
 
 Graph rendering stays responsive on unusually dense notes by showing at most 120 direct nodes and 48 next-step preview nodes. When routes are omitted, the panel reports the count and offers the complete authored list in Outline view.
+
+The demo Vault includes a [130-route fallback example](https://github.com/woonyong-kr/obsidian-navigator-demo-vault/blob/main/Benchmarks/Dense%20Routes.md), and the parser has a [reproducible 5,000-route benchmark](docs/benchmarks.md).
 
 Linked Graph Navigator follows the active Markdown editor. View mode, group collapse, and search are session-only UI state. It does not create maps, Canvas files, backlinks, relationships, sidecars, or duplicated notes.
 
@@ -56,6 +63,8 @@ Linked Graph Navigator follows the active Markdown editor. View mode, group coll
 - The plugin never edits Vault content.
 
 See [UX contract](docs/ux-contract.md), [design system](docs/design-system.md), and [release process](docs/release-process.md).
+
+See the public [Roadmap](ROADMAP.md), report a [bug or use case](https://github.com/woonyong-kr/linked-graph/issues/new/choose), or discuss a workflow in [Discussions](https://github.com/woonyong-kr/linked-graph/discussions).
 
 ## Development
 

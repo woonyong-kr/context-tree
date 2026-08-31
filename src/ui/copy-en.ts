@@ -1,7 +1,7 @@
 export const COPY_EN = {
-	view: { title: "Linked Graph Navigator", openRibbon: "View the current note in Linked Graph Navigator", openCommand: "Open Linked Graph Navigator for the current note", refreshCommand: "Refresh Linked Graph Navigator" },
+	view: { title: "Linked Graph Navigator", openRibbon: "View the current note in Linked Graph Navigator", openCommand: "Open Linked Graph Navigator for the current note", refreshCommand: "Refresh Linked Graph Navigator", focusSearchCommand: "Focus route search", backCommand: "Navigate back in this session", forwardCommand: "Navigate forward in this session" },
 	actions: {
-		search: "Search current links", showGraph: "Graph view", showOutline: "Outline view",
+		search: "Search current links", back: "Back", forward: "Forward", showGraph: "Graph view", showOutline: "Outline view",
 		expand: (label: string) => `Expand ${label}`, collapse: (label: string) => `Collapse ${label}`,
 		zoomOut: "Zoom out", zoomIn: "Zoom in", fitGraph: "Fit graph",
 		openParent: (label: string) => `Open parent note: ${label}`,

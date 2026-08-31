@@ -6,6 +6,7 @@ export interface LinkedNote {
 	label: string;
 	linkText: string;
 	path: string;
+	sectionPath: string[];
 	subpath: string;
 }
 
@@ -168,7 +169,13 @@ function splitMarkdownLink(label: string, rawTarget: string): ReturnType<typeof 
 	return parsed ? { ...parsed, label: plainLabel(label) || parsed.label } : null;
 }
 
-function linksOnLine(line: string, sourcePath: string, resolve: LinkResolver, seen: Set<string>): LinkedNote[] {
+function linksOnLine(
+	line: string,
+	sourcePath: string,
+	resolve: LinkResolver,
+	seen: Set<string>,
+	sectionPath: readonly string[],
+): LinkedNote[] {
 	const links: LinkedNote[] = [];
 	for (const { parsed } of linkCandidates(line)) {
 		if (!parsed) continue;
@@ -177,7 +184,15 @@ function linksOnLine(line: string, sourcePath: string, resolve: LinkResolver, se
 		const key = `${path}${parsed.subpath}`;
 		if (seen.has(key)) continue;
 		seen.add(key);
-		links.push({ kind: "link", key, label: parsed.label, linkText: parsed.linkText, path, subpath: parsed.subpath });
+		links.push({
+			kind: "link",
+			key,
+			label: parsed.label,
+			linkText: parsed.linkText,
+			path,
+			sectionPath: [...sectionPath],
+			subpath: parsed.subpath,
+		});
 	}
 	return links;
 }
@@ -255,6 +270,7 @@ export function graphMatches(entry: GraphEntry, query: string): boolean {
 	const normalized = query.trim().toLocaleLowerCase();
 	if (!normalized) return true;
 	if (entry.label.toLocaleLowerCase().includes(normalized)) return true;
+	if (entry.kind === "link" && entry.sectionPath.some((section) => section.toLocaleLowerCase().includes(normalized))) return true;
 	return entry.kind === "group" && entry.children.some((child) => graphMatches(child, normalized));
 }
 
@@ -268,13 +284,29 @@ export function parseDocumentLinks(
 	const groups: GroupDraft[] = [];
 	const seen = new Set<string>();
 	let groupSequence = 0;
+	let documentHeading = "";
+	const sections: Array<{ label: string; level: number }> = [];
 
 	for (const line of visibleMarkdown(markdown)) {
+		const heading = line.match(/^\s*(#{1,6})\s+(.+)$/);
+		if (heading) {
+			const level = heading[1]?.length ?? 1;
+			const label = plainLabel(heading[2] ?? "");
+			groups.length = 0;
+			if (level === 1) {
+				documentHeading ||= label;
+				sections.length = 0;
+			} else if (label) {
+				while (sections.length > 0 && sections[sections.length - 1]!.level >= level) sections.pop();
+				sections.push({ label, level });
+			}
+			continue;
+		}
 		const list = line.match(/^(\s*)[-*+]\s+(?:\[[ xX-]\]\s+)?(.+)$/);
 		const indent = list ? indentation(list[1] ?? "") : -1;
 		while (groups.length > 0 && groups[groups.length - 1]!.indent >= indent && indent >= 0) groups.pop();
 
-		const links = linksOnLine(line, sourcePath, resolve, seen);
+		const links = linksOnLine(line, sourcePath, resolve, seen, sections.map((section) => section.label));
 		if (list && links.length === 0) {
 			const label = plainLabel(list[2] ?? "");
 			if (!label) continue;
@@ -297,9 +329,6 @@ export function parseDocumentLinks(
 	}
 
 	const entries = prune(root);
-	const heading = visibleMarkdown(markdown)
-		.map((line) => line.match(/^\s*#\s+(.+)$/)?.[1])
-		.find((value): value is string => Boolean(value));
-	const displayTitle = heading ? plainLabel(heading) : title;
+	const displayTitle = documentHeading || title;
 	return { sourcePath, title: displayTitle || title, entries, linkCount: countLinks(entries) };
 }

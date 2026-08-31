@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.0
+
+- Show the authored section heading as context on direct graph routes, next-step previews, and the complete Outline.
+- Add session-only Back and Forward navigation plus a command that focuses route search.
+- Let keyboard users open search, move to the first matching route with Arrow Down, open it, and return through session history.
+- Add a reproducible 5,000-route parser benchmark and a public dense-note demo for the bounded graph and complete Outline fallback.
+- Publish a private-data-free demo Vault, issue templates, Roadmap, and Discussions path for a five-minute first success.
+
 ## 1.5.0
 
 - Bound Graph view to 120 direct routes and 48 next-step previews while keeping the complete authored list in Outline view.

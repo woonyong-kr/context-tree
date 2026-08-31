@@ -1,0 +1,32 @@
+name: Bug report
+description: Report a reproducible current-note navigation problem.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Linked Graph Navigator, Obsidian, operating system, and theme versions.
+    validations:
+      required: true
+  - type: textarea
+    id: markdown
+    attributes:
+      label: Minimal public Markdown
+      description: Include a small non-sensitive note that reproduces the route or parser problem.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Expected and actual result
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I removed private note content and paths.
+          required: true

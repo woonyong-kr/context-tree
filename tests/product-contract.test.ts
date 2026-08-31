@@ -31,11 +31,32 @@ test("manifest exposes the renamed product and no desktop-only dependency", asyn
 });
 
 test("view defaults to the current-note graph and keeps mode state session-only", async () => {
-	const view = await readFile(new URL("src/view.ts", repository), "utf8");
+	const [view, main] = await Promise.all([
+		readFile(new URL("src/view.ts", repository), "utf8"),
+		readFile(new URL("src/main.ts", repository), "utf8"),
+	]);
 	assert.match(view, /private mode: ViewMode = "graph"/);
 	assert.match(view, /showGraph/);
 	assert.match(view, /showOutline/);
 	assert.doesNotMatch(view, /branchGraphs|expandedLinks/);
+	assert.match(view, /event\.key === "ArrowDown"/);
+	assert.match(view, /event\.key !== "Escape"/);
+	assert.match(view, /focusSearch\(\)/);
+	assert.match(main, /private readonly sessionHistory: string\[\] = \[\]/);
+	assert.match(main, /navigateHistory\(delta: -1 \| 1\)/);
+	assert.doesNotMatch(main, /saveData\(|loadData\(/);
+});
+
+test("authored section context is shown without creating relationship data", async () => {
+	const [model, view, graph] = await Promise.all([
+		readFile(new URL("src/model.ts", repository), "utf8"),
+		readFile(new URL("src/view.ts", repository), "utf8"),
+		readFile(new URL("src/one-hop-graph.ts", repository), "utf8"),
+	]);
+	assert.match(model, /sectionPath: string\[\]/);
+	assert.match(view, /linked-graph-link-context/);
+	assert.match(graph, /linked-graph-network-node-context/);
+	assert.doesNotMatch(`${model}\n${view}\n${graph}`, /sectionDatabase|relationshipStore/);
 });
 
 test("one-hop graph supports movable root, parent navigation, hover preview, and ephemeral layout only", async () => {
