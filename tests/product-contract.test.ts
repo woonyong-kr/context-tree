@@ -70,6 +70,8 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /onPreview/);
 	assert.match(graph, /linked-graph-preview-toggle/);
 	assert.match(graph, /aria-expanded/);
+	assert.match(graph, /tabindex: "0"/);
+	assert.doesNotMatch(graph, /clickable-icon linked-graph-preview-toggle/);
 	assert.match(graph, /togglePreview/);
 	assert.match(graph, /MAX_PREVIEW_GRAPH_NODES/);
 	assert.match(graph, /node\.fx = node\.x/);

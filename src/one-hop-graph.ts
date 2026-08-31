@@ -238,10 +238,11 @@ export class OneHopForceGraph {
 		const dot = element.createSpan({ cls: "linked-graph-network-node-dot", attr: { "aria-hidden": "true" } });
 		element.createSpan({ cls: "linked-graph-network-node-label", text: item.label });
 		const previewToggle = shell.createEl("button", {
-			cls: "clickable-icon linked-graph-preview-toggle",
+			cls: "linked-graph-preview-toggle",
 			attr: {
 				"aria-expanded": "false",
 				"aria-label": this.options.controls.previewNext(item.label),
+				tabindex: "0",
 				title: this.options.controls.previewNext(item.label),
 				type: "button",
 			},
