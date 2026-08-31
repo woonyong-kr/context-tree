@@ -91,7 +91,7 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /const sourceAnchor = this\.nodeAnchor\(link\.source\)/);
 	assert.match(graph, /registerDrag\(rootElement, this\.root\)/);
 	assert.match(graph, /registerDrag\(shell, node\)/);
-	assert.match(graph, /shell\.addEventListener\("click", \(event\) => \{[\s\S]*this\.options\.onOpen\(item\)/);
+	assert.match(graph, /shell\.addEventListener\("click", \(event\) => \{[\s\S]*this\.activateNode\(node\)/);
 	assert.doesNotMatch(graph, /element\.addEventListener\("click"/);
 	const startDrag = graph.slice(graph.indexOf("private startNodeDrag"), graph.indexOf("private moveNode"));
 	assert.doesNotMatch(startDrag, /event\.stopPropagation\(\)/);
@@ -113,6 +113,7 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.doesNotMatch(graph, /Math\.hypot\(deltaX, deltaY\)/);
 	assert.match(graph, /private readonly pinnedNodeIds = new Set<string>\(\)/);
 	assert.match(graph, /this\.pinnedNodeIds\.add\(completed\.node\.id\)/);
+	assert.match(graph, /completed\.phase === "pressed"[\s\S]*this\.suppressClickFor\(completed\.node\.id\)[\s\S]*this\.activateNode\(completed\.node\)/);
 	assert.match(graph, /pointercancel[^\n]*cancelNodeDrag/);
 	assert.match(graph, /lostpointercapture[^\n]*cancelNodeDrag/);
 	assert.match(graph, /window\.addEventListener\("blur", this\.cancelPointerInteractionsOnBlur\)/);

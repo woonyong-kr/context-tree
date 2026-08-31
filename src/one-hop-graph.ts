@@ -186,7 +186,7 @@ export class OneHopForceGraph {
 		if (options.parent) {
 			rootElement.addEventListener("click", (event) => {
 				if (this.consumeSuppressedClick(event as MouseEvent, this.root.id)) return;
-				options.onOpenParent(options.parent!);
+				this.activateNode(this.root);
 			});
 		}
 
@@ -295,7 +295,7 @@ export class OneHopForceGraph {
 		});
 		shell.addEventListener("click", (event) => {
 			if (this.consumeSuppressedClick(event, node.id)) return;
-			this.options.onOpen(item);
+			this.activateNode(node);
 		});
 		return node;
 	}
@@ -320,6 +320,14 @@ export class OneHopForceGraph {
 		event.preventDefault();
 		this.clearSuppressedClick();
 		return true;
+	}
+
+	private activateNode(node: PhysicsNode): void {
+		if (node === this.root) {
+			if (this.options.parent) this.options.onOpenParent(this.options.parent);
+			return;
+		}
+		if (node.graph) this.options.onOpen(node.graph);
 	}
 
 	private physicsNodes(): PhysicsNode[] {
@@ -610,7 +618,11 @@ export class OneHopForceGraph {
 		const completed = this.drag;
 		this.drag = null;
 		this.releasePointerCapture(completed);
-		if (completed.phase === "pressed") return;
+		if (completed.phase === "pressed") {
+			this.suppressClickFor(completed.node.id);
+			this.activateNode(completed.node);
+			return;
+		}
 		completed.node.element?.removeClass("is-dragging");
 		this.suppressClickFor(completed.node.id);
 		this.pinnedNodeIds.add(completed.node.id);
