@@ -64,10 +64,11 @@ test("authored section context stays in Outline and does not clutter graph nodes
 });
 
 test("one-hop graph supports movable root, parent navigation, hover preview, and ephemeral layout only", async () => {
-	const [graph, main, navigation, view] = await Promise.all([
+	const [graph, main, navigation, previewLayout, view] = await Promise.all([
 		readFile(new URL("src/one-hop-graph.ts", repository), "utf8"),
 		readFile(new URL("src/main.ts", repository), "utf8"),
 		readFile(new URL("src/navigation.ts", repository), "utf8"),
+		readFile(new URL("src/preview-layout.ts", repository), "utf8"),
 		readFile(new URL("src/view.ts", repository), "utf8"),
 	]);
 	assert.match(graph, /pointerdown/);
@@ -132,7 +133,8 @@ test("one-hop graph supports movable root, parent navigation, hover preview, and
 	assert.match(graph, /window\.addEventListener\("blur", this\.cancelPointerInteractionsOnBlur\)/);
 	assert.match(graph, /cancelled\.node\.x = cancelled\.startNodeX/);
 	assert.match(graph, /offsetWidth/);
-	assert.match(graph, /ringSize = this\.layoutWidth <= 420 \? 2 : 8/);
+	assert.match(graph, /previewPlacement/);
+	assert.match(previewLayout, /viewportWidth <= 420 \? 2 : 8/);
 	assert.match(graph, /force\("center-x"/);
 	assert.match(graph, /force\("center-y"/);
 	assert.doesNotMatch(graph, /network-group-label|groupAnchors|groupTarget/);

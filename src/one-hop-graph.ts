@@ -16,6 +16,7 @@ import { graphLayoutMetrics, nodeAnchorOffset, type GraphLayoutMetrics, type Nod
 import { boundedItems, previewGraphNodeLimit } from "./limits";
 import type { GraphNavigationTarget, NodeVisualKind } from "./navigation";
 import { hasNodeDragIntent } from "./pointer-intent";
+import { previewPlacement, previewRingSize } from "./preview-layout";
 
 export interface OneHopGraphNode {
 	key: string;
@@ -66,7 +67,6 @@ interface PhysicsNode extends SimulationNodeDatum {
 	hoverOrigin?: PointerPosition;
 	element?: HTMLElement;
 	dot?: HTMLElement;
-	anchor?: HTMLElement;
 }
 
 interface PhysicsLink extends SimulationLinkDatum<PhysicsNode> {
@@ -296,7 +296,6 @@ export class OneHopForceGraph {
 			graph: item,
 			element,
 			dot,
-			anchor: element,
 		};
 		element.addEventListener("pointerenter", (event) => {
 			node.hoverOrigin = { clientX: event.clientX, clientY: event.clientY };
@@ -402,34 +401,31 @@ export class OneHopForceGraph {
 		));
 		const inwardAngle = Math.atan2(this.root.y - node.y, this.root.x - node.x);
 		this.previewNodes = visibleItems.items.map((item, index) => {
-			const ringSize = this.layoutWidth <= 420 ? 2 : 8;
-			const ring = Math.floor(index / ringSize);
-			const ringStart = ring * ringSize;
-			const ringCount = Math.min(ringSize, visibleItems.items.length - ringStart);
-			const ringPosition = index - ringStart;
-			const spread = Math.min(Math.PI * 1.15, 0.9 * Math.max(ringCount - 1, 1));
-			const stagger = ring % 2 === 0 ? 0 : Math.min(0.2, spread / Math.max(ringCount, 1));
-			const angle = inwardAngle - spread / 2 + stagger + spread * (ringPosition / Math.max(ringCount - 1, 1));
-			const distance = this.layout.previewDistance + ring * this.layout.previewRingGap;
+			const placement = previewPlacement(
+				index,
+				visibleItems.items.length,
+				this.layoutWidth,
+				inwardAngle,
+				this.layout.previewDistance,
+				this.layout.previewRingGap,
+			);
 			const element = this.world.createDiv({
 				cls: "linked-graph-network-preview-node",
 				attr: { "aria-hidden": "true", "data-node-kind": item.kind },
 			});
 			const dot = element.createSpan({ cls: "linked-graph-network-node-dot", attr: { "aria-hidden": "true" } });
 			element.createSpan({ cls: "linked-graph-network-node-label", text: item.label });
-			const offsetX = Math.cos(angle) * distance;
-			const offsetY = Math.sin(angle) * distance;
 			return {
 				id: `preview:${node.id}:${item.key}`,
 				depth: 2,
 				label: item.label,
 				kind: item.kind,
-				x: node.x + offsetX,
-				y: node.y + offsetY,
+				x: node.x + placement.offsetX,
+				y: node.y + placement.offsetY,
 				graph: item,
 				previewParent: node,
-				previewOffsetX: offsetX,
-				previewOffsetY: offsetY,
+				previewOffsetX: placement.offsetX,
+				previewOffsetY: placement.offsetY,
 				element,
 				dot,
 			};
@@ -438,7 +434,8 @@ export class OneHopForceGraph {
 			node,
 			preview,
 			true,
-			this.layout.previewDistance + Math.floor(index / (this.layoutWidth <= 420 ? 2 : 8)) * this.layout.previewRingGap,
+			this.layout.previewDistance
+				+ Math.floor(index / previewRingSize(this.layoutWidth)) * this.layout.previewRingGap,
 		));
 		this.updateNodes();
 		this.previewAnimationFrame = window.requestAnimationFrame(() => {
@@ -500,7 +497,7 @@ export class OneHopForceGraph {
 		for (const link of this.baseLinks) link.distance = this.layout.directDistance;
 		for (const [index, link] of this.previewLinks.entries()) {
 			link.distance = this.layout.previewDistance
-				+ Math.floor(index / (this.layoutWidth <= 420 ? 2 : 8)) * this.layout.previewRingGap;
+				+ Math.floor(index / previewRingSize(this.layoutWidth)) * this.layout.previewRingGap;
 		}
 		this.linkForce.distance((link) => link.distance);
 		return true;
@@ -571,7 +568,7 @@ export class OneHopForceGraph {
 	}
 
 	private nodeAnchor(node: PhysicsNode): NodeAnchorOffset {
-		const anchor = node.anchor ?? node.element;
+		const anchor = node.element;
 		if (!anchor || !node.dot) return { x: 0, y: 0 };
 		const offset = nodeAnchorOffset(
 			anchor.offsetWidth,
@@ -588,7 +585,7 @@ export class OneHopForceGraph {
 	}
 
 	private moveHover(event: PointerEvent, node: PhysicsNode): void {
-		if (this.drag || this.previewOwnerId !== node.id || !node.anchor || !node.hoverOrigin) return;
+		if (this.drag || this.previewOwnerId !== node.id || !node.element || !node.hoverOrigin) return;
 		const offset = boundedHoverOffset(node.hoverOrigin, event.clientX, event.clientY);
 		node.hoverOffsetX = offset.x / this.scale;
 		node.hoverOffsetY = offset.y / this.scale;
@@ -606,8 +603,8 @@ export class OneHopForceGraph {
 	}
 
 	private setHoverCssOffset(node: PhysicsNode): void {
-		node.anchor?.style.setProperty("--lg-hover-x", `${String(node.hoverOffsetX ?? 0)}px`);
-		node.anchor?.style.setProperty("--lg-hover-y", `${String(node.hoverOffsetY ?? 0)}px`);
+		node.element?.style.setProperty("--lg-hover-x", `${String(node.hoverOffsetX ?? 0)}px`);
+		node.element?.style.setProperty("--lg-hover-y", `${String(node.hoverOffsetY ?? 0)}px`);
 	}
 
 	private updateWorldTransform(): void {
