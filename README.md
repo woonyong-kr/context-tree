@@ -7,7 +7,7 @@
 [![Latest release](https://img.shields.io/github/v/release/woonyong-kr/linked-graph?sort=semver)](https://github.com/woonyong-kr/linked-graph/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Linked Graph Navigator follows the active Markdown note and shows only its resolved outgoing `[[wikilinks]]` in the order you wrote them. Use a quiet outline or a focused one-hop graph beside the note, preview the next step, and open the original Markdown in one click.
+Linked Graph Navigator turns the links in your current Markdown note into a calm reading map beside the editor. It preserves the order you wrote, previews one next step on hover or focus, and opens the original note in one click—without turning the whole Vault into a hairball.
 
 ![Linked Graph Navigator walkthrough from an active note to its authored routes and a next-step preview](docs/assets/linked-graph-demo.gif)
 
@@ -19,7 +19,7 @@ Linked Graph Navigator follows the active Markdown note and shows only its resol
   <a href="https://community.obsidian.md/plugins/linked-graph">Community page</a>
 </p>
 
-## At a glance
+## Why people keep it open
 
 - **Current-note scope:** the navigator changes with the active Markdown editor.
 - **Authored order:** routes keep the order and section context from the source note.
@@ -28,6 +28,8 @@ Linked Graph Navigator follows the active Markdown note and shows only its resol
 - **Direct navigation:** click a route to open the canonical note; click the root to follow its configured parent.
 - **Local and read-only:** no network requests, telemetry, generated maps, or Vault writes.
 - **Desktop and mobile:** built only on Obsidian's public API.
+
+Use it for a course index, project hub, research trail, onboarding guide, or any note where link order expresses what to read next. The source note remains the map; the plugin is only a live view of that intent.
 
 ## Quick start
 
@@ -39,7 +41,7 @@ Linked Graph Navigator follows the active Markdown note and shows only its resol
 
 Want a safe example first? Download the [public demo Vault](https://github.com/woonyong-kr/obsidian-navigator-demo-vault/releases/latest) and follow its five-minute walkthrough. It includes ordinary routes, long labels, next-step previews, and a dense-note fallback.
 
-## The workflow
+## From note to next step
 
 1. **Open a linked note.** The sidebar follows the active Markdown editor automatically.
 2. **See the intended routes.** Only resolved outgoing links appear; unrelated Vault connections stay out of the way.
@@ -50,7 +52,7 @@ There is no relationship database or saved graph layout. Disable the plugin and 
 
 ## Graph and Outline
 
-![Linked Graph Navigator following the active Wiki note](docs/assets/linked-graph-runtime.png)
+![Linked Graph Navigator following the active Wiki note in a sharp 16:9 Obsidian capture](docs/assets/linked-graph-runtime.png)
 
 The graph is for spatial scanning and direct manipulation:
 
@@ -60,7 +62,7 @@ The graph is for spatial scanning and direct manipulation:
 - a completed drag becomes the node's position for this session, while cancel or focus loss restores the previous position;
 - node colours use existing canonical metadata only; titles never infer type.
 
-![Linked Graph Navigator previewing the focused route's next step](docs/assets/linked-graph-runtime-preview.png)
+![Linked Graph Navigator previewing the focused route's next step in a sharp 16:9 Obsidian capture](docs/assets/linked-graph-runtime-preview.png)
 
 The Outline preserves reading order:
 

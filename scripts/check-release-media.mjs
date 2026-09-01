@@ -48,7 +48,8 @@ for (const path of requiredAssets) {
 
 	const bytes = await readFile(new URL(path, repository));
 	const { width, height } = imageDimensions(bytes, path);
-	if (width < 900 || height < 600) fail(`${path} is too small for README inspection`);
+	if (width < 1600 || height < 900) fail(`${path} is too small for README inspection`);
+	if (width * 9 !== height * 16) fail(`${path} must use a 16:9 frame`);
 	if (record.width !== width || record.height !== height) fail(`${path} dimensions are stale`);
 	const sha256 = createHash("sha256").update(bytes).digest("hex");
 	if (record.sha256 !== sha256) fail(`${path} SHA-256 is stale`);

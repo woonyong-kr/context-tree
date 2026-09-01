@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.6
+
+- Replace every public visual with a public-safe, native Obsidian 16:9 capture at 1600×900.
+- Recut the walkthrough around active note, hover preview, one-click navigation, and Outline so the Community page demonstrates the real reading flow.
+- Require sharp 16:9 README media in the release gate and clarify the plugin's note-first use cases.
+
 ## 1.6.5
 
 - Replace the final `Array.at()` call with indexed access so the Community source scanner can infer the section label without unsafe-value warnings.

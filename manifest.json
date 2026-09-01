@@ -1,7 +1,7 @@
 {
 	"id": "linked-graph",
 	"name": "Linked Graph Navigator",
-	"version": "1.6.5",
+	"version": "1.6.6",
 	"minAppVersion": "1.8.0",
 	"description": "Follow the links you wrote in order as a focused outline or graph beside the active note.",
 	"author": "woonyong-kr",
