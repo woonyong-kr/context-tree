@@ -2,6 +2,7 @@ export type NodeVisualKind =
 	| "hub"
 	| "project"
 	| "person"
+	| "schedule"
 	| "book"
 	| "resource"
 	| "entity"
@@ -25,6 +26,11 @@ const ENTITY_KINDS = new Map<string, NodeVisualKind>([
 	["프로젝트", "project"],
 	["person", "person"],
 	["인물", "person"],
+	["event", "schedule"],
+	["schedule", "schedule"],
+	["calendar-event", "schedule"],
+	["일정", "schedule"],
+	["캘린더", "schedule"],
 	["book", "book"],
 	["책", "book"],
 	["resource", "resource"],
@@ -36,6 +42,11 @@ const FACET_KINDS = new Map<string, NodeVisualKind>([
 	["프로젝트", "project"],
 	["person", "person"],
 	["인물", "person"],
+	["event", "schedule"],
+	["schedule", "schedule"],
+	["calendar-event", "schedule"],
+	["일정", "schedule"],
+	["캘린더", "schedule"],
 	["book", "book"],
 	["책", "book"],
 	["resource", "resource"],
@@ -60,6 +71,9 @@ function stringValues(value: unknown): string[] {
 export function nodeVisualKind(frontmatter: unknown): NodeVisualKind {
 	const metadata = record(frontmatter);
 	if (!metadata) return "unknown";
+
+	const type = normalizedString(metadata.type);
+	if (type === "calendar-event" || type === "event" || type === "schedule") return "schedule";
 
 	const nodeKind = normalizedString(metadata.node_kind);
 	if (nodeKind === "root" || nodeKind === "hub") return "hub";

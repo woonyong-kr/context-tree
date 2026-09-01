@@ -10,14 +10,15 @@
 	--lg-focus: var(--background-modifier-border-focus);
 	--lg-graph-line: var(--graph-line, var(--color-base-35, var(--background-modifier-border-focus)));
 	--lg-graph-text: var(--graph-text, var(--text-normal));
-	--lg-kind-hub: var(--color-purple, var(--interactive-accent));
+	--lg-kind-hub: var(--color-cyan, var(--interactive-accent));
 	--lg-kind-project: var(--color-blue, var(--link-color));
 	--lg-kind-person: var(--color-pink, var(--color-red));
-	--lg-kind-book: var(--color-orange, var(--text-accent));
+	--lg-kind-schedule: var(--color-orange, var(--text-accent));
+	--lg-kind-book: var(--color-purple, var(--interactive-accent));
 	--lg-kind-resource: var(--color-cyan, var(--color-blue));
 	--lg-kind-entity: var(--color-blue, var(--link-color));
 	--lg-kind-topic: var(--color-green, var(--interactive-accent));
-	--lg-kind-detail: var(--color-yellow, var(--text-muted));
+	--lg-kind-detail: var(--color-green, var(--interactive-accent));
 	--lg-kind-unknown: var(--graph-node, var(--text-muted));
 	--lg-space-1: 4px;
 	--lg-space-2: 8px;
@@ -616,6 +617,12 @@
 .linked-graph-network-node[data-node-kind="person"],
 .linked-graph-network-preview-node[data-node-kind="person"] {
 	--lg-node-color: var(--lg-kind-person);
+}
+
+.linked-graph-network-root[data-node-kind="schedule"],
+.linked-graph-network-node[data-node-kind="schedule"],
+.linked-graph-network-preview-node[data-node-kind="schedule"] {
+	--lg-node-color: var(--lg-kind-schedule);
 }
 
 .linked-graph-network-root[data-node-kind="book"],

@@ -6,9 +6,13 @@ test("uses canonical metadata for graph colours without title inference", () => 
 	assert.equal(nodeVisualKind({ node_kind: "hub" }), "hub");
 	assert.equal(nodeVisualKind({ node_kind: "entity", entity_kind: "project" }), "project");
 	assert.equal(nodeVisualKind({ node_kind: "entity", entity_kind: "person" }), "person");
+	assert.equal(nodeVisualKind({ type: "calendar-event" }), "schedule");
+	assert.equal(nodeVisualKind({ node_kind: "entity", entity_kind: "schedule" }), "schedule");
+	assert.equal(nodeVisualKind({ node_kind: "entity", facets: ["일정"] }), "schedule");
 	assert.equal(nodeVisualKind({ node_kind: "entity", facets: ["책"] }), "book");
 	assert.equal(nodeVisualKind({ node_kind: "topic" }), "topic");
 	assert.equal(nodeVisualKind({ node_kind: "detail" }), "detail");
+	assert.equal(nodeVisualKind({ type: "calendar-event", node_kind: "topic" }), "schedule");
 	assert.equal(nodeVisualKind({ title: "프로젝트처럼 보이는 제목" }), "unknown");
 });
 
