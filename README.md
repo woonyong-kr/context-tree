@@ -1,11 +1,15 @@
 # Linked Graph Navigator
 
-**Follow the paths you wrote, not every connection in your Vault.**
+<p align="center">
+  <a href="obsidian://show-plugin?id=linked-graph"><img alt="Obsidian Community Plugin" src="https://img.shields.io/badge/Obsidian-Community_plugin-7C3AED?logo=obsidian" /></a>
+  <a href="https://github.com/woonyong-kr/linked-graph/actions/workflows/lint.yml"><img alt="Node.js build" src="https://github.com/woonyong-kr/linked-graph/actions/workflows/lint.yml/badge.svg" /></a>
+  <a href="https://github.com/woonyong-kr/linked-graph/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/woonyong-kr/linked-graph?sort=semver" /></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg" /></a>
+</p>
 
-[![Obsidian Community Plugin](https://img.shields.io/badge/Obsidian-Community_plugin-7C3AED?logo=obsidian)](obsidian://show-plugin?id=linked-graph)
-[![Node.js build](https://github.com/woonyong-kr/linked-graph/actions/workflows/lint.yml/badge.svg)](https://github.com/woonyong-kr/linked-graph/actions/workflows/lint.yml)
-[![Latest release](https://img.shields.io/github/v/release/woonyong-kr/linked-graph?sort=semver)](https://github.com/woonyong-kr/linked-graph/releases/latest)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+<p align="center">
+  <strong>Follow the paths you wrote, not every connection in your Vault.</strong>
+</p>
 
 Linked Graph Navigator turns the links in your current Markdown note into a calm reading map beside the editor. It preserves the order you wrote, previews one next step on hover or focus, and opens the original note in one click—without turning the whole Vault into a hairball.
 
