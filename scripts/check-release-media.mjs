@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 
 const repository = new URL("../", import.meta.url);
 const requiredAssets = [
+	"docs/assets/linked-graph-demo.gif",
 	"docs/assets/linked-graph-runtime.png",
 	"docs/assets/linked-graph-runtime-preview.png",
 ];
@@ -23,7 +24,11 @@ const imageDimensions = (bytes, path) => {
 	if (bytes.subarray(0, 8).toString("hex") === "89504e470d0a1a0a") {
 		return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
 	}
-	fail(`${path} is not a PNG`);
+	const gifHeader = bytes.subarray(0, 6).toString("ascii");
+	if (gifHeader === "GIF87a" || gifHeader === "GIF89a") {
+		return { width: bytes.readUInt16LE(6), height: bytes.readUInt16LE(8) };
+	}
+	fail(`${path} is not a PNG or GIF`);
 };
 
 if (packageJson.version !== manifest.version) fail("package and manifest versions differ");

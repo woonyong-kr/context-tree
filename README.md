@@ -9,6 +9,8 @@
 
 Linked Graph Navigator turns the links in your current Markdown note into a calm reading map beside the editor. It preserves the order you wrote, previews one next step on hover or focus, and opens the original note in one click—without turning the whole Vault into a hairball.
 
+![Linked Graph Navigator following an active note from graph to authored outline](docs/assets/linked-graph-demo.gif)
+
 ![Linked Graph Navigator following the active Wiki note in a sharp 16:9 Obsidian capture](docs/assets/linked-graph-runtime.png)
 
 <p align="center">

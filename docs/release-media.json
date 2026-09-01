@@ -5,6 +5,12 @@
 	"publicSafeSample": true,
 	"assets": [
 		{
+			"path": "docs/assets/linked-graph-demo.gif",
+			"width": 1600,
+			"height": 900,
+			"sha256": "6f7b5511fdd022133655bbf1c04ddced2f67540b8dbb44f6ab6b0d0fadc8907e"
+		},
+		{
 			"path": "docs/assets/linked-graph-runtime.png",
 			"width": 1600,
 			"height": 900,
