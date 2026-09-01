@@ -2,8 +2,8 @@
 
 ## 1.6.6
 
-- Replace every public visual with a public-safe, native Obsidian 16:9 capture at 1600×900.
-- Recut the walkthrough around active note, hover preview, one-click navigation, and Outline so the Community page demonstrates the real reading flow.
+- Replace low-resolution Community visuals with public-safe 16:9 PNG frames at 1600×900; a new interaction GIF is intentionally deferred.
+- Keep the introduction focused on the active-note and next-step reading flow.
 - Require sharp 16:9 README media in the release gate and clarify the plugin's note-first use cases.
 
 ## 1.6.5

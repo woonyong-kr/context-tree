@@ -1,26 +1,20 @@
 {
-	"version": "1.6.5",
+	"version": "1.6.6",
 	"capturedWith": "Obsidian 1.13.7",
 	"capturedAt": "2026-09-01",
 	"publicSafeSample": true,
 	"assets": [
 		{
-			"path": "docs/assets/linked-graph-demo.gif",
-			"width": 1130,
-			"height": 882,
-			"sha256": "9b6423b116f40212fb524f97178b1f4a07a2924d30ff855fe5d7fcd84591aa61"
-		},
-		{
 			"path": "docs/assets/linked-graph-runtime.png",
-			"width": 984,
-			"height": 768,
-			"sha256": "23a2a243c1444144a08929c3a8abc49fec872fc7a9a5123170c6cf58c6e27d2b"
+			"width": 1600,
+			"height": 900,
+			"sha256": "3ae63d11c02842ee145cc18f1608117e95f4d048a99a880a7bb65264df5c6078"
 		},
 		{
 			"path": "docs/assets/linked-graph-runtime-preview.png",
-			"width": 984,
-			"height": 768,
-			"sha256": "fad93734ea98903c81de94de6ba2f7a946e486474704dc96e595fce1401cba3c"
+			"width": 1600,
+			"height": 900,
+			"sha256": "0b3235819bd6d6b89ada5d6f3bf8b54bd7562dcf0a8d783207cb2d2f285b508b"
 		}
 	]
 }

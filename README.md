@@ -9,7 +9,7 @@
 
 Linked Graph Navigator turns the links in your current Markdown note into a calm reading map beside the editor. It preserves the order you wrote, previews one next step on hover or focus, and opens the original note in one click—without turning the whole Vault into a hairball.
 
-![Linked Graph Navigator walkthrough from an active note to its authored routes and a next-step preview](docs/assets/linked-graph-demo.gif)
+![Linked Graph Navigator following the active Wiki note in a sharp 16:9 Obsidian capture](docs/assets/linked-graph-runtime.png)
 
 <p align="center">
   <a href="obsidian://show-plugin?id=linked-graph">Add to Obsidian</a>
@@ -52,8 +52,6 @@ There is no relationship database or saved graph layout. Disable the plugin and 
 
 ## Graph and Outline
 
-![Linked Graph Navigator following the active Wiki note in a sharp 16:9 Obsidian capture](docs/assets/linked-graph-runtime.png)
-
 The graph is for spatial scanning and direct manipulation:
 
 - drag any primary node after the pointer crosses a deliberate movement threshold;
@@ -62,7 +60,7 @@ The graph is for spatial scanning and direct manipulation:
 - a completed drag becomes the node's position for this session, while cancel or focus loss restores the previous position;
 - node colours use existing canonical metadata only; titles never infer type.
 
-![Linked Graph Navigator previewing the focused route's next step in a sharp 16:9 Obsidian capture](docs/assets/linked-graph-runtime-preview.png)
+![Linked Graph Navigator preserving authored route order in Outline in a sharp 16:9 Obsidian capture](docs/assets/linked-graph-runtime-preview.png)
 
 The Outline preserves reading order:
 
