@@ -75,11 +75,6 @@ export function nodeVisualKind(frontmatter: unknown): NodeVisualKind {
 	const type = normalizedString(metadata.type);
 	if (type === "calendar-event" || type === "event" || type === "schedule") return "schedule";
 
-	const nodeKind = normalizedString(metadata.node_kind);
-	if (nodeKind === "root" || nodeKind === "hub") return "hub";
-	if (nodeKind === "topic") return "topic";
-	if (nodeKind === "detail") return "detail";
-
 	const entityKind = ENTITY_KINDS.get(normalizedString(metadata.entity_kind));
 	if (entityKind) return entityKind;
 
@@ -87,6 +82,11 @@ export function nodeVisualKind(frontmatter: unknown): NodeVisualKind {
 		const kind = FACET_KINDS.get(facet.trim().toLocaleLowerCase());
 		if (kind) return kind;
 	}
+
+	const nodeKind = normalizedString(metadata.node_kind);
+	if (nodeKind === "root" || nodeKind === "hub") return "hub";
+	if (nodeKind === "topic") return "topic";
+	if (nodeKind === "detail") return "detail";
 
 	return nodeKind === "entity" ? "entity" : "unknown";
 }
