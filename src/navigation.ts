@@ -76,11 +76,13 @@ export function nodeVisualKind(frontmatter: unknown): NodeVisualKind {
 	if (type === "calendar-event" || type === "event" || type === "schedule") return "schedule";
 
 	const entityKind = ENTITY_KINDS.get(normalizedString(metadata.entity_kind));
-	if (entityKind) return entityKind;
-
+	const facetKinds = new Set<NodeVisualKind>();
 	for (const facet of stringValues(metadata.facets)) {
 		const kind = FACET_KINDS.get(facet.trim().toLocaleLowerCase());
-		if (kind) return kind;
+		if (kind) facetKinds.add(kind);
+	}
+	for (const semanticKind of ["schedule", "person", "project", "book", "resource"] as const) {
+		if (entityKind === semanticKind || facetKinds.has(semanticKind)) return semanticKind;
 	}
 
 	const nodeKind = normalizedString(metadata.node_kind);
