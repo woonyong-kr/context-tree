@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.5
+
+- Replace the final `Array.at()` call with indexed access so the Community source scanner can infer the section label without unsafe-value warnings.
+- Keep preview status text visually clipped through its one-pixel overflow box without the partially supported `clip-path` property.
+
 ## 1.6.4
 
 - Move next-hop ring geometry into a focused pure module with direct narrow- and wide-panel regression tests.

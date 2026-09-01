@@ -300,7 +300,7 @@ function flattenGraphEntries(
 			linkText: entry.linkText,
 			path: entry.path,
 			kind: kindForPath(entry.path),
-			context: entry.sectionPath.at(-1) ?? "",
+				context: entry.sectionPath[entry.sectionPath.length - 1] ?? "",
 		});
 	}
 	return result;

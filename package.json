@@ -1,6 +1,6 @@
 {
 	"name": "linked-graph",
-  "version": "1.6.4",
+	"version": "1.6.5",
 	"description": "Follow the links you wrote in order as a focused outline or graph beside the active note.",
 	"main": "main.js",
 	"type": "module",
