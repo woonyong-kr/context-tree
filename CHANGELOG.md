@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.4
+
+- Move next-hop ring geometry into a focused pure module with direct narrow- and wide-panel regression tests.
+- Remove the redundant node anchor field so pointer, hover, and edge positioning share one DOM owner.
+- Rebuild the Community overview around quick start, exact Markdown support, interaction behavior, limits, privacy, and troubleshooting.
+- Replace the public walkthrough with a private-data-free active-note → re-root → Outline sequence captured in Obsidian 1.13.7.
+
 ## 1.6.3
 
 - Remove repeated section captions such as `하위 키워드` from graph nodes while keeping authored grouping in Outline view.

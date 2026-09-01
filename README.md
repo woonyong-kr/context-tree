@@ -2,76 +2,159 @@
 
 **Follow the paths you wrote, not every connection in your Vault.**
 
-Linked Graph Navigator follows the active Markdown note and shows only its resolved outgoing `[[wikilinks]]` in the order you wrote them. Keep the routes in a quiet outline or see them as a focused graph beside the note.
+[![Obsidian Community Plugin](https://img.shields.io/badge/Obsidian-Community_plugin-7C3AED?logo=obsidian)](obsidian://show-plugin?id=linked-graph)
+[![Node.js build](https://github.com/woonyong-kr/linked-graph/actions/workflows/lint.yml/badge.svg)](https://github.com/woonyong-kr/linked-graph/actions/workflows/lint.yml)
+[![Latest release](https://img.shields.io/github/v/release/woonyong-kr/linked-graph?sort=semver)](https://github.com/woonyong-kr/linked-graph/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+Linked Graph Navigator follows the active Markdown note and shows only its resolved outgoing `[[wikilinks]]` in the order you wrote them. Use a quiet outline or a focused one-hop graph beside the note, preview the next step, and open the original Markdown in one click.
 
 ![Linked Graph Navigator walkthrough from an active note to its authored routes and a next-step preview](docs/assets/linked-graph-demo.gif)
 
-Want to try it without touching your notes? Download the [public demo Vault](https://github.com/woonyong-kr/obsidian-navigator-demo-vault/releases/latest) and follow its five-minute path.
+<p align="center">
+  <a href="obsidian://show-plugin?id=linked-graph">Add to Obsidian</a>
+  ·
+  <a href="https://github.com/woonyong-kr/obsidian-navigator-demo-vault/releases/latest">Try the public demo Vault</a>
+  ·
+  <a href="https://community.obsidian.md/plugins/linked-graph">Community page</a>
+</p>
 
-## The three-step workflow
+## At a glance
 
-1. **Open a linked note.** The navigator follows the active Markdown editor automatically.
-2. **See the intended routes.** Direct outgoing links appear in authored order instead of becoming a vault-wide tangle.
-3. **Preview the next step.** Hover a route to reveal its next outgoing links, or click it to open the original note.
+- **Current-note scope:** the navigator changes with the active Markdown editor.
+- **Authored order:** routes keep the order and section context from the source note.
+- **Two useful views:** switch between a direct-link graph and a compact outline.
+- **One-hop preview:** hover or focus a route to see where it leads next.
+- **Direct navigation:** click a route to open the canonical note; click the root to follow its configured parent.
+- **Local and read-only:** no network requests, telemetry, generated maps, or Vault writes.
+- **Desktop and mobile:** built only on Obsidian's public API.
 
-There is no relationship database, generated map, or saved layout. Disable the plugin and every Markdown link remains exactly where you wrote it.
+## Quick start
 
-## Why use this instead of Obsidian Graph view?
+1. Install **Linked Graph Navigator** from **Settings → Community plugins**.
+2. Open a Markdown note containing links such as `[[Concept]]` or `[[Guide#Next step]]`.
+3. Run **Open Linked Graph Navigator for the current note** or select the ribbon icon.
+4. Hover or focus a direct node to preview its outgoing links. Click it to open the note.
+5. Switch to **Outline** when you want the complete authored order and section labels.
 
-Obsidian Graph answers “how is this network connected?” Linked Graph Navigator answers “where did I intend the reader to go next?”
+Want a safe example first? Download the [public demo Vault](https://github.com/woonyong-kr/obsidian-navigator-demo-vault/releases/latest) and follow its five-minute walkthrough. It includes ordinary routes, long labels, next-step previews, and a dense-note fallback.
 
-| | Linked Graph Navigator | Obsidian Graph |
-|---|---|---|
-| Scope | Active note | Vault or local neighbourhood |
-| Direction | Outgoing links in written order | Connections in multiple directions |
-| Layout | Focused routes with optional next-step preview | Relationship network |
-| Location | Persistent right-sidebar navigator | Separate graph view |
-| Action | Follow the intended reading path | Inspect connections |
-| Knowledge writes | None | None |
+## The workflow
 
-## What it looks like
+1. **Open a linked note.** The sidebar follows the active Markdown editor automatically.
+2. **See the intended routes.** Only resolved outgoing links appear; unrelated Vault connections stay out of the way.
+3. **Preview the next step.** Hover or keyboard-focus a route to reveal its next outgoing links.
+4. **Continue in Markdown.** Click once to open the original note. Back and Forward retrace only this session's path.
+
+There is no relationship database or saved graph layout. Disable the plugin and every link remains exactly where you wrote it.
+
+## Graph and Outline
 
 ![Linked Graph Navigator following the active Wiki note](docs/assets/linked-graph-runtime.png)
 
+The graph is for spatial scanning and direct manipulation:
+
+- drag any primary node after the pointer crosses a deliberate movement threshold;
+- pan the background, use the wheel or controls to zoom, and fit the current graph;
+- hover movement is local, bounded, and returns smoothly to its origin;
+- a completed drag becomes the node's position for this session, while cancel or focus loss restores the previous position;
+- node colours use existing canonical metadata only; titles never infer type.
+
 ![Linked Graph Navigator previewing the focused route's next step](docs/assets/linked-graph-runtime-preview.png)
 
-## Get started
+The Outline preserves reading order:
 
-1. Open a Markdown note.
-2. Run **Open Linked Graph Navigator for the current note** or select its ribbon icon.
-3. The default graph shows the current note and only its direct authored links. The current node and direct nodes all participate in the force layout.
-4. Drag any visible primary node, click the current node to move to its configured parent, or hover/focus a direct node to preview its next outgoing links. Each graph node remains one uncluttered control.
-5. Node colours use existing canonical metadata only; titles are never used to infer type.
-6. Pan or zoom the graph, click a direct node to open the canonical note, or switch to **Outline view** for the same direct links in Markdown order.
-7. Use search to filter both views. A route also shows the section heading where its link was authored, so similarly named links keep their reading context.
-8. Use Back and Forward to retrace paths opened during the current Obsidian session. Nothing is persisted.
+- links remain grouped under the section where they were written;
+- search matches route titles and section context;
+- plain bullet text can label a group without becoming a graph node;
+- the full list remains available when a dense graph is visually bounded.
 
-Keyboard-only flow: run **Focus route search**, type a route or section name, press `Arrow Down` to focus the first match, then `Enter` to open it. Use the Back command or header action to return.
+Keyboard flow: run **Focus route search**, type a route or section name, press `Arrow Down` to focus the first match, then press `Enter` to open it.
 
-Graph rendering stays responsive on unusually dense notes by sizing its direct-node limit from the measured panel area (12 to 120 nodes) and showing at most 48 next-step preview nodes. When routes are omitted, the panel reports the count and offers the complete authored list in Outline view.
+## Why not the built-in Graph view?
 
-The demo Vault includes a [130-route fallback example](https://github.com/woonyong-kr/obsidian-navigator-demo-vault/blob/main/Benchmarks/Dense%20Routes.md), and the parser has a [reproducible 5,000-route benchmark](docs/benchmarks.md).
+The built-in Graph view answers “how is this network connected?” Linked Graph Navigator answers “where did I intend the reader to go next?”
 
-Linked Graph Navigator follows the active Markdown editor. View mode, group collapse, and search are session-only UI state. It does not create maps, Canvas files, backlinks, relationships, sidecars, or duplicated notes.
+| | Linked Graph Navigator | Obsidian Graph |
+| --- | --- | --- |
+| Scope | Active note | Vault or local neighbourhood |
+| Direction | Outgoing links in written order | Connections in multiple directions |
+| Layout | Focused routes and optional next-step preview | Relationship network |
+| Location | Persistent sidebar navigator | Separate graph view |
+| Primary action | Follow an intended reading path | Inspect connections |
+| Knowledge writes | None | None |
 
-## Ownership contract
+The two views complement each other: use Graph for exploration and Linked Graph Navigator for deliberate reading paths.
 
-- Markdown is the only knowledge source of truth.
-- A visible route exists only when the source Markdown contains a resolved wikilink.
-- Plain bullet text appears only in Outline view; it never becomes a graph node or caption.
-- Removing the plugin removes no knowledge.
-- The plugin never edits Vault content.
+## Supported Markdown
 
-See [UX contract](docs/ux-contract.md), [design system](docs/design-system.md), and [release process](docs/release-process.md).
+Visible routes come from resolved internal links in the active note:
 
-See the public [Roadmap](ROADMAP.md), report a [bug or use case](https://github.com/woonyong-kr/linked-graph/issues/new/choose), or discuss a workflow in [Discussions](https://github.com/woonyong-kr/linked-graph/discussions).
+```markdown
+## Learn
 
-## Development
+- [[Language fundamentals]]
+  - [[Functions]]
+  - [[Collections#Transforming values]]
+
+## Practice
+
+- [Executable exercises](Exercises/README.md)
+```
+
+The parser supports wikilinks, heading and block subpaths, aliases, and relative Markdown links. It ignores embeds, external URLs, fenced code, inline code, comments, unresolved targets, and duplicate destinations. The first H1 is used as the visible note title when available.
+
+## Performance and limits
+
+- Direct graph capacity adapts to the measured panel area from 12 to 120 nodes.
+- A hover preview shows at most 48 next-step nodes.
+- Omitted routes are reported and remain available in Outline.
+- A 5,000-route parser benchmark is documented in [benchmarks](docs/benchmarks.md).
+- The demo Vault includes a [130-route fallback example](https://github.com/woonyong-kr/obsidian-navigator-demo-vault/blob/main/Benchmarks/Dense%20Routes.md).
+
+These are visual safeguards, not data loss: the source Markdown remains canonical and unchanged.
+
+## Privacy and ownership
+
+Linked Graph Navigator is local-first and read-only:
+
+- it makes no network requests and includes no telemetry;
+- it never creates, edits, renames, or deletes Vault files;
+- it stores no relationship database, layout, Canvas, sidecar, or duplicated note;
+- search, collapse, graph positions, and navigation history are session-only;
+- removing the plugin removes no knowledge.
+
+See the detailed [UX contract](docs/ux-contract.md), [design system](docs/design-system.md), and [security policy](SECURITY.md).
+
+## Troubleshooting
+
+- **The navigator is empty:** confirm the active file is Markdown and its internal links resolve to files in the Vault.
+- **A link is missing:** embeds, external URLs, code, comments, unresolved links, and duplicates are intentionally excluded.
+- **Some graph routes are omitted:** switch to Outline for the complete list or enlarge the sidebar.
+- **Hover preview is empty:** the focused destination has no resolved outgoing links.
+- **A node opened instead of dragging:** begin with a deliberate movement; a short press is intentionally treated as a click.
+- **The root is not clickable:** parent navigation appears only when the active note has a supported `parent` wikilink in frontmatter.
+
+## Installation and compatibility
+
+Install from **Settings → Community plugins → Browse → Linked Graph Navigator**. The plugin supports Obsidian 1.8.0 or later on desktop and mobile.
+
+For a manual release install, download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/woonyong-kr/linked-graph/releases/latest) into `.obsidian/plugins/linked-graph/`, then reload Obsidian.
+
+## Support and development
+
+- Read the [changelog](CHANGELOG.md) and [roadmap](ROADMAP.md).
+- Report a [bug or use case](https://github.com/woonyong-kr/linked-graph/issues/new/choose).
+- Review the [contributing guide](CONTRIBUTING.md) before opening a pull request.
 
 ```bash
-npm install
+npm ci
 npm run check
 npm audit --omit=dev --audit-level=high
 ```
 
-Requires Node.js 20 or later.
+`npm run check` runs ESLint, unused-code analysis, TypeScript, CSS policy checks, the production build, 41 focused tests, and release-media validation. Node.js 20 or later is required.
+
+## License
+
+[MIT](LICENSE)

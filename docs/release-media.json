@@ -1,14 +1,14 @@
 {
-	"version": "1.6.3",
+	"version": "1.6.4",
 	"capturedWith": "Obsidian 1.13.7",
 	"capturedAt": "2026-09-01",
 	"publicSafeSample": true,
 	"assets": [
 		{
 			"path": "docs/assets/linked-graph-demo.gif",
-			"width": 984,
-			"height": 768,
-			"sha256": "608c7d1185871da4016626f03963d93d362f89c4229d9ac081f16afb988a7f88"
+			"width": 1130,
+			"height": 882,
+			"sha256": "9b6423b116f40212fb524f97178b1f4a07a2924d30ff855fe5d7fcd84591aa61"
 		},
 		{
 			"path": "docs/assets/linked-graph-runtime.png",
