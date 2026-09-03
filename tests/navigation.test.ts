@@ -1,6 +1,21 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { nodeVisualKind, parseParentLink } from "../src/navigation";
+import { isGraphDestinationVisible, nodeVisualKind, parseParentLink } from "../src/navigation";
+
+test("hides non-canonical graph destinations without assuming Vault-specific root folders", () => {
+	assert.equal(isGraphDestinationVisible("wiki/ai/attention.md", { status: "Active" }), true);
+	assert.equal(isGraphDestinationVisible("wiki/personal/study.md", { access: "local-only" }), true);
+	assert.equal(isGraphDestinationVisible("brain/guide.md", {}), true);
+	assert.equal(isGraphDestinationVisible("inbox/idea.md", {}), true);
+	assert.equal(isGraphDestinationVisible(".local/cache.md", {}), false);
+	assert.equal(isGraphDestinationVisible("wiki/private/notes.md", { status: "Active" }), false);
+	assert.equal(isGraphDestinationVisible("wiki/private/_sources/raw.md", {}), false);
+	assert.equal(isGraphDestinationVisible("wiki/books/archive/old.md", {}), false);
+	assert.equal(isGraphDestinationVisible("wiki/books/generated/event.md", {}), false);
+	assert.equal(isGraphDestinationVisible("wiki/books/current.md", { status: "Retired" }), false);
+	assert.equal(isGraphDestinationVisible("wiki/books/current.md", { lifecycle: "archived" }), false);
+	assert.equal(isGraphDestinationVisible("wiki/books/current.md", { lifecycle_status: "superseded" }), false);
+});
 
 test("uses canonical metadata for graph colours without title inference", () => {
 	assert.equal(nodeVisualKind({ node_kind: "hub" }), "hub");
@@ -18,6 +33,19 @@ test("uses canonical metadata for graph colours without title inference", () => 
 	assert.equal(nodeVisualKind({ node_kind: "hub", facets: ["일정"] }), "schedule");
 	assert.equal(nodeVisualKind({ entity_kind: "person", facets: ["일정"] }), "schedule");
 	assert.equal(nodeVisualKind({ title: "프로젝트처럼 보이는 제목" }), "unknown");
+});
+
+test("keeps semantic graph colours exclusive when structural metadata overlaps", () => {
+	const cases = [
+		[{ type: "calendar-event", node_kind: "detail", entity_kind: "project" }, "schedule"],
+		[{ entity_kind: "person", node_kind: "topic", facets: ["프로젝트"] }, "person"],
+		[{ entity_kind: "project", node_kind: "detail" }, "project"],
+		[{ node_kind: "detail" }, "detail"],
+	] as const;
+
+	for (const [frontmatter, expected] of cases) {
+		assert.equal(nodeVisualKind(frontmatter), expected);
+	}
 });
 
 test("parses the canonical parent wikilink for upward navigation", () => {

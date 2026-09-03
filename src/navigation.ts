@@ -21,6 +21,17 @@ export interface GraphNavigationTarget extends ParsedParentLink {
 	kind: NodeVisualKind;
 }
 
+const HIDDEN_PATH_SEGMENTS = new Set([
+	"private",
+	"_sources",
+	"_generated",
+	"generated",
+	"archive",
+	"archived",
+]);
+
+const HIDDEN_LIFECYCLES = new Set(["archived", "retired", "superseded"]);
+
 const ENTITY_KINDS = new Map<string, NodeVisualKind>([
 	["project", "project"],
 	["프로젝트", "project"],
@@ -66,6 +77,22 @@ function normalizedString(value: unknown): string {
 function stringValues(value: unknown): string[] {
 	if (typeof value === "string") return [value];
 	return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+export function isGraphDestinationVisible(path: string, frontmatter: unknown): boolean {
+	const segments = path
+		.replace(/\\/g, "/")
+		.split("/")
+		.map((segment) => segment.trim().toLocaleLowerCase())
+		.filter(Boolean);
+	if (segments.length === 0 || segments[0]?.startsWith(".")) return false;
+	if (segments.some((segment) => HIDDEN_PATH_SEGMENTS.has(segment))) return false;
+
+	const metadata = record(frontmatter);
+	if (!metadata) return true;
+	return ![metadata.status, metadata.lifecycle, metadata.lifecycle_status]
+		.map(normalizedString)
+		.some((value) => HIDDEN_LIFECYCLES.has(value));
 }
 
 export function nodeVisualKind(frontmatter: unknown): NodeVisualKind {

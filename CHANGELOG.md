@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.7
+
+- Keep private/source, generated/archive, dot-prefixed internal, and retired destinations out of graph routes, previews, and parent navigation.
+- Treat ordinary root folders such as `brain` and `inbox` normally instead of assuming a maintainer-specific Vault layout.
+- Update the indirect development dependency `fast-uri` to 3.1.7; the shipped plugin remains network-free and has no production dependency vulnerability.
+
 ## 1.6.6
 
 - Replace low-resolution Community visuals with public-safe 16:9 PNG frames at 1600×900; a new interaction GIF is intentionally deferred.

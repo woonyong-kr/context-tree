@@ -1,7 +1,13 @@
 import { MarkdownView, Notice, Plugin, TAbstractFile, TFile, WorkspaceLeaf } from "obsidian";
 import { SessionNavigationHistory } from "./history";
 import { parseDocumentLinks, type DocumentLinkGraph } from "./model";
-import { nodeVisualKind, parseParentLink, type GraphNavigationTarget, type NodeVisualKind } from "./navigation";
+import {
+	isGraphDestinationVisible,
+	nodeVisualKind,
+	parseParentLink,
+	type GraphNavigationTarget,
+	type NodeVisualKind,
+} from "./navigation";
 import { COPY } from "./ui/copy";
 import { LinkedGraphView, VIEW_TYPE_LINKED_GRAPH } from "./view";
 
@@ -67,8 +73,17 @@ export default class LinkedGraphPlugin extends Plugin {
 		const markdown = await this.app.vault.cachedRead(file);
 		return parseDocumentLinks(markdown, file.path, file.basename, (linkPath, sourcePath) => {
 			const destination = this.app.metadataCache.getFirstLinkpathDest(linkPath, sourcePath);
-			return destination?.extension === "md" ? destination.path : null;
+			return destination?.extension === "md" && this.graphDestinationVisible(destination)
+				? destination.path
+				: null;
 		});
+	}
+
+	private graphDestinationVisible(file: TFile): boolean {
+		return isGraphDestinationVisible(
+			file.path,
+			this.app.metadataCache.getFileCache(file)?.frontmatter,
+		);
 	}
 
 	fileForPath(path: string): TFile | null {
@@ -85,7 +100,11 @@ export default class LinkedGraphPlugin extends Plugin {
 		const parsed = parseParentLink(this.app.metadataCache.getFileCache(file)?.frontmatter?.parent);
 		if (!parsed) return null;
 		const destination = this.app.metadataCache.getFirstLinkpathDest(parsed.linkPath, file.path);
-		if (!(destination instanceof TFile) || destination.extension !== "md") return null;
+		if (
+			!(destination instanceof TFile)
+			|| destination.extension !== "md"
+			|| !this.graphDestinationVisible(destination)
+		) return null;
 		return {
 			...parsed,
 			path: destination.path,

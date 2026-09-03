@@ -108,7 +108,7 @@ Visible routes come from resolved internal links in the active note:
 - [Executable exercises](Exercises/README.md)
 ```
 
-The parser supports wikilinks, heading and block subpaths, aliases, and relative Markdown links. It ignores embeds, external URLs, fenced code, inline code, comments, unresolved targets, and duplicate destinations. The first H1 is used as the visible note title when available.
+The parser supports wikilinks, heading and block subpaths, aliases, and relative Markdown links. It ignores embeds, external URLs, fenced code, inline code, comments, unresolved targets, duplicate destinations, dot-prefixed internal roots, private/source folders, generated/archive folders, and destinations marked `archived`, `retired`, or `superseded`. Ordinary folder names such as `brain` and `inbox` keep their normal meaning. The first H1 is used as the visible note title when available.
 
 ## Performance and limits
 
@@ -135,7 +135,7 @@ See the detailed [UX contract](docs/ux-contract.md), [design system](docs/design
 ## Troubleshooting
 
 - **The navigator is empty:** confirm the active file is Markdown and its internal links resolve to files in the Vault.
-- **A link is missing:** embeds, external URLs, code, comments, unresolved links, and duplicates are intentionally excluded.
+- **A link is missing:** embeds, external URLs, code, comments, unresolved links, duplicates, dot-prefixed internal roots, private/source folders, generated/archive folders, and retired destinations are intentionally excluded.
 - **Some graph routes are omitted:** switch to Outline for the complete list or enlarge the sidebar.
 - **Hover preview is empty:** the focused destination has no resolved outgoing links.
 - **A node opened instead of dragging:** begin with a deliberate movement; a short press is intentionally treated as a click.
@@ -159,7 +159,7 @@ npm run check
 npm audit --omit=dev --audit-level=high
 ```
 
-`npm run check` runs ESLint, unused-code analysis, TypeScript, CSS policy checks, the production build, 41 focused tests, and release-media validation. Node.js 20 or later is required.
+`npm run check` runs ESLint, unused-code analysis, TypeScript, CSS policy checks, the production build, 43 focused tests, and release-media validation. Node.js 20 or later is required.
 
 ## License
 
